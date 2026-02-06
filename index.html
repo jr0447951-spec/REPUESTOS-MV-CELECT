@@ -1,53 +1,53 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SISTEMA CELECT</title>
+    <title>CELECT PRO</title>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <style>
-        body { font-family: sans-serif; background: #f0f2f5; padding: 10px; margin: 0; }
+        body { font-family: sans-serif; background: #f0f2f5; margin: 0; padding: 10px; }
         .container { max-width: 450px; margin: auto; }
-        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-top: 10px; display: none; }
-        .header { background: #0056b3; color: white; padding: 15px; border-radius: 10px; margin-bottom: 10px; }
-        .btn-group { display: flex; gap: 10px; }
+        .header { background: #0056b3; color: white; padding: 15px; border-radius: 10px; margin-bottom: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        .btn-group { display: flex; gap: 10px; margin-bottom: 15px; }
         .btn { flex: 1; padding: 15px; border: none; border-radius: 8px; color: white; font-weight: bold; cursor: pointer; }
+        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); display: none; }
         label { display: block; margin-top: 12px; font-weight: bold; font-size: 13px; }
         input, select, .select2-container { width: 100% !important; margin-top: 5px; }
-        .select2-selection { height: 40px !important; border-radius: 6px !important; padding-top: 5px !important; }
-        #loading { position: fixed; top:0; left:0; width:100%; height:100%; background:white; display:flex; justify-content:center; align-items:center; z-index:99; }
+        .select2-selection { height: 42px !important; border-radius: 6px !important; border: 1px solid #ccc !important; padding-top: 6px !important; }
+        #loader { position: fixed; top:0; left:0; width:100%; height:100%; background:white; display:flex; flex-direction:column; justify-content:center; align-items:center; z-index:99; }
     </style>
 </head>
 <body>
 
-<div id="loading"><b>Cargando Base de Datos...</b></div>
+<div id="loader"><b>⌛ Conectando con Google Sheets...</b></div>
 
 <div class="container">
     <div class="header">
-        <div id="user-name" style="font-weight: bold;">...</div>
-        <div id="user-rol" style="font-size: 11px;">...</div>
+        <div id="u-nom" style="font-weight: bold;">...</div>
+        <div id="u-rol" style="font-size: 11px; opacity: 0.9;">Cargando permisos...</div>
     </div>
 
-    <div class="btn-group">
-        <button class="btn" style="background:#0056b3" onclick="abrir('RETIRO')">RETIRO</button>
-        <button class="btn" style="background:#28a745" onclick="abrir('ENTREGA')">ENTREGA</button>
+    <div class="btn-group" id="btn-ops">
+        <button class="btn" style="background:#0056b3" onclick="abrir('RETIRO')">📤 RETIRO</button>
+        <button class="btn" style="background:#28a745" onclick="abrir('ENTREGA')">📥 ENTREGA</button>
     </div>
 
     <div id="form-card" class="card">
-        <h3 id="modo-txt" style="margin:0"></h3>
+        <h3 id="modo-txt" style="margin:0; color:#333; border-bottom: 1px solid #eee; padding-bottom: 10px;"></h3>
         <form id="mainForm">
-            <div id="bodega-div">
-                <label>Bodega:</label>
+            <div id="div-bodega">
+                <label>Bodega de Origen:</label>
                 <select id="bodega"><option>BODEGA CENTRAL</option><option>SAN BENITO</option><option>TALNIQUE</option></select>
             </div>
 
             <label>Sitio:</label>
-            <select id="sitio" class="select2"></select>
+            <select id="sitio" class="js-busc"></select>
 
             <label>Equipo:</label>
-            <select id="equipo" class="select2"></select>
+            <select id="equipo" class="js-busc"></select>
 
             <label>Serie:</label>
             <input type="text" id="serie" required>
@@ -55,22 +55,22 @@
             <label>Activo Fijo:</label>
             <input type="text" id="af" placeholder="N/A">
 
-            <label>Foto:</label>
+            <label>Foto Evidencia:</label>
             <input type="file" id="foto" accept="image/*" capture="camera" required>
 
-            <button type="button" onclick="enviar()" id="btnSend" class="btn" style="background:#333; width:100%; margin-top:20px;">CONFIRMAR</button>
+            <button type="button" onclick="enviar()" id="btnSend" class="btn" style="background:#333; width:100%; margin-top:20px;">FINALIZAR REGISTRO</button>
+            <div id="status" style="text-align:center; margin-top:10px; font-weight:bold;"></div>
         </form>
     </div>
 </div>
 
 <script>
     let DB = {}; let MODO = "";
-    // ⚠️ REEMPLAZA ESTA URL CON LA TUYA DE GOOGLE APPS SCRIPT
-    const URL_APPS = "https://script.google.com/macros/s/AKfycby6vZ_HW8iSoAVy8EOZpXa6x-bGu9lV-QCePm4jkmEsentvr_oo2gjki7zc1dsftION/exec";
+    const URL_APPS = "https://script.google.com/macros/s/AKfycbz1K1WhQmc401quRLMmI9eeZn3XGj71DJZ0iUxqZUOmbwlyjTrxYxT5M_aoD108tN-R/exec";
 
     $(document).ready(() => {
-        $('.select2').select2({ placeholder: "Seleccione..." });
-        $('#sitio').on('change', () => filterEq($('#sitio').val()));
+        $('.js-busc').select2({ placeholder: "Buscar...", allowClear: true });
+        $('#sitio').on('change', () => cargarEquipos($('#sitio').val()));
         $('#equipo').on('change', function() { if(MODO==='ENTREGA') $('#serie').val($(this).val()); });
         init();
     });
@@ -79,42 +79,51 @@
         try {
             const r = await fetch(URL_APPS);
             DB = await r.json();
-            $('#loading').hide();
-            $('#user-name').text(DB.user.nombre);
-            $('#user-rol').text("Rol: " + DB.user.rol);
-            if(DB.user.rol === "ADMIN_VIEW") $('.btn-group').hide();
+            if(DB.error) throw new Error(DB.error);
+
+            $('#loader').fadeOut();
+            $('#u-nom').text(DB.user.nombre);
+            $('#u-rol').text("Rol: " + DB.user.rol);
             
-            DB.sitios.forEach(s => $('#sitio').append(new Option(s.txt, s.id)));
-        } catch(e) { $('#loading').text("Error de conexión. Revisa los permisos."); }
+            if(DB.user.rol === "ADMIN_VIEW") $('#btn-ops').hide();
+            
+            const selS = $('#sitio');
+            selS.empty().append('<option value=""></option>');
+            DB.sitios.forEach(s => selS.append(new Option(s.txt, s.id)));
+        } catch(e) { 
+            $('#loader').html(`<b style="color:red">Error: ${e.message}<br>Verifica el despliegue del Script.</b>`); 
+        }
     }
 
     function abrir(m) {
         MODO = m;
         $('#form-card').show();
-        $('#modo-txt').text(m);
-        $('#bodega-div').toggle(m === 'RETIRO');
+        $('#modo-txt').text("PROCESO: " + m);
+        $('#div-bodega').toggle(m === 'RETIRO');
         $('#serie').prop('readonly', m === 'ENTREGA');
-        filterEq($('#sitio').val());
+        cargarEquipos($('#sitio').val());
     }
 
-    function filterEq(sid) {
-        const sel = $('#equipo').empty().append(new Option("",""));
+    function cargarEquipos(sid) {
+        const selE = $('#equipo').empty().append('<option value=""></option>');
         if(MODO === 'ENTREGA') {
-            DB.pends.filter(p => p.sid === sid).forEach(p => sel.append(new Option(p.eq + " ("+p.sn+")", p.sn)));
+            DB.pends.filter(p => p.sid === sid).forEach(p => selE.append(new Option(p.eq + " (SN: "+p.sn+")", p.sn)));
         } else {
             DB.inv.forEach(i => {
                 const o = new Option(i.id, i.id);
                 $(o).data('m', i.m);
-                sel.append(o);
+                selE.append(o);
             });
         }
     }
 
     function enviar() {
         const f = $('#foto')[0].files[0];
-        if(!$('#sitio').val() || !f) return alert("Faltan datos");
+        if(!$('#sitio').val() || !f) return alert("Completa los campos y la foto.");
 
         $('#btnSend').prop('disabled', true).text("ENVIANDO...");
+        $('#status').css('color','blue').text("Subiendo datos...");
+
         const reader = new FileReader();
         reader.readAsDataURL(f);
         reader.onload = () => {
@@ -132,8 +141,11 @@
             };
 
             fetch(URL_APPS, { method: 'POST', mode: 'no-cors', body: JSON.stringify(data) })
-                .then(() => { alert("Registro Exitoso"); location.reload(); })
-                .catch(() => { alert("Error al enviar"); $('#btnSend').prop('disabled', false); });
+                .then(() => { 
+                    $('#status').css('color','green').text("¡REGISTRO EXITOSO!");
+                    setTimeout(() => location.reload(), 2000); 
+                })
+                .catch(() => { alert("Error de red"); $('#btnSend').prop('disabled', false); });
         };
     }
 </script>
