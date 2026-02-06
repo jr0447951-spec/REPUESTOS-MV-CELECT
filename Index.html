@@ -1,98 +1,128 @@
 <!DOCTYPE html>
-<html lang="es">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Consulta de Inventario - Movistar</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+  <base target="_top">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .loading { cursor: not-allowed; opacity: 0.6; }
+  </style>
 </head>
-<body class="bg-slate-50 p-4 font-sans">
+<body class="bg-gray-100 p-4 font-sans">
 
-    <div class="max-w-md mx-auto bg-white rounded-xl shadow-lg overflow-hidden p-6 border border-slate-200">
-        <h1 class="text-2xl font-bold text-blue-700 mb-2">Consulta Master</h1>
-        <p class="text-sm text-slate-500 mb-6">Búsqueda en tiempo real de sitios e inventario.</p>
+  <div class="max-w-md mx-auto bg-white rounded-xl shadow-md p-6 border border-gray-200">
+    <h2 class="text-xl font-bold text-blue-600 mb-4 text-center border-b pb-2">Registro de Movimiento</h2>
+    
+    <form id="registroForm" onsubmit="enviarDatos(event)">
+      
+      <div class="mb-4">
+        <label class="block text-sm font-bold mb-1">ID y Nombre del Sitio:</label>
+        <input type="text" name="idSitio" placeholder="ID Sitio" class="w-1/3 p-2 border rounded-l-lg outline-none" required>
+        <input type="text" name="nombreSitio" placeholder="Nombre" class="w-2/3 p-2 border-y border-r rounded-r-lg outline-none" required>
+      </div>
 
-        <div class="mb-6">
-            <label class="block text-sm font-semibold text-slate-700 mb-1">Buscar Sitio (Nombre):</label>
-            <input type="text" id="inputSitio" oninput="buscarSitio(this.value)" placeholder="Ej: ALTAMIRA..." 
-                class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
-            <div id="resSitio" class="mt-2 p-3 bg-blue-50 rounded-lg text-blue-800 text-sm hidden font-mono"></div>
+      <div class="mb-4">
+        <label class="block text-sm font-bold mb-1">Repuesto / Modelo:</label>
+        <input type="text" name="repuesto" placeholder="Equipo" class="w-full p-2 border rounded-lg mb-2" required>
+        <div class="flex gap-2">
+          <input type="text" name="modelo" placeholder="Modelo" class="w-1/2 p-2 border rounded-lg">
+          <input type="text" name="marca" placeholder="Marca" class="w-1/2 p-2 border rounded-lg">
         </div>
+      </div>
 
-        <div class="mb-6">
-            <label class="block text-sm font-semibold text-slate-700 mb-1">Buscar Equipo:</label>
-            <input type="text" id="inputInv" oninput="buscarInventario(this.value)" placeholder="Ej: ROUTER..." 
-                class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-green-500 outline-none">
-            <div id="resInv" class="mt-2 p-3 bg-green-50 rounded-lg text-green-800 text-sm hidden font-mono"></div>
+      <div class="mb-4">
+        <label class="block text-sm font-bold mb-1">Activo / Serie:</label>
+        <div class="flex gap-2">
+          <input type="text" name="activo" placeholder="N° Activo" class="w-1/2 p-2 border rounded-lg">
+          <input type="text" name="serie" placeholder="N° Serie" class="w-1/2 p-2 border rounded-lg">
         </div>
+      </div>
 
-        <hr class="my-4">
+      <div class="mb-4 grid grid-cols-2 gap-2">
+        <div>
+          <label class="block text-sm font-bold mb-1">Técnico:</label>
+          <input type="text" name="tecnicoRetira" placeholder="Nombre" class="w-full p-2 border rounded-lg" required>
+        </div>
+        <div>
+          <label class="block text-sm font-bold mb-1">Bodega:</label>
+          <input type="text" name="bodega" placeholder="Bodega" class="w-full p-2 border rounded-lg">
+        </div>
+      </div>
 
-        <button onclick="cargarBases()" id="btnCargar" class="w-full bg-slate-800 text-white py-3 rounded-lg font-bold hover:bg-slate-700 transition">
-            Sincronizar Datos
-        </button>
-        <p id="status" class="text-center text-xs text-slate-400 mt-2 italic"></p>
-    </div>
+      <div class="mb-6">
+        <label class="block text-sm font-bold mb-1 text-blue-600">Subir Evidencia (Foto):</label>
+        <input type="file" id="archivo" accept="image/*" capture="camera" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+      </div>
 
-    <script>
-        // REEMPLAZA ESTA URL CON LA QUE TE DIO GOOGLE AL IMPLEMENTAR
-        const API_URL = "https://script.google.com/macros/s/AKfycbz9wV5Dh1za-T7975HT472iR_vgUpEBA_yJzL38KMCcrkm9wgxf8YGK6rvLv14bkd8N/exec"; 
-        
-        let bases = { sitios: {}, inventario: {}, tecnicos: {} };
+      <button type="submit" id="btnEnviar" class="w-full bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-700 transition duration-300 shadow-lg">
+        Guardar Registro
+      </button>
 
-        async function cargarBases() {
-            const btn = document.getElementById('btnCargar');
-            const status = document.getElementById('status');
-            
-            btn.disabled = true;
-            btn.innerText = "Cargando...";
-            status.innerText = "Conectando con Google Sheets...";
+    </form>
+    
+    <div id="status" class="mt-4 text-center font-bold hidden"></div>
+  </div>
 
-            try {
-                // Llamada a la API con el parámetro de acción
-                const res = await fetch(`${API_URL}?accion=leerData`);
-                bases = await res.json();
-                
-                status.innerText = "✅ Datos actualizados correctamente";
-                btn.innerText = "Actualizar Datos";
-            } catch (e) {
-                status.innerText = "❌ Error al cargar datos";
-                console.error(e);
-            } finally {
-                btn.disabled = false;
-            }
-        }
+  <script>
+    function enviarDatos(e) {
+      e.preventDefault();
+      const form = document.getElementById('registroForm');
+      const btn = document.getElementById('btnEnviar');
+      const status = document.getElementById('status');
+      const fileInput = document.getElementById('archivo');
 
-        function buscarSitio(valor) {
-            const res = document.getElementById('resSitio');
-            const busqueda = valor.trim().toUpperCase();
-            
-            if (busqueda.length < 2) { res.classList.add('hidden'); return; }
+      btn.disabled = true;
+      btn.classList.add('loading');
+      btn.innerText = "Enviando...";
+      status.classList.remove('hidden', 'text-red-600', 'text-green-600');
+      status.innerText = "Procesando datos e imagen...";
 
-            if (bases.sitios[busqueda]) {
-                res.innerHTML = `<strong>ID:</strong> ${bases.sitios[busqueda]}`;
-                res.classList.remove('hidden');
-            } else {
-                res.classList.add('hidden');
-            }
-        }
+      const formData = {
+        idSitio: form.idSitio.value,
+        nombreSitio: form.nombreSitio.value,
+        repuesto: form.repuesto.value,
+        modelo: form.modelo.value,
+        marca: form.marca.value,
+        activo: form.activo.value,
+        serie: form.serie.value,
+        tecnicoRetira: form.tecnicoRetira.value,
+        bodega: form.bodega.value
+      };
 
-        function buscarInventario(valor) {
-            const res = document.getElementById('resInv');
-            const busqueda = valor.trim().toUpperCase();
+      if (fileInput.files.length > 0) {
+        const file = fileInput.files[0];
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const bytes = e.target.result.split(',')[1];
+          // LLAMADA AL SERVIDOR (.gs)
+          google.script.run
+            .withSuccessHandler(res => finalizar(res))
+            .guardarRegistroTécnico(formData, bytes, file.name);
+        };
+        reader.readAsDataURL(file);
+      } else {
+        google.script.run
+          .withSuccessHandler(res => finalizar(res))
+          .guardarRegistroTécnico(formData, null, null);
+      }
+    }
 
-            if (busqueda.length < 2) { res.classList.add('hidden'); return; }
+    function finalizar(res) {
+      const status = document.getElementById('status');
+      const btn = document.getElementById('btnEnviar');
+      btn.disabled = false;
+      btn.classList.remove('loading');
+      btn.innerText = "Guardar Registro";
 
-            if (bases.inventario[busqueda]) {
-                res.innerHTML = `<strong>MARCA:</strong> ${bases.inventario[busqueda]}`;
-                res.classList.remove('hidden');
-            } else {
-                res.classList.add('hidden');
-            }
-        }
-
-        // Cargar datos automáticamente al abrir la web
-        window.onload = cargarBases;
-    </script>
+      if (res === "OK") {
+        status.innerText = "✅ ¡Guardado con éxito!";
+        status.classList.add('text-green-600');
+        document.getElementById('registroForm').reset();
+      } else {
+        status.innerText = "❌ " + res;
+        status.classList.add('text-red-600');
+      }
+    }
+  </script>
 </body>
 </html>
