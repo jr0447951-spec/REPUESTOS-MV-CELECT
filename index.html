@@ -1,128 +1,240 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
-  <base target="_top">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-    .loading { cursor: not-allowed; opacity: 0.6; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CELECT - Control de Repuestos</title>
+    <style>
+        :root {
+            --primary: #0056b3;
+            --success: #28a745;
+            --dark: #343a40;
+            --light: #f8f9fa;
+        }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #e9ecef; margin: 0; padding: 15px; }
+        .container { max-width: 500px; margin: auto; }
+        
+        /* Selector Inicial */
+        .selector-box { display: flex; gap: 15px; margin-bottom: 20px; }
+        .btn-op { 
+            flex: 1; padding: 25px 10px; border: none; border-radius: 12px; 
+            color: white; font-weight: bold; cursor: pointer; font-size: 16px;
+            transition: transform 0.2s, box-shadow 0.2s;
+            display: flex; flex-direction: column; align-items: center; gap: 8px;
+        }
+        .btn-op:active { transform: scale(0.95); }
+        .retiro { background: var(--primary); box-shadow: 0 4px 15px rgba(0,86,179,0.3); }
+        .entrega { background: var(--success); box-shadow: 0 4px 15px rgba(40,167,69,0.3); }
+
+        /* Formulario */
+        .card { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); display: none; }
+        h2 { margin-top: 0; color: var(--dark); border-bottom: 2px solid #eee; padding-bottom: 10px; }
+        label { display: block; margin-top: 15px; font-weight: 600; color: #555; font-size: 14px; }
+        
+        input, select { 
+            width: 100%; padding: 12px; margin-top: 5px; border: 1px solid #ddd; 
+            border-radius: 8px; box-sizing: border-box; font-size: 16px; background: #fff;
+        }
+        input[readonly] { background: #f1f3f5; color: #666; }
+
+        .btn-enviar { 
+            width: 100%; padding: 15px; margin-top: 25px; border: none; 
+            border-radius: 8px; background: var(--dark); color: white; 
+            font-size: 18px; font-weight: bold; cursor: pointer;
+        }
+        
+        .loading-overlay { 
+            position: fixed; top:0; left:0; width:100%; height:100%; 
+            background: rgba(255,255,255,0.9); display: flex; 
+            justify-content: center; align-items: center; z-index: 1000; 
+        }
+
+        .status-msg { margin-top: 15px; text-align: center; font-weight: bold; }
+    </style>
 </head>
-<body class="bg-gray-100 p-4 font-sans">
+<body>
 
-  <div class="max-w-md mx-auto bg-white rounded-xl shadow-md p-6 border border-gray-200">
-    <h2 class="text-xl font-bold text-blue-600 mb-4 text-center border-b pb-2">Registro de Movimiento</h2>
+<div id="loading" class="loading-overlay">
+    <div><b>Cargando bases de datos...</b></div>
+</div>
+
+<div class="container">
+    <div id="header-user" style="text-align: right; font-size: 12px; color: #666; margin-bottom: 10px;"></div>
     
-    <form id="registroForm" onsubmit="enviarDatos(event)">
-      
-      <div class="mb-4">
-        <label class="block text-sm font-bold mb-1">ID y Nombre del Sitio:</label>
-        <input type="text" name="idSitio" placeholder="ID Sitio" class="w-1/3 p-2 border rounded-l-lg outline-none" required>
-        <input type="text" name="nombreSitio" placeholder="Nombre" class="w-2/3 p-2 border-y border-r rounded-r-lg outline-none" required>
-      </div>
+    <div class="selector-box">
+        <button class="btn-op retiro" onclick="abrirFormulario('RETIRO')">
+            <span>📤</span> RETIRO DE REPUESTO
+        </button>
+        <button class="btn-op entrega" onclick="abrirFormulario('ENTREGA')">
+            <span>📥</span> ENTREGA DE REPUESTO
+        </button>
+    </div>
 
-      <div class="mb-4">
-        <label class="block text-sm font-bold mb-1">Repuesto / Modelo:</label>
-        <input type="text" name="repuesto" placeholder="Equipo" class="w-full p-2 border rounded-lg mb-2" required>
-        <div class="flex gap-2">
-          <input type="text" name="modelo" placeholder="Modelo" class="w-1/2 p-2 border rounded-lg">
-          <input type="text" name="marca" placeholder="Marca" class="w-1/2 p-2 border rounded-lg">
-        </div>
-      </div>
+    <div id="main-card" class="card">
+        <h2 id="form-title">Operación</h2>
+        <form id="repuestoForm">
+            <div id="grupo-bodega">
+                <label>Bodega de Origen:</label>
+                <select id="bodega">
+                    <option value="BODEGA CENTRAL">BODEGA CENTRAL</option>
+                    <option value="BODEGA SAN BENITO">BODEGA SAN BENITO</option>
+                    <option value="BODEGA TALNIQUE">BODEGA TALNIQUE</option>
+                </select>
+            </div>
 
-      <div class="mb-4">
-        <label class="block text-sm font-bold mb-1">Activo / Serie:</label>
-        <div class="flex gap-2">
-          <input type="text" name="activo" placeholder="N° Activo" class="w-1/2 p-2 border rounded-lg">
-          <input type="text" name="serie" placeholder="N° Serie" class="w-1/2 p-2 border rounded-lg">
-        </div>
-      </div>
+            <label>Sitio (ID o Nombre):</label>
+            <select id="siteSelect" required onchange="filtrarEquiposPorSitio()"></select>
 
-      <div class="mb-4 grid grid-cols-2 gap-2">
-        <div>
-          <label class="block text-sm font-bold mb-1">Técnico:</label>
-          <input type="text" name="tecnicoRetira" placeholder="Nombre" class="w-full p-2 border rounded-lg" required>
-        </div>
-        <div>
-          <label class="block text-sm font-bold mb-1">Bodega:</label>
-          <input type="text" name="bodega" placeholder="Bodega" class="w-full p-2 border rounded-lg">
-        </div>
-      </div>
+            <label>Equipo:</label>
+            <select id="equipoSelect" required onchange="autoCompletarDatos()"></select>
 
-      <div class="mb-6">
-        <label class="block text-sm font-bold mb-1 text-blue-600">Subir Evidencia (Foto):</label>
-        <input type="file" id="archivo" accept="image/*" capture="camera" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
-      </div>
+            <label>Número de Serie:</label>
+            <input type="text" id="serie" required placeholder="Ingrese o confirme serie">
 
-      <button type="submit" id="btnEnviar" class="w-full bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-700 transition duration-300 shadow-lg">
-        Guardar Registro
-      </button>
+            <div id="grupo-activo" class="hidden">
+                <label>Activo Fijo:</label>
+                <input type="text" id="activoFijo" placeholder="Placa de activo fijo">
+            </div>
 
-    </form>
-    
-    <div id="status" class="mt-4 text-center font-bold hidden"></div>
-  </div>
+            <label>Evidencia Fotográfica:</label>
+            <input type="file" id="foto" accept="image/*" required>
 
-  <script>
-    function enviarDatos(e) {
-      e.preventDefault();
-      const form = document.getElementById('registroForm');
-      const btn = document.getElementById('btnEnviar');
-      const status = document.getElementById('status');
-      const fileInput = document.getElementById('archivo');
+            <button type="button" onclick="procesarEnvio()" class="btn-enviar" id="btnSubmit">REGISTRAR DATOS</button>
+            <div id="status" class="status-msg"></div>
+        </form>
+    </div>
+</div>
 
-      btn.disabled = true;
-      btn.classList.add('loading');
-      btn.innerText = "Enviando...";
-      status.classList.remove('hidden', 'text-red-600', 'text-green-600');
-      status.innerText = "Procesando datos e imagen...";
+<script>
+    let DATA_MAESTRA = {};
+    let MODO_ACTUAL = "";
+    const SCRIPT_URL = "TU_URL_DE_APPS_SCRIPT_AQUÍ"; // <--- PEGA TU URL DE IMPLEMENTACIÓN
 
-      const formData = {
-        idSitio: form.idSitio.value,
-        nombreSitio: form.nombreSitio.value,
-        repuesto: form.repuesto.value,
-        modelo: form.modelo.value,
-        marca: form.marca.value,
-        activo: form.activo.value,
-        serie: form.serie.value,
-        tecnicoRetira: form.tecnicoRetira.value,
-        bodega: form.bodega.value
-      };
+    // 1. Cargar datos al iniciar
+    window.onload = async () => {
+        try {
+            const response = await fetch(`${SCRIPT_URL}?accion=leerData`);
+            DATA_MAESTRA = await response.json();
+            
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('header-user').innerText = `Usuario: ${DATA_MAESTRA.usuarioActual.nombre} (${DATA_MAESTRA.usuarioActual.rol})`;
+            
+            poblarSitios();
+        } catch (e) {
+            alert("Error conectando con el servidor. Verifique su conexión.");
+        }
+    };
 
-      if (fileInput.files.length > 0) {
-        const file = fileInput.files[0];
+    function poblarSitios() {
+        const select = document.getElementById('siteSelect');
+        select.innerHTML = '<option value="">-- Seleccione Sitio --</option>';
+        for (const [nombre, id] of Object.entries(DATA_MAESTRA.sitios)) {
+            const opt = document.createElement('option');
+            opt.value = id;
+            opt.dataset.nombre = nombre;
+            opt.text = `${id} - ${nombre}`;
+            select.appendChild(opt);
+        }
+    }
+
+    function abrirFormulario(modo) {
+        MODO_ACTUAL = modo;
+        document.getElementById('main-card').style.display = 'block';
+        document.getElementById('form-title').innerText = modo;
+        
+        // Ajustar visibilidad de campos
+        document.getElementById('grupo-bodega').style.display = (modo === 'RETIRO') ? 'block' : 'none';
+        document.getElementById('grupo-activo').style.display = (modo === 'ENTREGA') ? 'block' : 'none';
+        document.getElementById('serie').readOnly = (modo === 'ENTREGA');
+        
+        // Limpiar equipo seleccionado al cambiar modo
+        document.getElementById('equipoSelect').innerHTML = '<option value="">-- Seleccione Sitio Primero --</option>';
+        document.getElementById('serie').value = "";
+    }
+
+    function filtrarEquiposPorSitio() {
+        const idSitio = document.getElementById('siteSelect').value;
+        const selectEq = document.getElementById('equipoSelect');
+        selectEq.innerHTML = '<option value="">-- Seleccione Equipo --</option>';
+
+        if (MODO_ACTUAL === 'ENTREGA') {
+            // Filtrar de la lista de PENDIENTES que envió el servidor
+            const pends = DATA_MAESTRA.pendientes.filter(p => p.siteId == idSitio);
+            pends.forEach(p => {
+                const opt = document.createElement('option');
+                opt.value = p.serie;
+                opt.dataset.nombre = p.equipo;
+                opt.text = `${p.equipo} (Serie: ${p.serie})`;
+                selectEq.appendChild(opt);
+            });
+            if(pends.length === 0) alert("Este sitio no tiene equipos pendientes de devolución.");
+        } else {
+            // Cargar todo el inventario para retiro
+            for (const [desc, marca] of Object.entries(DATA_MAESTRA.inventario)) {
+                const opt = document.createElement('option');
+                opt.value = desc;
+                opt.dataset.marca = marca;
+                opt.text = desc;
+                selectEq.appendChild(opt);
+            }
+        }
+    }
+
+    function autoCompletarDatos() {
+        const selectEq = document.getElementById('equipoSelect');
+        const opt = selectEq.options[selectEq.selectedIndex];
+        
+        if (MODO_ACTUAL === 'ENTREGA') {
+            document.getElementById('serie').value = selectEq.value; // La serie viene en el value en modo entrega
+        }
+    }
+
+    async function procesarEnvio() {
+        const btn = document.getElementById('btnSubmit');
+        const status = document.getElementById('status');
+        const fotoFile = document.getElementById('foto').files[0];
+
+        if (!document.getElementById('siteSelect').value || !fotoFile) {
+            alert("Por favor complete todos los campos y adjunte la foto.");
+            return;
+        }
+
+        btn.disabled = true;
+        btn.innerText = "PROCESANDO...";
+        status.innerText = "Subiendo datos y fotografía...";
+
+        // Convertir imagen a Base64
         const reader = new FileReader();
-        reader.onload = function(e) {
-          const bytes = e.target.result.split(',')[1];
-          // LLAMADA AL SERVIDOR (.gs)
-          google.script.run
-            .withSuccessHandler(res => finalizar(res))
-            .guardarRegistroTécnico(formData, bytes, file.name);
+        reader.readAsDataURL(fotoFile);
+        reader.onload = async () => {
+            const base64 = reader.result.split(',')[1];
+            
+            const payload = {
+                idSitio: document.getElementById('siteSelect').value,
+                nombreSitio: document.getElementById('siteSelect').options[document.getElementById('siteSelect').selectedIndex].dataset.nombre,
+                equipo: MODO_ACTUAL === 'RETIRO' ? document.getElementById('equipoSelect').value : document.getElementById('equipoSelect').options[document.getElementById('equipoSelect').selectedIndex].dataset.nombre,
+                serie: document.getElementById('serie').value,
+                bodega: document.getElementById('bodega').value,
+                marca: document.getElementById('equipoSelect').options[document.getElementById('equipoSelect').selectedIndex].dataset.marca || "",
+                activoFijo: document.getElementById('activoFijo').value,
+                tecnicoNombre: DATA_MAESTRA.usuarioActual.nombre
+            };
+
+            // Llamada al servidor de Google
+            const funcionServidor = (MODO_ACTUAL === 'RETIRO') ? 'guardarRetiro' : 'guardarEntrega';
+            
+            google.script.run
+                .withSuccessHandler((res) => {
+                    alert("¡Registro guardado con éxito!");
+                    location.reload();
+                })
+                .withFailureHandler((err) => {
+                    alert("Error: " + err);
+                    btn.disabled = false;
+                })[funcionServidor](payload, base64, fotoFile.name);
         };
-        reader.readAsDataURL(file);
-      } else {
-        google.script.run
-          .withSuccessHandler(res => finalizar(res))
-          .guardarRegistroTécnico(formData, null, null);
-      }
     }
+</script>
 
-    function finalizar(res) {
-      const status = document.getElementById('status');
-      const btn = document.getElementById('btnEnviar');
-      btn.disabled = false;
-      btn.classList.remove('loading');
-      btn.innerText = "Guardar Registro";
-
-      if (res === "OK") {
-        status.innerText = "✅ ¡Guardado con éxito!";
-        status.classList.add('text-green-600');
-        document.getElementById('registroForm').reset();
-      } else {
-        status.innerText = "❌ " + res;
-        status.classList.add('text-red-600');
-      }
-    }
-  </script>
 </body>
 </html>
