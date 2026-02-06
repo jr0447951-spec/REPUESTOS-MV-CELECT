@@ -3,148 +3,124 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CELECT PRO - Gestión</title>
+    <title>CELECT Movistar</title>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <style>
-        :root { --p: #0056b3; --s: #28a745; --d: #343a40; }
-        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; margin: 0; padding: 10px; }
-        .container { max-width: 500px; margin: auto; }
-        .user-info { background: white; padding: 10px; border-radius: 8px; margin-bottom: 10px; font-size: 12px; display: flex; justify-content: space-between; border-left: 4px solid var(--p); }
-        .btn-box { display: flex; gap: 8px; margin-bottom: 15px; }
-        .btn-op { flex: 1; padding: 15px; border: none; border-radius: 10px; color: white; font-weight: bold; cursor: pointer; }
+        :root { --blue: #0056b3; --gray: #f4f7f6; --dark: #333; }
+        body { font-family: sans-serif; background: var(--gray); margin: 0; padding: 10px; }
+        .container { max-width: 480px; margin: auto; }
+        .header { background: white; padding: 15px; border-radius: 10px; border-left: 5px solid var(--blue); margin-bottom: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .btn-box { display: flex; gap: 10px; margin-bottom: 15px; }
+        .btn-op { flex: 1; padding: 18px; border: none; border-radius: 10px; color: white; font-weight: bold; cursor: pointer; }
         .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); display: none; }
-        label { display: block; margin-top: 15px; font-weight: bold; font-size: 13px; color: #444; }
+        label { display: block; margin-top: 15px; font-weight: bold; font-size: 13px; color: #555; }
         input, .select2-container { width: 100% !important; margin-top: 5px; }
         .select2-selection { height: 45px !important; border-radius: 8px !important; border: 1px solid #ccc !important; padding-top: 8px !important; }
-        .btn-send { width: 100%; padding: 16px; margin-top: 25px; border: none; border-radius: 8px; background: var(--d); color: white; font-weight: bold; font-size: 16px; cursor: pointer; }
+        .btn-send { width: 100%; padding: 16px; margin-top: 25px; border: none; border-radius: 10px; background: var(--dark); color: white; font-weight: bold; font-size: 16px; }
         .loader { position: fixed; top:0; left:0; width:100%; height:100%; background: white; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 99; }
-        .admin-only { display: none; background: #fff3cd; padding: 10px; border-radius: 8px; margin-top: 10px; border: 1px solid #ffeeba; }
     </style>
 </head>
 <body>
 
-<div id="loading" class="loader"><b>⌛ Cargando Sistema y Roles...</b></div>
+<div id="loading" class="loader"><b>⌛ Sincronizando datos...</b></div>
 
 <div class="container">
-    <div class="user-info">
-        <span id="u-nom">...</span>
-        <span id="u-rol" style="font-weight: bold; color: var(--p);">...</span>
-    </div>
-    
-    <div id="admin-panel" class="admin-only">
-        <b>Panel Admin:</b> Usted puede ver todos los movimientos.
+    <div class="header">
+        <div id="u-nom" style="font-weight: bold;">...</div>
+        <div id="u-rol" style="font-size: 11px; color: var(--blue);">...</div>
     </div>
 
     <div class="btn-box" id="menu-ops">
-        <button class="btn-op" style="background:var(--p)" onclick="setModo('RETIRO')">📤 RETIRO</button>
-        <button class="btn-op" style="background:var(--s)" onclick="setModo('ENTREGA')">📥 ENTREGA</button>
+        <button class="btn-op" style="background:var(--blue)" onclick="setModo('RETIRO')">📤 RETIRO</button>
+        <button class="btn-op" style="background:#28a745" onclick="setModo('ENTREGA')">📥 ENTREGA</button>
     </div>
 
     <div id="main-card" class="card">
-        <h3 id="title-modo" style="margin-top:0"></h3>
-        <form id="formRepo">
+        <h3 id="form-title" style="margin-top:0"></h3>
+        <form id="appForm">
             <div id="div-bodega">
-                <label>Bodega de Origen:</label>
-                <select id="bodega" class="js-basic"><option>BODEGA CENTRAL</option><option>BODEGA SAN BENITO</option><option>BODEGA TALNIQUE</option></select>
+                <label>Bodega:</label>
+                <select id="bodega"><option>BODEGA CENTRAL</option><option>BODEGA SAN BENITO</option><option>BODEGA TALNIQUE</option></select>
             </div>
             
-            <label>Sitio (Escriba nombre o ID):</label>
-            <select id="selSitio" class="js-search" required onchange="actualizarEquipos()"></select>
+            <label>Sitio (ID o Nombre):</label>
+            <select id="selSitio" class="js-search" required></select>
             
-            <label>Descripción del Equipo:</label>
-            <select id="selEquipo" class="js-search" required onchange="setSerie()"></select>
+            <label>Descripción Equipo:</label>
+            <select id="selEquipo" class="js-search" required></select>
             
-            <label>Número de Serie:</label>
+            <label>Serie:</label>
             <input type="text" id="serie" required>
             
             <label>Activo Fijo:</label>
             <input type="text" id="af" placeholder="N/A">
             
-            <label>Foto Evidencia:</label>
+            <label>Foto:</label>
             <input type="file" id="foto" accept="image/*" capture="camera" required>
             
-            <button type="button" onclick="enviar()" class="btn-send" id="btnGo">FINALIZAR REGISTRO</button>
-            <div id="status" style="text-align:center; margin-top:10px;"></div>
+            <button type="button" onclick="enviar()" class="btn-send" id="btnGo">CONFIRMAR</button>
         </form>
     </div>
 </div>
 
 <script>
     let DATA = {}; let MODO = "";
-    const URL_APPS = "https://script.google.com/macros/s/AKfycbxXKcr24FzBuPsGCLCmzFI9ZQ6njT2eK_6RJFsnIv1o0X4EewO2CAbQujpY5dfqTKzA/exec";
+    const URL_APPS = "https://script.google.com/macros/s/AKfycbxWzd00EE_8YlU8-DiZiQoYOSFMfeyFNefYz4vgkCRt-pncINKdbs_fDs7Z7QQtowR6/exec";
 
     $(document).ready(function() {
-        $('.js-search').select2();
-        cargarDatos();
+        $('.js-search').select2({ placeholder: "Buscar...", allowClear: true });
+        $('#selSitio').on('change', () => cargarEquipos($('#selSitio').val()));
+        $('#selEquipo').on('change', function() { if(MODO === 'ENTREGA') $('#serie').val($(this).val()); });
+        init();
     });
 
-    function cargarDatos() {
-        fetch(URL_APPS + "?accion=leerData")
-            .then(r => r.text())
-            .then(t => {
-                DATA = JSON.parse(t);
-                document.getElementById('loading').style.display = 'none';
-                
-                // Aplicar Roles
-                document.getElementById('u-nom').innerText = DATA.usuarioActual.nombre;
-                document.getElementById('u-rol').innerText = DATA.usuarioActual.rol;
-                
-                if(DATA.usuarioActual.rol === "ADMIN_EDIT" || DATA.usuarioActual.rol === "ADMIN_VIEW") {
-                    document.getElementById('admin-panel').style.display = 'block';
-                }
-                if(DATA.usuarioActual.rol === "ADMIN_VIEW") {
-                    document.getElementById('menu-ops').style.display = 'none';
-                    document.getElementById('status').innerText = "Modo solo lectura.";
-                }
+    async function init() {
+        try {
+            const r = await fetch(URL_APPS);
+            DATA = await r.json();
+            $('#loading').hide();
+            $('#u-nom').text(DATA.usuarioActual.nombre);
+            $('#u-rol').text("ROL: " + DATA.usuarioActual.rol);
+            
+            if(DATA.usuarioActual.rol === "ADMIN_VIEW") $('#menu-ops').hide();
 
-                // Cargar Sitios al Select2
-                const sel = $('#selSitio');
-                sel.append('<option value="">Buscar sitio...</option>');
-                DATA.sitios.forEach(s => {
-                    sel.append(new Option(s.text, s.id, false, false));
-                });
-            });
+            const sel = $('#selSitio');
+            sel.empty().append('<option value=""></option>');
+            DATA.sitios.forEach(s => sel.append(new Option(s.text, s.id)));
+        } catch(e) { alert("Error de carga."); }
     }
 
     function setModo(m) {
         MODO = m;
-        $('#main-card').fadeIn();
-        document.getElementById('title-modo').innerText = "Operación: " + m;
-        document.getElementById('div-bodega').style.display = m === 'RETIRO' ? 'block' : 'none';
-        document.getElementById('serie').readOnly = (m === 'ENTREGA');
-        actualizarEquipos();
+        $('#main-card').show();
+        $('#form-title').text(m);
+        $('#div-bodega').toggle(m === 'RETIRO');
+        $('#serie').prop('readonly', m === 'ENTREGA');
+        cargarEquipos($('#selSitio').val());
     }
 
-    function actualizarEquipos() {
-        const id = $('#selSitio').val();
+    function cargarEquipos(sid) {
         const sel = $('#selEquipo');
-        sel.empty().append('<option value="">Buscar equipo...</option>');
-        
+        sel.empty().append('<option value=""></option>');
         if (MODO === 'ENTREGA') {
-            DATA.pendientes.filter(p => p.siteId == id).forEach(p => {
-                sel.append(new Option(`${p.equipo} (SN: ${p.serie})`, p.serie, false, false));
-            });
+            DATA.pendientes.filter(p => p.sid === sid).forEach(p => sel.append(new Option(p.eq + " (SN: " + p.sn + ")", p.sn)));
         } else {
             DATA.inventario.forEach(i => {
-                const opt = new Option(i.text, i.id, false, false);
-                $(opt).data('marca', i.marca);
-                sel.append(opt);
+                const o = new Option(i.text, i.id);
+                $(o).data('m', i.marca);
+                sel.append(o);
             });
         }
     }
 
-    function setSerie() { 
-        if(MODO === 'ENTREGA') document.getElementById('serie').value = $('#selEquipo').val(); 
-    }
-
     function enviar() {
-        const btn = document.getElementById('btnGo');
-        const f = document.getElementById('foto').files[0];
+        const btn = $('#btnGo');
+        const f = $('#foto')[0].files[0];
         if(!$('#selSitio').val() || !f) return alert("Faltan datos");
 
-        btn.disabled = true; btn.innerText = "ENVIANDO...";
+        btn.prop('disabled', true).text("ENVIANDO...");
         const r = new FileReader();
         r.readAsDataURL(f);
         r.onload = () => {
@@ -152,12 +128,12 @@
                 accion: MODO === 'RETIRO' ? 'guardarRetiro' : 'guardarEntrega',
                 datos: {
                     idSitio: $('#selSitio').val(),
-                    nombreSitio: DATA.sitios.find(s => s.id == $('#selSitio').val()).nombre,
+                    nombreSitio: DATA.sitios.find(s => s.id === $('#selSitio').val()).nombre,
                     equipo: MODO === 'RETIRO' ? $('#selEquipo').val() : $('#selEquipo').find(':selected').text().split(' (')[0],
-                    serie: document.getElementById('serie').value,
-                    bodega: document.getElementById('bodega').value,
-                    marca: $('#selEquipo').find(':selected').data('marca') || "ZTE",
-                    activoFijo: document.getElementById('af').value || "N/A",
+                    serie: $('#serie').val(),
+                    bodega: $('#bodega').val(),
+                    marca: $('#selEquipo').find(':selected').data('m') || "N/A",
+                    activoFijo: $('#af').val() || "N/A",
                     tecnico: DATA.usuarioActual.nombre,
                     correo: DATA.usuarioActual.correo
                 },
@@ -165,7 +141,7 @@
                 fileName: f.name
             };
             fetch(URL_APPS, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) })
-                .then(() => { alert("Registro exitoso"); location.reload(); });
+                .then(() => { alert("Éxito"); location.reload(); });
         };
     }
 </script>
