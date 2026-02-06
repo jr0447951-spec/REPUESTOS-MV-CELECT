@@ -3,156 +3,160 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SISTEMA CELECT - Movistar</title>
+    <title>CELECT PRO - Gestión</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <style>
         :root { --p: #0056b3; --s: #28a745; --d: #343a40; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f2f5; margin: 0; padding: 10px; }
-        .container { max-width: 480px; margin: auto; }
-        .btn-box { display: flex; gap: 10px; margin-bottom: 15px; }
-        .btn-op { flex: 1; padding: 18px; border: none; border-radius: 10px; color: white; font-weight: bold; cursor: pointer; font-size: 15px; transition: 0.3s; }
-        .retiro { background: var(--p); box-shadow: 0 4px 6px rgba(0,86,179,0.3); }
-        .entrega { background: var(--s); box-shadow: 0 4px 6px rgba(40,167,69,0.3); }
-        .card { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); display: none; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; margin: 0; padding: 10px; }
+        .container { max-width: 500px; margin: auto; }
+        .user-info { background: white; padding: 10px; border-radius: 8px; margin-bottom: 10px; font-size: 12px; display: flex; justify-content: space-between; border-left: 4px solid var(--p); }
+        .btn-box { display: flex; gap: 8px; margin-bottom: 15px; }
+        .btn-op { flex: 1; padding: 15px; border: none; border-radius: 10px; color: white; font-weight: bold; cursor: pointer; }
+        .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); display: none; }
         label { display: block; margin-top: 15px; font-weight: bold; font-size: 13px; color: #444; }
-        input, select { width: 100%; padding: 12px; margin-top: 5px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
+        input, .select2-container { width: 100% !important; margin-top: 5px; }
+        .select2-selection { height: 45px !important; border-radius: 8px !important; border: 1px solid #ccc !important; padding-top: 8px !important; }
         .btn-send { width: 100%; padding: 16px; margin-top: 25px; border: none; border-radius: 8px; background: var(--d); color: white; font-weight: bold; font-size: 16px; cursor: pointer; }
         .loader { position: fixed; top:0; left:0; width:100%; height:100%; background: white; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 99; }
-        #status { text-align: center; margin-top: 15px; font-weight: bold; }
+        .admin-only { display: none; background: #fff3cd; padding: 10px; border-radius: 8px; margin-top: 10px; border: 1px solid #ffeeba; }
     </style>
 </head>
 <body>
 
-<div id="loading" class="loader">
-    <div style="font-size: 30px; margin-bottom: 10px;">⌛</div>
-    <b>Sincronizando Sistema CELECT...</b>
-</div>
+<div id="loading" class="loader"><b>⌛ Cargando Sistema y Roles...</b></div>
 
 <div class="container">
-    <div id="user-tag" style="text-align: right; font-size: 11px; color: #777; margin-bottom: 8px;"></div>
+    <div class="user-info">
+        <span id="u-nom">...</span>
+        <span id="u-rol" style="font-weight: bold; color: var(--p);">...</span>
+    </div>
     
-    <div class="btn-box">
-        <button class="btn-op retiro" onclick="setModo('RETIRO')">📤 RETIRO (BODEGA)</button>
-        <button class="btn-op entrega" onclick="setModo('ENTREGA')">📥 ENTREGA (SITIO)</button>
+    <div id="admin-panel" class="admin-only">
+        <b>Panel Admin:</b> Usted puede ver todos los movimientos.
+    </div>
+
+    <div class="btn-box" id="menu-ops">
+        <button class="btn-op" style="background:var(--p)" onclick="setModo('RETIRO')">📤 RETIRO</button>
+        <button class="btn-op" style="background:var(--s)" onclick="setModo('ENTREGA')">📥 ENTREGA</button>
     </div>
 
     <div id="main-card" class="card">
-        <h2 id="title-modo" style="margin:0; font-size: 20px; color: #333; border-bottom: 2px solid #eee; padding-bottom: 10px;"></h2>
+        <h3 id="title-modo" style="margin-top:0"></h3>
         <form id="formRepo">
             <div id="div-bodega">
                 <label>Bodega de Origen:</label>
-                <select id="bodega">
-                    <option>BODEGA CENTRAL</option>
-                    <option>BODEGA SAN BENITO</option>
-                    <option>BODEGA TALNIQUE</option>
-                </select>
+                <select id="bodega" class="js-basic"><option>BODEGA CENTRAL</option><option>BODEGA SAN BENITO</option><option>BODEGA TALNIQUE</option></select>
             </div>
             
-            <label>Seleccione Sitio:</label>
-            <select id="selSitio" required onchange="actualizarEquipos()"></select>
+            <label>Sitio (Escriba nombre o ID):</label>
+            <select id="selSitio" class="js-search" required onchange="actualizarEquipos()"></select>
             
             <label>Descripción del Equipo:</label>
-            <select id="selEquipo" required onchange="setSerie()"></select>
+            <select id="selEquipo" class="js-search" required onchange="setSerie()"></select>
             
             <label>Número de Serie:</label>
-            <input type="text" id="serie" required placeholder="Ingrese serie">
+            <input type="text" id="serie" required>
             
-            <label>Número de Activo Fijo:</label>
-            <input type="text" id="af" placeholder="N/A o número de placa">
+            <label>Activo Fijo:</label>
+            <input type="text" id="af" placeholder="N/A">
             
-            <label>Fotografía del Equipo:</label>
+            <label>Foto Evidencia:</label>
             <input type="file" id="foto" accept="image/*" capture="camera" required>
             
-            <button type="button" onclick="enviar()" class="btn-send" id="btnGo">CONFIRMAR REGISTRO</button>
-            <div id="status"></div>
+            <button type="button" onclick="enviar()" class="btn-send" id="btnGo">FINALIZAR REGISTRO</button>
+            <div id="status" style="text-align:center; margin-top:10px;"></div>
         </form>
     </div>
 </div>
 
 <script>
-    let DATA = {}; 
-    let MODO = "";
-    // URL de tu Script de Google
-    const URL_APPS = "https://script.google.com/macros/s/AKfycbzKjKmr5yYT-TUvr2yYovm_fQGSM_nNXujwGtcvfUw77AAGZaJcjVSqx3keVmIbB8hl/exec";
+    let DATA = {}; let MODO = "";
+    const URL_APPS = "https://script.google.com/macros/s/AKfycbxXKcr24FzBuPsGCLCmzFI9ZQ6njT2eK_6RJFsnIv1o0X4EewO2CAbQujpY5dfqTKzA/exec";
 
-    window.onload = () => {
+    $(document).ready(function() {
+        $('.js-search').select2();
+        cargarDatos();
+    });
+
+    function cargarDatos() {
         fetch(URL_APPS + "?accion=leerData")
             .then(r => r.text())
             .then(t => {
                 DATA = JSON.parse(t);
                 document.getElementById('loading').style.display = 'none';
-                document.getElementById('user-tag').innerText = "Técnico: " + DATA.usuarioActual.nombre;
                 
-                const sel = document.getElementById('selSitio');
-                sel.innerHTML = '<option value="">-- Seleccione Sitio --</option>';
-                // Ordenar sitios alfabéticamente
-                Object.entries(DATA.sitios).sort().forEach(([nom, id]) => {
-                    sel.innerHTML += `<option value="${id}" data-nom="${nom}">${id} - ${nom}</option>`;
+                // Aplicar Roles
+                document.getElementById('u-nom').innerText = DATA.usuarioActual.nombre;
+                document.getElementById('u-rol').innerText = DATA.usuarioActual.rol;
+                
+                if(DATA.usuarioActual.rol === "ADMIN_EDIT" || DATA.usuarioActual.rol === "ADMIN_VIEW") {
+                    document.getElementById('admin-panel').style.display = 'block';
+                }
+                if(DATA.usuarioActual.rol === "ADMIN_VIEW") {
+                    document.getElementById('menu-ops').style.display = 'none';
+                    document.getElementById('status').innerText = "Modo solo lectura.";
+                }
+
+                // Cargar Sitios al Select2
+                const sel = $('#selSitio');
+                sel.append('<option value="">Buscar sitio...</option>');
+                DATA.sitios.forEach(s => {
+                    sel.append(new Option(s.text, s.id, false, false));
                 });
-            })
-            .catch(e => {
-                document.getElementById('loading').innerHTML = "<b style='color:red'>❌ Error de conexión. Verifique publicación del Script.</b>";
             });
-    };
+    }
 
     function setModo(m) {
         MODO = m;
-        document.getElementById('main-card').style.display = 'block';
-        document.getElementById('title-modo').innerText = "PROCESO: " + m;
+        $('#main-card').fadeIn();
+        document.getElementById('title-modo').innerText = "Operación: " + m;
         document.getElementById('div-bodega').style.display = m === 'RETIRO' ? 'block' : 'none';
         document.getElementById('serie').readOnly = (m === 'ENTREGA');
-        document.getElementById('status').innerText = "";
-        document.getElementById('selSitio').value = "";
-        document.getElementById('selEquipo').innerHTML = '<option value="">-- Primero elija sitio --</option>';
+        actualizarEquipos();
     }
 
     function actualizarEquipos() {
-        const id = document.getElementById('selSitio').value;
-        const sel = document.getElementById('selEquipo');
-        sel.innerHTML = '<option value="">-- Seleccione Equipo --</option>';
+        const id = $('#selSitio').val();
+        const sel = $('#selEquipo');
+        sel.empty().append('<option value="">Buscar equipo...</option>');
         
         if (MODO === 'ENTREGA') {
-            const lista = DATA.pendientes.filter(p => p.siteId == id);
-            lista.forEach(p => {
-                sel.innerHTML += `<option value="${p.serie}" data-nom="${p.equipo}">${p.equipo} (Serie: ${p.serie})</option>`;
+            DATA.pendientes.filter(p => p.siteId == id).forEach(p => {
+                sel.append(new Option(`${p.equipo} (SN: ${p.serie})`, p.serie, false, false));
             });
-            if(lista.length === 0 && id) alert("No hay equipos pendientes de entrega en este sitio.");
         } else {
-            Object.entries(DATA.inventario).sort().forEach(([desc, marca]) => {
-                sel.innerHTML += `<option value="${desc}" data-marca="${marca}">${desc}</option>`;
+            DATA.inventario.forEach(i => {
+                const opt = new Option(i.text, i.id, false, false);
+                $(opt).data('marca', i.marca);
+                sel.append(opt);
             });
         }
     }
 
     function setSerie() { 
-        if(MODO === 'ENTREGA') {
-            document.getElementById('serie').value = document.getElementById('selEquipo').value;
-        } 
+        if(MODO === 'ENTREGA') document.getElementById('serie').value = $('#selEquipo').val(); 
     }
 
     function enviar() {
         const btn = document.getElementById('btnGo');
-        const st = document.getElementById('status');
         const f = document.getElementById('foto').files[0];
-        
-        if(!document.getElementById('selSitio').value || !f) return alert("Complete los datos y la fotografía");
+        if(!$('#selSitio').val() || !f) return alert("Faltan datos");
 
-        btn.disabled = true; 
-        btn.innerText = "PROCESANDO...";
-        st.style.color = "blue";
-        st.innerText = "Subiendo información...";
-
+        btn.disabled = true; btn.innerText = "ENVIANDO...";
         const r = new FileReader();
         r.readAsDataURL(f);
         r.onload = () => {
             const payload = {
                 accion: MODO === 'RETIRO' ? 'guardarRetiro' : 'guardarEntrega',
                 datos: {
-                    idSitio: document.getElementById('selSitio').value,
-                    nombreSitio: document.getElementById('selSitio').options[document.getElementById('selSitio').selectedIndex].dataset.nom,
-                    equipo: MODO === 'RETIRO' ? document.getElementById('selEquipo').value : document.getElementById('selEquipo').options[document.getElementById('selEquipo').selectedIndex].dataset.nom,
+                    idSitio: $('#selSitio').val(),
+                    nombreSitio: DATA.sitios.find(s => s.id == $('#selSitio').val()).nombre,
+                    equipo: MODO === 'RETIRO' ? $('#selEquipo').val() : $('#selEquipo').find(':selected').text().split(' (')[0],
                     serie: document.getElementById('serie').value,
                     bodega: document.getElementById('bodega').value,
-                    marca: document.getElementById('selEquipo').options[document.getElementById('selEquipo').selectedIndex].dataset.marca || "N/A",
+                    marca: $('#selEquipo').find(':selected').data('marca') || "ZTE",
                     activoFijo: document.getElementById('af').value || "N/A",
                     tecnico: DATA.usuarioActual.nombre,
                     correo: DATA.usuarioActual.correo
@@ -160,17 +164,8 @@
                 bytes: r.result.split(',')[1],
                 fileName: f.name
             };
-
             fetch(URL_APPS, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) })
-                .then(() => {
-                    st.style.color = "green";
-                    st.innerText = "✅ ¡REGISTRO EXITOSO!";
-                    setTimeout(() => location.reload(), 2000);
-                })
-                .catch(e => {
-                    alert("Error al enviar. Intente de nuevo.");
-                    btn.disabled = false;
-                });
+                .then(() => { alert("Registro exitoso"); location.reload(); });
         };
     }
 </script>
