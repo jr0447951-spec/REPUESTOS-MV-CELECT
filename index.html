@@ -3,138 +3,144 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CELECT Movistar</title>
+    <title>SISTEMA CELECT - Movistar</title>
     <style>
         :root { --p: #0056b3; --s: #28a745; --d: #343a40; }
-        body { font-family: sans-serif; background: #f4f7f6; margin: 0; padding: 15px; }
-        .container { max-width: 450px; margin: auto; }
-        .btn-box { display: flex; gap: 10px; margin-bottom: 20px; }
-        .btn-op { flex: 1; padding: 20px; border: none; border-radius: 12px; color: white; font-weight: bold; cursor: pointer; font-size: 16px; }
-        .retiro { background: var(--p); }
-        .entrega { background: var(--s); }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f2f5; margin: 0; padding: 10px; }
+        .container { max-width: 480px; margin: auto; }
+        .btn-box { display: flex; gap: 10px; margin-bottom: 15px; }
+        .btn-op { flex: 1; padding: 18px; border: none; border-radius: 10px; color: white; font-weight: bold; cursor: pointer; font-size: 15px; transition: 0.3s; }
+        .retiro { background: var(--p); box-shadow: 0 4px 6px rgba(0,86,179,0.3); }
+        .entrega { background: var(--s); box-shadow: 0 4px 6px rgba(40,167,69,0.3); }
         .card { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); display: none; }
         label { display: block; margin-top: 15px; font-weight: bold; font-size: 13px; color: #444; }
         input, select { width: 100%; padding: 12px; margin-top: 5px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
-        .btn-send { width: 100%; padding: 15px; margin-top: 25px; border: none; border-radius: 8px; background: var(--d); color: white; font-weight: bold; cursor: pointer; }
-        .loader { position: fixed; top:0; left:0; width:100%; height:100%; background: white; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 99; text-align: center; padding: 20px; }
-        .hidden { display: none; }
+        .btn-send { width: 100%; padding: 16px; margin-top: 25px; border: none; border-radius: 8px; background: var(--d); color: white; font-weight: bold; font-size: 16px; cursor: pointer; }
+        .loader { position: fixed; top:0; left:0; width:100%; height:100%; background: white; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 99; }
+        #status { text-align: center; margin-top: 15px; font-weight: bold; }
     </style>
 </head>
 <body>
 
 <div id="loading" class="loader">
-    <div style="font-size: 40px;">⏳</div>
-    <p id="msg-carga">Iniciando conexión...</p>
+    <div style="font-size: 30px; margin-bottom: 10px;">⌛</div>
+    <b>Sincronizando Sistema CELECT...</b>
 </div>
 
 <div class="container">
-    <div id="user-tag" style="text-align: right; font-size: 12px; margin-bottom: 10px; color: #666;"></div>
+    <div id="user-tag" style="text-align: right; font-size: 11px; color: #777; margin-bottom: 8px;"></div>
     
     <div class="btn-box">
-        <button class="btn-op retiro" onclick="setModo('RETIRO')">📤 RETIRO</button>
-        <button class="btn-op entrega" onclick="setModo('ENTREGA')">📥 ENTREGA</button>
+        <button class="btn-op retiro" onclick="setModo('RETIRO')">📤 RETIRO (BODEGA)</button>
+        <button class="btn-op entrega" onclick="setModo('ENTREGA')">📥 ENTREGA (SITIO)</button>
     </div>
 
     <div id="main-card" class="card">
-        <h2 id="title-modo" style="margin:0 0 15px 0;"></h2>
+        <h2 id="title-modo" style="margin:0; font-size: 20px; color: #333; border-bottom: 2px solid #eee; padding-bottom: 10px;"></h2>
         <form id="formRepo">
             <div id="div-bodega">
-                <label>Bodega:</label>
-                <select id="bodega"><option>BODEGA CENTRAL</option><option>SAN BENITO</option><option>TALNIQUE</option></select>
+                <label>Bodega de Origen:</label>
+                <select id="bodega">
+                    <option>BODEGA CENTRAL</option>
+                    <option>BODEGA SAN BENITO</option>
+                    <option>BODEGA TALNIQUE</option>
+                </select>
             </div>
             
-            <label>Sitio:</label>
+            <label>Seleccione Sitio:</label>
             <select id="selSitio" required onchange="actualizarEquipos()"></select>
             
-            <label>Equipo:</label>
+            <label>Descripción del Equipo:</label>
             <select id="selEquipo" required onchange="setSerie()"></select>
             
-            <label>Serie:</label>
-            <input type="text" id="serie" required>
+            <label>Número de Serie:</label>
+            <input type="text" id="serie" required placeholder="Ingrese serie">
             
-            <div id="div-af" class="hidden">
-                <label>Activo Fijo:</label>
-                <input type="text" id="af" placeholder="Placa AF">
-            </div>
+            <label>Número de Activo Fijo:</label>
+            <input type="text" id="af" placeholder="N/A o número de placa">
             
-            <label>Foto:</label>
+            <label>Fotografía del Equipo:</label>
             <input type="file" id="foto" accept="image/*" capture="camera" required>
             
-            <button type="button" onclick="enviar()" class="btn-send" id="btnGo">REGISTRAR</button>
-            <div id="status" style="text-align:center; margin-top:10px;"></div>
+            <button type="button" onclick="enviar()" class="btn-send" id="btnGo">CONFIRMAR REGISTRO</button>
+            <div id="status"></div>
         </form>
     </div>
 </div>
 
 <script>
-    let DATA = {}; let MODO = "";
-    // ⚠️ COPIA AQUÍ TU URL DE /exec ACTUALIZADA
-    const URL_APPS = "https://script.google.com/macros/s/AKfycbxyB_RdRIbt4pcAy1-hD7CeJmc-7bKgX0vsd7hSuOPWcAdDT8Znj-oBRLTGJHFaBMuI/exec";
+    let DATA = {}; 
+    let MODO = "";
+    // URL de tu Script de Google
+    const URL_APPS = "https://script.google.com/macros/s/AKfycbxWzd00EE_8YlU8-DiZiQoYOSFMfeyFNefYz4vgkCRt-pncINKdbs_fDs7Z7QQtowR6/exec";
 
     window.onload = () => {
-        const msg = document.getElementById('msg-carga');
-        msg.innerText = "Paso 1: Solicitando datos...";
-
         fetch(URL_APPS + "?accion=leerData")
-            .then(r => {
-                msg.innerText = "Paso 2: Respuesta recibida...";
-                if (!r.ok) throw new Error("Status " + r.status);
-                return r.text();
-            })
+            .then(r => r.text())
             .then(t => {
-                msg.innerText = "Paso 3: Procesando JSON...";
                 DATA = JSON.parse(t);
-                if (DATA.error) throw new Error(DATA.error);
-
                 document.getElementById('loading').style.display = 'none';
                 document.getElementById('user-tag').innerText = "Técnico: " + DATA.usuarioActual.nombre;
                 
                 const sel = document.getElementById('selSitio');
                 sel.innerHTML = '<option value="">-- Seleccione Sitio --</option>';
-                for (const [nom, id] of Object.entries(DATA.sitios)) {
+                // Ordenar sitios alfabéticamente
+                Object.entries(DATA.sitios).sort().forEach(([nom, id]) => {
                     sel.innerHTML += `<option value="${id}" data-nom="${nom}">${id} - ${nom}</option>`;
-                }
+                });
             })
             .catch(e => {
-                msg.innerHTML = `<b style="color:red">ERROR DE CONEXIÓN</b><br><small>${e.message}</small><br><button onclick="location.reload()" style="margin-top:10px;">Reintentar</button>`;
+                document.getElementById('loading').innerHTML = "<b style='color:red'>❌ Error de conexión. Verifique publicación del Script.</b>";
             });
     };
 
     function setModo(m) {
         MODO = m;
         document.getElementById('main-card').style.display = 'block';
-        document.getElementById('title-modo').innerText = m;
+        document.getElementById('title-modo').innerText = "PROCESO: " + m;
         document.getElementById('div-bodega').style.display = m === 'RETIRO' ? 'block' : 'none';
-        document.getElementById('div-af').style.display = m === 'ENTREGA' ? 'block' : 'none';
         document.getElementById('serie').readOnly = (m === 'ENTREGA');
+        document.getElementById('status').innerText = "";
         document.getElementById('selSitio').value = "";
-        document.getElementById('selEquipo').innerHTML = '<option value="">-- Elija Sitio --</option>';
+        document.getElementById('selEquipo').innerHTML = '<option value="">-- Primero elija sitio --</option>';
     }
 
     function actualizarEquipos() {
         const id = document.getElementById('selSitio').value;
         const sel = document.getElementById('selEquipo');
-        sel.innerHTML = '<option value="">-- Seleccione --</option>';
+        sel.innerHTML = '<option value="">-- Seleccione Equipo --</option>';
+        
         if (MODO === 'ENTREGA') {
-            DATA.pendientes.filter(p => p.siteId == id).forEach(p => {
-                sel.innerHTML += `<option value="${p.serie}" data-nom="${p.equipo}">${p.equipo} (SN: ${p.serie})</option>`;
+            const lista = DATA.pendientes.filter(p => p.siteId == id);
+            lista.forEach(p => {
+                sel.innerHTML += `<option value="${p.serie}" data-nom="${p.equipo}">${p.equipo} (Serie: ${p.serie})</option>`;
             });
+            if(lista.length === 0 && id) alert("No hay equipos pendientes de entrega en este sitio.");
         } else {
-            for (const [desc, marca] of Object.entries(DATA.inventario)) {
+            Object.entries(DATA.inventario).sort().forEach(([desc, marca]) => {
                 sel.innerHTML += `<option value="${desc}" data-marca="${marca}">${desc}</option>`;
-            }
+            });
         }
     }
 
-    function setSerie() { if(MODO === 'ENTREGA') document.getElementById('serie').value = document.getElementById('selEquipo').value; }
+    function setSerie() { 
+        if(MODO === 'ENTREGA') {
+            document.getElementById('serie').value = document.getElementById('selEquipo').value;
+        } 
+    }
 
     function enviar() {
         const btn = document.getElementById('btnGo');
         const st = document.getElementById('status');
         const f = document.getElementById('foto').files[0];
-        if(!f || !document.getElementById('selSitio').value) return alert("Faltan datos");
+        
+        if(!document.getElementById('selSitio').value || !f) return alert("Complete los datos y la fotografía");
 
-        btn.disabled = true; btn.innerText = "ENVIANDO...";
+        btn.disabled = true; 
+        btn.innerText = "PROCESANDO...";
+        st.style.color = "blue";
+        st.innerText = "Subiendo información...";
+
         const r = new FileReader();
         r.readAsDataURL(f);
         r.onload = () => {
@@ -146,9 +152,10 @@
                     equipo: MODO === 'RETIRO' ? document.getElementById('selEquipo').value : document.getElementById('selEquipo').options[document.getElementById('selEquipo').selectedIndex].dataset.nom,
                     serie: document.getElementById('serie').value,
                     bodega: document.getElementById('bodega').value,
-                    marca: document.getElementById('selEquipo').options[document.getElementById('selEquipo').selectedIndex].dataset.marca || "",
-                    activoFijo: document.getElementById('af').value,
-                    tecnico: DATA.usuarioActual.nombre
+                    marca: document.getElementById('selEquipo').options[document.getElementById('selEquipo').selectedIndex].dataset.marca || "N/A",
+                    activoFijo: document.getElementById('af').value || "N/A",
+                    tecnico: DATA.usuarioActual.nombre,
+                    correo: DATA.usuarioActual.correo
                 },
                 bytes: r.result.split(',')[1],
                 fileName: f.name
@@ -156,8 +163,13 @@
 
             fetch(URL_APPS, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) })
                 .then(() => {
-                    st.innerHTML = "<b style='color:green'>✅ ENVIADO</b>";
+                    st.style.color = "green";
+                    st.innerText = "✅ ¡REGISTRO EXITOSO!";
                     setTimeout(() => location.reload(), 2000);
+                })
+                .catch(e => {
+                    alert("Error al enviar. Intente de nuevo.");
+                    btn.disabled = false;
                 });
         };
     }
