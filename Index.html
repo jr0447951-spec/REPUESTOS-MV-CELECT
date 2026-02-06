@@ -3,49 +3,96 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel de Inventario Pro</title>
+    <title>Consulta de Inventario - Movistar</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-100 p-5">
-    <div class="max-w-4xl mx-auto">
-        <header class="flex justify-between items-center mb-8">
-            <h1 class="text-3xl font-bold text-gray-800">Inventario GitHub ↔ Sheets</h1>
-            <button onclick="cargarDatos()" class="bg-blue-600 text-white px-4 py-2 rounded shadow hover:bg-blue-700">Refrescar</button>
-        </header>
+<body class="bg-slate-50 p-4 font-sans">
 
-        <div id="loading" class="text-center text-xl text-gray-600">Cargando datos...</div>
-        
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="contenedor-inventario">
-            </div>
+    <div class="max-w-md mx-auto bg-white rounded-xl shadow-lg overflow-hidden p-6 border border-slate-200">
+        <h1 class="text-2xl font-bold text-blue-700 mb-2">Consulta Master</h1>
+        <p class="text-sm text-slate-500 mb-6">Búsqueda en tiempo real de sitios e inventario.</p>
+
+        <div class="mb-6">
+            <label class="block text-sm font-semibold text-slate-700 mb-1">Buscar Sitio (Nombre):</label>
+            <input type="text" id="inputSitio" oninput="buscarSitio(this.value)" placeholder="Ej: ALTAMIRA..." 
+                class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+            <div id="resSitio" class="mt-2 p-3 bg-blue-50 rounded-lg text-blue-800 text-sm hidden font-mono"></div>
+        </div>
+
+        <div class="mb-6">
+            <label class="block text-sm font-semibold text-slate-700 mb-1">Buscar Equipo:</label>
+            <input type="text" id="inputInv" oninput="buscarInventario(this.value)" placeholder="Ej: ROUTER..." 
+                class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-green-500 outline-none">
+            <div id="resInv" class="mt-2 p-3 bg-green-50 rounded-lg text-green-800 text-sm hidden font-mono"></div>
+        </div>
+
+        <hr class="my-4">
+
+        <button onclick="cargarBases()" id="btnCargar" class="w-full bg-slate-800 text-white py-3 rounded-lg font-bold hover:bg-slate-700 transition">
+            Sincronizar Datos
+        </button>
+        <p id="status" class="text-center text-xs text-slate-400 mt-2 italic"></p>
     </div>
 
     <script>
-        const WEB_APP_URL = "2PACX-1vQa4hodHj5bdOFphK4LKC4r3R4Vu0eXocLdSvCz8TRavXyryvBRgc05P8VDwzb0V9afMJx15_RMAmBq/pub?output=csv";
+        // REEMPLAZA ESTA URL CON LA QUE TE DIO GOOGLE AL IMPLEMENTAR
+        const API_URL = "TU_URL_DE_APPS_SCRIPT_AQUI"; 
+        
+        let bases = { sitios: {}, inventario: {}, tecnicos: {} };
 
-        async function cargarDatos() {
+        async function cargarBases() {
+            const btn = document.getElementById('btnCargar');
+            const status = document.getElementById('status');
+            
+            btn.disabled = true;
+            btn.innerText = "Cargando...";
+            status.innerText = "Conectando con Google Sheets...";
+
             try {
-                const res = await fetch(WEB_APP_URL);
-                const data = await res.json();
-                const contenedor = document.getElementById('contenedor-inventario');
-                const loader = document.getElementById('loading');
+                // Llamada a la API con el parámetro de acción
+                const res = await fetch(`${API_URL}?accion=leerData`);
+                bases = await res.json();
                 
-                loader.style.display = 'none';
-                contenedor.innerHTML = '';
-
-                data.forEach(item => {
-                    contenedor.innerHTML += `
-                        <div class="bg-white p-4 rounded-lg shadow-sm border-l-4 border-blue-500">
-                            <p class="text-sm font-semibold text-gray-500 uppercase">${item.MARCA || 'Sin Marca'}</p>
-                            <h3 class="text-xl font-bold">${item.EQUIPO || 'Sin nombre'}</h3>
-                        </div>
-                    `;
-                });
-            } catch (error) {
-                console.error("Error cargando datos:", error);
+                status.innerText = "✅ Datos actualizados correctamente";
+                btn.innerText = "Actualizar Datos";
+            } catch (e) {
+                status.innerText = "❌ Error al cargar datos";
+                console.error(e);
+            } finally {
+                btn.disabled = false;
             }
         }
 
-        window.onload = cargarDatos;
+        function buscarSitio(valor) {
+            const res = document.getElementById('resSitio');
+            const busqueda = valor.trim().toUpperCase();
+            
+            if (busqueda.length < 2) { res.classList.add('hidden'); return; }
+
+            if (bases.sitios[busqueda]) {
+                res.innerHTML = `<strong>ID:</strong> ${bases.sitios[busqueda]}`;
+                res.classList.remove('hidden');
+            } else {
+                res.classList.add('hidden');
+            }
+        }
+
+        function buscarInventario(valor) {
+            const res = document.getElementById('resInv');
+            const busqueda = valor.trim().toUpperCase();
+
+            if (busqueda.length < 2) { res.classList.add('hidden'); return; }
+
+            if (bases.inventario[busqueda]) {
+                res.innerHTML = `<strong>MARCA:</strong> ${bases.inventario[busqueda]}`;
+                res.classList.remove('hidden');
+            } else {
+                res.classList.add('hidden');
+            }
+        }
+
+        // Cargar datos automáticamente al abrir la web
+        window.onload = cargarBases;
     </script>
 </body>
 </html>
