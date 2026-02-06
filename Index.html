@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Inventario Pro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-5">
+    <div class="max-w-4xl mx-auto">
+        <header class="flex justify-between items-center mb-8">
+            <h1 class="text-3xl font-bold text-gray-800">Inventario GitHub ↔ Sheets</h1>
+            <button onclick="cargarDatos()" class="bg-blue-600 text-white px-4 py-2 rounded shadow hover:bg-blue-700">Refrescar</button>
+        </header>
+
+        <div id="loading" class="text-center text-xl text-gray-600">Cargando datos...</div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="contenedor-inventario">
+            </div>
+    </div>
+
+    <script>
+        const WEB_APP_URL = "2PACX-1vQa4hodHj5bdOFphK4LKC4r3R4Vu0eXocLdSvCz8TRavXyryvBRgc05P8VDwzb0V9afMJx15_RMAmBq/pub?output=csv";
+
+        async function cargarDatos() {
+            try {
+                const res = await fetch(WEB_APP_URL);
+                const data = await res.json();
+                const contenedor = document.getElementById('contenedor-inventario');
+                const loader = document.getElementById('loading');
+                
+                loader.style.display = 'none';
+                contenedor.innerHTML = '';
+
+                data.forEach(item => {
+                    contenedor.innerHTML += `
+                        <div class="bg-white p-4 rounded-lg shadow-sm border-l-4 border-blue-500">
+                            <p class="text-sm font-semibold text-gray-500 uppercase">${item.MARCA || 'Sin Marca'}</p>
+                            <h3 class="text-xl font-bold">${item.EQUIPO || 'Sin nombre'}</h3>
+                        </div>
+                    `;
+                });
+            } catch (error) {
+                console.error("Error cargando datos:", error);
+            }
+        }
+
+        window.onload = cargarDatos;
+    </script>
+</body>
+</html>
