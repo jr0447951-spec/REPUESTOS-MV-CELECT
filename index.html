@@ -3,128 +3,115 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CELECT Movistar</title>
+    <title>CELECT Movistar - Gestión</title>
     <style>
         :root { --p: #0056b3; --s: #28a745; --d: #343a40; }
-        body { font-family: sans-serif; background: #f0f2f5; margin: 0; padding: 15px; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; margin: 0; padding: 15px; }
         .container { max-width: 450px; margin: auto; }
         .btn-box { display: flex; gap: 10px; margin-bottom: 20px; }
-        .btn-op { flex: 1; padding: 20px; border: none; border-radius: 10px; color: white; font-weight: bold; cursor: pointer; }
-        .retiro { background: var(--p); }
-        .entrega { background: var(--s); }
-        .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); display: none; }
-        label { display: block; margin-top: 12px; font-weight: bold; font-size: 13px; }
-        input, select { width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
-        .btn-send { width: 100%; padding: 15px; margin-top: 20px; border: none; border-radius: 6px; background: var(--d); color: white; font-weight: bold; }
-        .loader { position: fixed; top:0; left:0; width:100%; height:100%; background: white; display: flex; justify-content: center; align-items: center; z-index: 9; }
+        .btn-op { flex: 1; padding: 20px; border: none; border-radius: 10px; color: white; font-weight: bold; cursor: pointer; font-size: 16px; }
+        .retiro { background: var(--p); box-shadow: 0 4px 10px rgba(0,86,179,0.2); }
+        .entrega { background: var(--s); box-shadow: 0 4px 10px rgba(40,167,69,0.2); }
+        .card { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); display: none; }
+        label { display: block; margin-top: 15px; font-weight: bold; font-size: 13px; color: #444; }
+        input, select { width: 100%; padding: 12px; margin-top: 5px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
+        input[readonly] { background: #eee; }
+        .btn-send { width: 100%; padding: 15px; margin-top: 25px; border: none; border-radius: 8px; background: var(--d); color: white; font-weight: bold; font-size: 16px; cursor: pointer; }
+        .loader { position: fixed; top:0; left:0; width:100%; height:100%; background: white; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 99; }
         .hidden { display: none; }
     </style>
 </head>
 <body>
 
-<div id="loading" class="loader"><b>⌛ Conectando con Google Sheets...</b></div>
+<div id="loading" class="loader">
+    <div style="font-size: 40px;">⏳</div>
+    <p id="msg-carga">Sincronizando con CELECT Cloud...</p>
+</div>
 
 <div class="container">
-    <div id="user-tag" style="text-align: right; font-size: 11px; margin-bottom: 5px;"></div>
+    <div id="user-tag" style="text-align: right; font-size: 12px; margin-bottom: 10px; color: #666;"></div>
+    
     <div class="btn-box">
         <button class="btn-op retiro" onclick="setModo('RETIRO')">📤 RETIRO</button>
         <button class="btn-op entrega" onclick="setModo('ENTREGA')">📥 ENTREGA</button>
     </div>
 
     <div id="main-card" class="card">
-        <h2 id="title-modo" style="margin:0 0 15px 0;"></h2>
+        <h2 id="title-modo" style="margin:0 0 15px 0; color: var(--d);"></h2>
         <form id="formRepo">
-            <div id="div-bodega"><label>Bodega:</label><select id="bodega"><option>BODEGA CENTRAL</option><option>SAN BENITO</option></select></div>
+            <div id="div-bodega">
+                <label>Bodega de Origen:</label>
+                <select id="bodega">
+                    <option>BODEGA CENTRAL</option>
+                    <option>BODEGA SAN BENITO</option>
+                    <option>BODEGA TALNIQUE</option>
+                </select>
+            </div>
             
-            <label>Sitio:</label><select id="selSitio" onchange="actualizarEquipos()"></select>
-            <label>Equipo:</label><select id="selEquipo" onchange="setSerie()"></select>
-            <label>Serie:</label><input type="text" id="serie">
-            <div id="div-af" class="hidden"><label>Activo Fijo:</label><input type="text" id="af"></div>
-            <label>Foto:</label><input type="file" id="foto" accept="image/*" capture="camera">
+            <label>Sitio (ID - Nombre):</label>
+            <select id="selSitio" required onchange="actualizarEquipos()"></select>
             
-            <button type="button" onclick="enviar()" class="btn-send" id="btnGo">REGISTRAR</button>
+            <label>Equipo:</label>
+            <select id="selEquipo" required onchange="setSerie()"></select>
+            
+            <label>Número de Serie:</label>
+            <input type="text" id="serie" required>
+            
+            <div id="div-af" class="hidden">
+                <label>Activo Fijo:</label>
+                <input type="text" id="af" placeholder="Ingrese placa de activo">
+            </div>
+            
+            <label>Foto Evidencia:</label>
+            <input type="file" id="foto" accept="image/*" capture="camera" required>
+            
+            <button type="button" onclick="enviar()" class="btn-send" id="btnGo">REGISTRAR OPERACIÓN</button>
+            <div id="status" style="text-align:center; margin-top:10px;"></div>
         </form>
     </div>
 </div>
 
 <script>
-    let DATA = {}; let MODO = "";
-    // ⚠️ REEMPLAZA ESTA URL CON TU /exec NUEVO
-    const URL_APPS = "https://script.google.com/macros/s/AKfycbxWzd00EE_8YlU8-DiZiQoYOSFMfeyFNefYz4vgkCRt-pncINKdbs_fDs7Z7QQtowR6/exec";
+    let DATA = {}; 
+    let MODO = "";
+    // ⚠️ REEMPLAZA CON TU URL DE /exec ACTUALIZADA
+    const URL_APPS = "https://script.google.com/macros/s/AKfycbxyx4yXVmS4BY42UA_Dbx8wIdPQoCInktZqv0tnYNdogtI2wLEFvHkNYvWEJb9nVbhM/exec";
 
     window.onload = () => {
+        // Usamos una petición de texto para evadir el bloqueo estricto de JSON de los navegadores
         fetch(URL_APPS + "?accion=leerData")
-            .then(r => r.text()) // Leemos como texto para saltar CORS
+            .then(r => {
+                if (!r.ok) throw new Error("Falla en respuesta");
+                return r.text(); 
+            })
             .then(t => {
-                DATA = JSON.parse(t);
-                document.getElementById('loading').style.display = 'none';
-                document.getElementById('user-tag').innerText = "Usuario: " + DATA.usuarioActual.nombre;
-                const sel = document.getElementById('selSitio');
-                sel.innerHTML = '<option value="">-- Seleccione --</option>';
-                for (const [nom, id] of Object.entries(DATA.sitios)) {
-                    sel.innerHTML += `<option value="${id}" data-nom="${nom}">${id} - ${nom}</option>`;
+                try {
+                    DATA = JSON.parse(t);
+                    document.getElementById('loading').style.display = 'none';
+                    document.getElementById('user-tag').innerText = "Técnico: " + (DATA.usuarioActual.nombre || "Autorizado");
+                    
+                    const sel = document.getElementById('selSitio');
+                    sel.innerHTML = '<option value="">-- Seleccione Sitio --</option>';
+                    for (const [nom, id] of Object.entries(DATA.sitios)) {
+                        const opt = document.createElement('option');
+                        opt.value = id;
+                        opt.dataset.nom = nom;
+                        opt.text = `${id} - ${nom}`;
+                        sel.appendChild(opt);
+                    }
+                } catch(e) {
+                    console.error("Error parseando JSON:", e);
+                    throw new Error("Respuesta inválida");
                 }
             })
-            .catch(e => { document.getElementById('loading').innerText = "❌ Error de conexión"; });
+            .catch(e => {
+                console.error(e);
+                document.getElementById('msg-carga').innerHTML = `<b style="color:red">Error de Conexión (CORS)</b><br><small>Verifique que el Script esté publicado como 'Cualquier Persona'.</small>`;
+            });
     };
 
     function setModo(m) {
         MODO = m;
         document.getElementById('main-card').style.display = 'block';
-        document.getElementById('title-modo').innerText = m;
-        document.getElementById('div-bodega').style.display = m === 'RETIRO' ? 'block' : 'none';
-        document.getElementById('div-af').style.display = m === 'ENTREGA' ? 'block' : 'none';
-        document.getElementById('serie').readOnly = m === 'ENTREGA';
-    }
-
-    function actualizarEquipos() {
-        const id = document.getElementById('selSitio').value;
-        const sel = document.getElementById('selEquipo');
-        sel.innerHTML = '<option value="">-- Seleccione --</option>';
-        if (MODO === 'ENTREGA') {
-            DATA.pendientes.filter(p => p.siteId == id).forEach(p => {
-                sel.innerHTML += `<option value="${p.serie}" data-nom="${p.equipo}">${p.equipo} (SN: ${p.serie})</option>`;
-            });
-        } else {
-            for (const [desc, marca] of Object.entries(DATA.inventario)) {
-                sel.innerHTML += `<option value="${desc}" data-marca="${marca}">${desc}</option>`;
-            }
-        }
-    }
-
-    function setSerie() { 
-        if(MODO === 'ENTREGA') document.getElementById('serie').value = document.getElementById('selEquipo').value; 
-    }
-
-    function enviar() {
-        const btn = document.getElementById('btnGo');
-        const f = document.getElementById('foto').files[0];
-        if(!f) return alert("Suba una foto");
-        
-        btn.disabled = true; btn.innerText = "ENVIANDO...";
-        const r = new FileReader();
-        r.readAsDataURL(f);
-        r.onload = () => {
-            const payload = {
-                accion: MODO === 'RETIRO' ? 'guardarRetiro' : 'guardarEntrega',
-                datos: {
-                    idSitio: document.getElementById('selSitio').value,
-                    nombreSitio: document.getElementById('selSitio').options[document.getElementById('selSitio').selectedIndex].dataset.nom,
-                    equipo: MODO === 'RETIRO' ? document.getElementById('selEquipo').value : document.getElementById('selEquipo').options[document.getElementById('selEquipo').selectedIndex].dataset.nom,
-                    serie: document.getElementById('serie').value,
-                    bodega: document.getElementById('bodega').value,
-                    marca: document.getElementById('selEquipo').options[document.getElementById('selEquipo').selectedIndex].dataset.marca || "",
-                    activoFijo: document.getElementById('af').value,
-                    tecnico: DATA.usuarioActual.nombre
-                },
-                bytes: r.result.split(',')[1],
-                fileName: f.name
-            };
-            
-            fetch(URL_APPS, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) })
-                .then(() => { alert("Éxito"); location.reload(); });
-        };
-    }
-</script>
-</body>
-</html>
+        document.getElementById('title-modo').innerText = "OPERACIÓN: " + m;
+        document.getElementById('div-bodega').style.display = m === 'RETIRO' ? 'block' : '
