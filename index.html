@@ -108,7 +108,7 @@
 <script>
     let DATA_MAESTRA = {};
     let MODO_ACTUAL = "";
-    const SCRIPT_URL = "TU_URL_DE_APPS_SCRIPT_AQUÍ"; // <--- PEGA TU URL DE IMPLEMENTACIÓN
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz2eydSTUWUiDbFdRVTMlwNkR1E1NFXSlznB9HxaG7B4zeDzsixedAguz-8OKJ-u9w/exec"; // <--- PEGA TU URL DE IMPLEMENTACIÓN
 
     // 1. Cargar datos al iniciar
     window.onload = async () => {
@@ -188,28 +188,28 @@
             document.getElementById('serie').value = selectEq.value; // La serie viene en el value en modo entrega
         }
     }
+async function procesarEnvio() {
+    const btn = document.getElementById('btnSubmit');
+    const status = document.getElementById('status');
+    const fotoFile = document.getElementById('foto').files[0];
 
-    async function procesarEnvio() {
-        const btn = document.getElementById('btnSubmit');
-        const status = document.getElementById('status');
-        const fotoFile = document.getElementById('foto').files[0];
+    if (!document.getElementById('siteSelect').value || !fotoFile) {
+        alert("Por favor complete todos los campos y adjunte la foto.");
+        return;
+    }
 
-        if (!document.getElementById('siteSelect').value || !fotoFile) {
-            alert("Por favor complete todos los campos y adjunte la foto.");
-            return;
-        }
+    btn.disabled = true;
+    btn.innerText = "PROCESANDO...";
+    status.innerText = "Subiendo datos y fotografía...";
 
-        btn.disabled = true;
-        btn.innerText = "PROCESANDO...";
-        status.innerText = "Subiendo datos y fotografía...";
-
-        // Convertir imagen a Base64
-        const reader = new FileReader();
-        reader.readAsDataURL(fotoFile);
-        reader.onload = async () => {
-            const base64 = reader.result.split(',')[1];
-            
-            const payload = {
+    const reader = new FileReader();
+    reader.readAsDataURL(fotoFile);
+    reader.onload = async () => {
+        const base64 = reader.result.split(',')[1];
+        
+        const payload = {
+            accion: (MODO_ACTUAL === 'RETIRO') ? 'guardarRetiro' : 'guardarEntrega',
+            datos: {
                 idSitio: document.getElementById('siteSelect').value,
                 nombreSitio: document.getElementById('siteSelect').options[document.getElementById('siteSelect').selectedIndex].dataset.nombre,
                 equipo: MODO_ACTUAL === 'RETIRO' ? document.getElementById('equipoSelect').value : document.getElementById('equipoSelect').options[document.getElementById('equipoSelect').selectedIndex].dataset.nombre,
@@ -218,22 +218,29 @@
                 marca: document.getElementById('equipoSelect').options[document.getElementById('equipoSelect').selectedIndex].dataset.marca || "",
                 activoFijo: document.getElementById('activoFijo').value,
                 tecnicoNombre: DATA_MAESTRA.usuarioActual.nombre
-            };
-
-            // Llamada al servidor de Google
-            const funcionServidor = (MODO_ACTUAL === 'RETIRO') ? 'guardarRetiro' : 'guardarEntrega';
-            
-            google.script.run
-                .withSuccessHandler((res) => {
-                    alert("¡Registro guardado con éxito!");
-                    location.reload();
-                })
-                .withFailureHandler((err) => {
-                    alert("Error: " + err);
-                    btn.disabled = false;
-                })[funcionServidor](payload, base64, fotoFile.name);
+            },
+            bytes: base64,
+            fileName: fotoFile.name
         };
-    }
+
+        try {
+            const response = await fetch(SCRIPT_URL, {
+                method: 'POST',
+                mode: 'no-cors', // Esto es necesario para evitar errores de CORS con Google Apps Script
+                body: JSON.stringify(payload)
+            });
+
+            // Con no-cors no podemos leer la respuesta, pero si no hay error en consola, se envió.
+            alert("¡Registro enviado! Verifique su hoja de cálculo en unos segundos.");
+            location.reload();
+            
+        } catch (error) {
+            alert("Error al enviar: " + error);
+            btn.disabled = false;
+        }
+    };
+}
+    
 </script>
 
 </body>
