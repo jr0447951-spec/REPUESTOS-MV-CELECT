@@ -78,37 +78,48 @@
     const URL_APPS = "https://script.google.com/macros/s/AKfycbxyx4yXVmS4BY42UA_Dbx8wIdPQoCInktZqv0tnYNdogtI2wLEFvHkNYvWEJb9nVbhM/exec";
 
     window.onload = () => {
-        // Usamos una petición de texto para evadir el bloqueo estricto de JSON de los navegadores
-        fetch(URL_APPS + "?accion=leerData")
-            .then(r => {
-                if (!r.ok) throw new Error("Falla en respuesta");
-                return r.text(); 
-            })
-            .then(t => {
-                try {
-                    DATA = JSON.parse(t);
-                    document.getElementById('loading').style.display = 'none';
-                    document.getElementById('user-tag').innerText = "Técnico: " + (DATA.usuarioActual.nombre || "Autorizado");
-                    
-                    const sel = document.getElementById('selSitio');
-                    sel.innerHTML = '<option value="">-- Seleccione Sitio --</option>';
-                    for (const [nom, id] of Object.entries(DATA.sitios)) {
-                        const opt = document.createElement('option');
-                        opt.value = id;
-                        opt.dataset.nom = nom;
-                        opt.text = `${id} - ${nom}`;
-                        sel.appendChild(opt);
-                    }
-                } catch(e) {
-                    console.error("Error parseando JSON:", e);
-                    throw new Error("Respuesta inválida");
+    const msg = document.getElementById('msg-carga');
+    
+    // Agregamos un parámetro de tiempo para evitar que el navegador use datos viejos
+    const urlConCache = URL_APPS + "?accion=leerData&t=" + Date.now();
+
+    console.log("Iniciando conexión a:", urlConCache);
+
+    fetch(urlConCache)
+        .then(response => {
+            console.log("Respuesta recibida del servidor...");
+            if (!response.ok) throw new Error("Servidor no disponible (Status: " + response.status + ")");
+            return response.text(); // Leemos como texto puro
+        })
+        .then(texto => {
+            console.log("Texto recibido, intentando procesar...");
+            try {
+                DATA = JSON.parse(texto); // Convertimos el texto a datos reales aquí
+                
+                if (DATA.error) throw new Error(DATA.error);
+
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('user-tag').innerText = "Técnico: " + (DATA.usuarioActual.nombre || "Autorizado");
+                
+                // Llenar sitios
+                const sel = document.getElementById('selSitio');
+                sel.innerHTML = '<option value="">-- Seleccione Sitio --</option>';
+                for (const [nom, id] of Object.entries(DATA.sitios)) {
+                    sel.innerHTML += `<option value="${id}" data-nom="${nom}">${id} - ${nom}</option>`;
                 }
-            })
-            .catch(e => {
-                console.error(e);
-                document.getElementById('msg-carga').innerHTML = `<b style="color:red">Error de Conexión (CORS)</b><br><small>Verifique que el Script esté publicado como 'Cualquier Persona'.</small>`;
-            });
-    };
+                console.log("Sincronización completa.");
+            } catch (e) {
+                console.error("Fallo al procesar datos:", e);
+                throw new Error("El servidor envió datos dañados.");
+            }
+        })
+        .catch(err => {
+            console.error("Error final:", err);
+            msg.innerHTML = `<b style="color:red">ERROR DE SINCRONIZACIÓN</b><br>
+            <small>${err.message}</small><br><br>
+            <button onclick="location.reload()" style="padding:10px; border-radius:5px;">Reintentar</button>`;
+        });
+};
 
     function setModo(m) {
         MODO = m;
