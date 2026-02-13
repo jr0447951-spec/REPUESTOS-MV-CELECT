@@ -3,193 +3,316 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Salida de Repuestos - El Salvador</title>
+    <title>Salida de Repuestos - Network Ops</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
     <style>
-        :root { --primary: #2c3e50; --accent: #3498db; --bg: #f4f7f6; }
-        body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg); margin: 0; padding: 20px; display: flex; justify-content: center; }
-        .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); width: 100%; max-width: 500px; }
+        :root { 
+            --primary: #00a1ff; 
+            --dark-bg: #0f172a;
+            --glass: rgba(255, 255, 255, 0.08);
+            --border: rgba(255, 255, 255, 0.15);
+            --success: #22c55e;
+            --warning: #fbbf24;
+        }
+
+        body { 
+            font-family: 'Segoe UI', sans-serif; margin: 0; padding: 0; 
+            background: radial-gradient(circle at top right, #1e293b, var(--dark-bg));
+            color: white; min-height: 100vh;
+        }
+
+        header { 
+            background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(12px);
+            padding: 15px 0; text-align: center; border-bottom: 1px solid var(--border);
+            position: sticky; top: 0; z-index: 2000;
+        }
+
+        h1 {
+            font-family: 'Orbitron', sans-serif; margin: 0; font-size: 1.1rem;
+            letter-spacing: 2px; background: linear-gradient(to bottom, #ffffff, #00a1ff);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            text-transform: uppercase;
+        }
+
+        .status-bar { font-size: 0.65rem; font-family: 'Orbitron', sans-serif; margin-top: 5px; }
+        .dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; margin-right: 5px; }
+        .dot-sync { background: var(--warning); animation: pulse 1s infinite; }
+        .dot-ready { background: var(--success); }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+        .container { width: 92%; max-width: 500px; margin: 20px auto; padding-bottom: 50px; }
+        .timer { 
+            text-align: center; font-family: 'Orbitron', sans-serif; 
+            font-size: 1.6rem; color: var(--primary); margin-bottom: 20px;
+            text-shadow: 0 0 10px rgba(0, 161, 255, 0.4);
+        }
+
+        .card { 
+            background: var(--glass); backdrop-filter: blur(15px);
+            border: 1px solid var(--border); border-radius: 20px; padding: 22px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        label { display: block; margin-top: 18px; font-size: 0.65rem; color: var(--primary); font-weight: 800; text-transform: uppercase; letter-spacing: 1px; }
+        
+        input, select { 
+            width: 100%; padding: 14px; margin-top: 6px; border-radius: 12px; 
+            border: 1px solid var(--border); background: rgba(255,255,255,0.05);
+            color: white; outline: none; box-sizing: border-box; font-size: 0.95rem;
+        }
+
+        input:focus { border-color: var(--primary); background: rgba(255,255,255,0.1); }
+        .readonly { background: rgba(0,0,0,0.3); color: #aaa; border-style: dashed; cursor: not-allowed; }
+
+        /* Buscador / Sugerencias Estilo Consultor */
+        .search-container { position: relative; }
+        .suggestions { 
+            position: absolute; top: 100%; left: 0; right: 0; 
+            background: #1e293b; border: 1px solid var(--primary); 
+            border-radius: 12px; max-height: 220px; overflow-y: auto; z-index: 3000;
+            display: none; margin-top: 5px; box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+        }
+        .suggestion-item { padding: 14px; border-bottom: 1px solid var(--border); cursor: pointer; font-size: 0.9rem; }
+        .suggestion-item:hover { background: rgba(0, 161, 255, 0.15); color: var(--primary); }
+        .suggestion-item strong { color: #fff; }
+
+        button { 
+            width: 100%; padding: 18px; border-radius: 16px; border: none;
+            background: linear-gradient(135deg, var(--primary), #0072ff);
+            color: white; font-family: 'Orbitron', sans-serif; font-weight: bold;
+            margin-top: 30px; cursor: pointer; transition: 0.3s; font-size: 0.9rem;
+            letter-spacing: 1px;
+        }
+        button:hover { filter: brightness(1.2); transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,161,255,0.4); }
+        button:disabled { background: #444; opacity: 0.6; cursor: not-allowed; }
+
         .hidden { display: none; }
-        .header { text-align: center; border-bottom: 2px solid var(--bg); margin-bottom: 20px; padding-bottom: 10px; }
-        .timer { font-size: 1.8em; font-weight: bold; color: var(--primary); margin: 5px 0; font-family: 'Courier New', monospace; }
-        .location-tag { font-size: 0.7em; color: #7f8c8d; text-transform: uppercase; letter-spacing: 1px; }
-        label { display: block; margin-top: 15px; font-weight: 600; color: #444; font-size: 0.9em; }
-        input, select, button { width: 100%; padding: 12px; margin-top: 5px; border-radius: 6px; border: 1px solid #ddd; box-sizing: border-box; }
-        input:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 5px rgba(52,152,219,0.3); }
-        .readonly { background-color: #f8f9fa; color: #7f8c8d; cursor: not-allowed; }
-        button { background-color: var(--accent); color: white; border: none; font-weight: bold; margin-top: 25px; cursor: pointer; transition: 0.3s; }
-        button:hover { background-color: #2980b9; }
-        .autocomplete-container { position: relative; }
-        .suggestions { border: 1px solid #ddd; position: absolute; z-index: 100; width: 100%; background: white; max-height: 200px; overflow-y: auto; border-radius: 0 0 6px 6px; box-shadow: 0 8px 16px rgba(0,0,0,0.1); }
-        .suggestion-item { padding: 12px; cursor: pointer; font-size: 0.9em; border-bottom: 1px solid #eee; }
-        .suggestion-item:last-child { border-bottom: none; }
-        .suggestion-item:hover { background-color: #f1f1f1; color: var(--accent); }
-        .nav-back { text-decoration: none; color: var(--accent); font-size: 0.85em; display: inline-block; margin-bottom: 15px; }
+        .nav-link { text-align: center; display: block; margin-top: 20px; color: #64748b; text-decoration: none; font-size: 0.8rem; }
     </style>
 </head>
 <body>
 
-<div class="card" id="card-consentimiento">
-    <div class="header"><h2>Paso 1: Identificación</h2></div>
-    <p>Para registrar la salida, el sistema detectará su cuenta de Google y solicitará permiso para almacenar la fotografía en su unidad de Drive.</p>
-    <button onclick="iniciarFormulario()">ACEPTAR Y CONTINUAR</button>
-</div>
+<header>
+    <h1>SALIDA DE REPUESTOS</h1>
+    <div class="status-bar">
+        <span id="status-dot" class="dot dot-sync"></span>
+        <span id="status-text">Sincronizando Base de Datos...</span>
+    </div>
+</header>
 
-<div class="card hidden" id="card-formulario">
-    <a href="index.html" class="nav-back">← Volver al Menú Principal</a>
-    <div class="header">
-        <div class="location-tag">Hora Oficial El Salvador (CST)</div>
-        <div class="timer" id="reloj">00:00:00</div>
+<div class="container">
+    <div class="timer" id="reloj">00:00:00</div>
+
+    <div class="card" id="consentimiento">
+        <h2 style="font-family: 'Orbitron'; font-size: 1rem; text-align: center; color: var(--primary);">AUTORIZACIÓN</h2>
+        <p style="text-align: center; font-size: 0.85rem; color: #cbd5e1; line-height: 1.5;">
+            Para proceder, el sistema registrará su usuario y requiere acceso para guardar evidencias fotográficas en su unidad de Drive personal.
+        </p>
+        <button onclick="activarFormulario()">ACEPTAR Y CONTINUAR</button>
     </div>
 
-    <form id="formSalida">
-        <label>1. BODEGA DE RETIRO</label>
-        <select id="f-bodega" required>
-            <option value="">Seleccione bodega...</option>
-            <option value="SAN BENITO">SAN BENITO</option>
-            <option value="CENTRAL">CENTRAL</option>
-            <option value="TALNIQUE">TALNIQUE</option>
-        </select>
+    <form id="mainForm" class="hidden">
+        <div class="card">
+            <label>1. Bodega de Retiro</label>
+            <select id="bodega" required>
+                <option value="">Seleccione bodega...</option>
+                <option value="SAN BENITO">SAN BENITO</option>
+                <option value="CENTRAL">CENTRAL</option>
+                <option value="TALNIQUE">TALNIQUE</option>
+            </select>
 
-        <div class="autocomplete-container">
-            <label>2. SITIO (BUSCADOR)</label>
-            <input type="text" id="f-busqueda-sitio" placeholder="Escriba nombre del sitio..." autocomplete="off" required>
-            <div id="sug-sitios" class="suggestions hidden"></div>
+            <div class="search-container">
+                <label>2. Nombre del Sitio (Buscador)</label>
+                <input type="text" id="siteSearch" placeholder="🔍 ID o Nombre del sitio..." autocomplete="off" required>
+                <div id="siteSug" class="suggestions"></div>
+            </div>
+
+            <label>3. ID Sitio (Auto)</label>
+            <input type="text" id="idSitio" class="readonly" readonly required>
+
+            <div class="search-container">
+                <label>4. Descripción de Equipo (Buscador)</label>
+                <input type="text" id="equipoSearch" placeholder="🔍 Escriba repuesto..." autocomplete="off" required>
+                <div id="equipoSug" class="suggestions"></div>
+            </div>
+
+            <label>5. Marca (Auto)</label>
+            <input type="text" id="marca" class="readonly" readonly required>
+
+            <label>6. Número de Serie</label>
+            <input type="text" id="serie" placeholder="Ingrese S/N" required>
+
+            <label>7. Fotografía de Respaldo</label>
+            <input type="file" id="foto" accept="image/*" required>
+
+            <button type="submit" id="btnEnviar">ENVIAR REGISTRO</button>
+            <a href="index.html" class="nav-link">← Volver al Menú Principal</a>
         </div>
-
-        <label>3. ID SITIO (AUTO)</label>
-        <input type="text" id="f-id-sitio" class="readonly" readonly required>
-
-        <div class="autocomplete-container">
-            <label>4. DESCRIPCIÓN DE EQUIPO</label>
-            <input type="text" id="f-busqueda-equipo" placeholder="Busque repuesto en inventario..." autocomplete="off" required>
-            <div id="sug-equipos" class="suggestions hidden"></div>
-        </div>
-
-        <label>5. MARCA (AUTO)</label>
-        <input type="text" id="f-marca" class="readonly" readonly required>
-
-        <label>6. NÚMERO DE SERIE</label>
-        <input type="text" id="f-serie" placeholder="Ingrese S/N o Único" required>
-
-        <label>7. FOTOGRAFÍA (SE SUBIRÁ A SU DRIVE)</label>
-        <input type="file" id="f-foto" accept="image/*" required>
-
-        <button type="submit" id="btn-enviar">REGISTRAR Y PRE-LLENAR FORMULARIO</button>
     </form>
 </div>
 
 <script>
-    // --- CONFIGURACIÓN ---
+    // --- CONFIGURACIÓN DE ENLACES ---
     const CONFIG = {
-        URL_APPS_SCRIPT: 'TU_URL_DE_APPS_SCRIPT', 
-        URL_SITIOS_CSV: 'TU_URL_SHEET_COMO_CSV', 
-        URL_FORMS_EXTERNO: 'https://docs.google.com/forms/d/e/TU_ID_FORM/viewform'
+        URL_SITIOS_CSV: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTE_5CZtD7qHGW5cWHGAjn7ALTphVm5h88lco9cySYoAe2VBW4fq8DQ7-SZY6cd_FHtNQJS3MpE88hs/pub?gid=1955381502&single=true&output=csv',
+        URL_APPS_SCRIPT: 'TU_URL_DE_APPS_SCRIPT_AQUI',
+        URL_FORMS_EXTERNO: 'https://docs.google.com/forms/d/e/TU_ID_DE_FORMS/viewform'
     };
 
-    let baseSitios = [];
-    let baseEquipos = [];
+    let sites = [];
+    let equipos = [];
 
-    // RELOJ FORZADO A EL SALVADOR
+    // Reloj El Salvador (UTC-6)
     setInterval(() => {
-        const horaSV = new Date().toLocaleTimeString("es-SV", {
-            timeZone: "America/El_Salvador",
-            hour: '2-digit', minute: '2-digit', second: '2-digit',
-            hour12: false
+        document.getElementById('reloj').innerText = new Date().toLocaleTimeString("es-SV", {
+            timeZone: "America/El_Salvador", hour12: false
         });
-        document.getElementById('reloj').innerText = horaSV;
     }, 1000);
 
-    async function iniciarFormulario() {
-        document.getElementById('card-consentimiento').classList.add('hidden');
-        document.getElementById('card-formulario').classList.remove('hidden');
-        
+    // Procesador de CSV (Lógica idéntica al consultor de sitio)
+    function parseCSV(data) {
+        const rows = data.split(/\r?\n/).filter(row => row.trim().length > 0);
+        const headers = rows[0].split(',').map(h => h.trim().replace(/"/g, ''));
+        return rows.slice(1).map(row => {
+            const values = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+            let obj = {};
+            headers.forEach((h, i) => obj[h] = values[i] ? values[i].trim().replace(/"/g, '') : '');
+            return obj;
+        });
+    }
+
+    async function cargarDatos() {
         try {
             // Cargar Sitios
             const resS = await fetch(CONFIG.URL_SITIOS_CSV);
-            const dataS = await resS.text();
-            Papa.parse(dataS, { complete: (r) => { baseSitios = r.data; } });
+            const rawS = await resS.text();
+            sites = parseCSV(rawS);
+            document.getElementById('status-dot').className = "dot dot-ready";
+            document.getElementById('status-text').innerText = "SISTEMA SINCRONIZADO";
 
-            // Cargar Equipos (Desde tu CSV en GitHub)
+            // Cargar Repuestos (CSV local en GitHub)
             Papa.parse("inventario_repuestos.csv", {
                 download: true, header: true, delimiter: ";",
-                complete: (r) => { baseEquipos = r.data; }
+                complete: (results) => { equipos = results.data; }
             });
-        } catch (e) { console.error("Error de carga:", e); }
+        } catch (e) {
+            document.getElementById('status-text').innerText = "ERROR DE CONEXIÓN";
+        }
     }
 
-    // AUTOCOMPLETADO
-    function setupSearch(inputId, sugId, dataProvider, fields) {
-        const input = document.getElementById(inputId);
-        const sugBox = document.getElementById(sugId);
-
-        input.addEventListener('input', () => {
-            const val = input.value.toLowerCase();
-            sugBox.innerHTML = '';
-            if (val.length < 2) { sugBox.classList.add('hidden'); return; }
-
-            const filtered = dataProvider().filter(item => 
-                JSON.stringify(item).toLowerCase().includes(val)
-            ).slice(0, 6);
-
-            filtered.forEach(item => {
-                const div = document.createElement('div');
-                div.className = 'suggestion-item';
-                div.innerText = item[fields.display] || item.Descripcion;
-                div.onclick = () => {
-                    input.value = item[fields.display] || item.Descripcion;
-                    document.getElementById(fields.target).value = item[fields.meta] || item.Marca;
-                    sugBox.classList.add('hidden');
-                };
-                sugBox.appendChild(div);
-            });
-            sugBox.classList.remove('hidden');
-        });
+    function activarFormulario() {
+        document.getElementById('consentimiento').classList.add('hidden');
+        document.getElementById('mainForm').classList.remove('hidden');
+        cargarDatos();
     }
 
-    setupSearch('f-busqueda-sitio', 'sug-sitios', () => baseSitios, {display: 1, meta: 0, target: 'f-id-sitio'});
-    setupSearch('f-busqueda-equipo', 'sug-equipos', () => baseEquipos, {display: 'Descripcion', meta: 'Marca', target: 'f-marca'});
+    // BUSCADOR DE SITIOS (Misma "Memoria" que el consultor)
+    const sInput = document.getElementById('siteSearch');
+    const sSug = document.getElementById('siteSug');
 
-    // ENVÍO
-    document.getElementById('formSalida').onsubmit = async (e) => {
+    sInput.addEventListener('input', (e) => {
+        const val = e.target.value.toLowerCase().trim();
+        if (val.length < 2) { sSug.style.display = 'none'; return; }
+        const matches = sites.filter(s => 
+            (s.SITEID && s.SITEID.toLowerCase().includes(val)) || 
+            (s['NOMBRE DE SITIO'] && s['NOMBRE DE SITIO'].toLowerCase().includes(val))
+        ).slice(0, 6);
+        
+        sSug.innerHTML = matches.map(s => `
+            <div class="suggestion-item" onclick="selectSitio('${s.SITEID}', '${s['NOMBRE DE SITIO']}')">
+                <strong>${s.SITEID}</strong><br><small>${s['NOMBRE DE SITIO']}</small>
+            </div>
+        `).join('');
+        sSug.style.display = matches.length ? 'block' : 'none';
+    });
+
+    function selectSitio(id, nombre) {
+        sInput.value = nombre;
+        document.getElementById('idSitio').value = id;
+        sSug.style.display = 'none';
+    }
+
+    // BUSCADOR DE EQUIPOS (Misma lógica)
+    const eInput = document.getElementById('equipoSearch');
+    const eSug = document.getElementById('equipoSug');
+
+    eInput.addEventListener('input', (e) => {
+        const val = e.target.value.toLowerCase().trim();
+        if (val.length < 2) { eSug.style.display = 'none'; return; }
+        const matches = equipos.filter(eq => 
+            eq.Descripcion && eq.Descripcion.toLowerCase().includes(val)
+        ).slice(0, 6);
+
+        eSug.innerHTML = matches.map(eq => `
+            <div class="suggestion-item" onclick="selectEquipo('${eq.Descripcion}', '${eq.Marca}')">
+                <strong>${eq.Descripcion}</strong><br><small>Marca: ${eq.Marca}</small>
+            </div>
+        `).join('');
+        eSug.style.display = matches.length ? 'block' : 'none';
+    });
+
+    function selectEquipo(desc, marca) {
+        eInput.value = desc;
+        document.getElementById('marca').value = marca;
+        eSug.style.display = 'none';
+    }
+
+    // --- ENVÍO A SHEET + REDIRECCIÓN A FORMS ---
+    document.getElementById('mainForm').onsubmit = async (e) => {
         e.preventDefault();
-        const btn = document.getElementById('btn-enviar');
-        btn.disabled = true; btn.innerText = "PROCESANDO ENVÍO...";
+        const btn = document.getElementById('btnEnviar');
+        btn.disabled = true; 
+        btn.innerText = "REGISTRANDO EN BASE DE DATOS...";
 
-        const file = document.getElementById('f-foto').files[0];
+        const fileInput = document.getElementById('foto');
+        const file = fileInput.files[0];
         const reader = new FileReader();
 
         reader.onload = async function() {
             const base64 = reader.result.split(',')[1];
-            const params = {
+            const data = {
                 fileData: base64, fileName: file.name, mimeType: file.type,
-                bodega: document.getElementById('f-bodega').value,
-                idSitio: document.getElementById('f-id-sitio').value,
-                nombreSitio: document.getElementById('f-busqueda-sitio').value,
-                descripcion: document.getElementById('f-busqueda-equipo').value,
-                marca: document.getElementById('f-marca').value,
-                serie: document.getElementById('f-serie').value
+                bodega: document.getElementById('bodega').value,
+                idSitio: document.getElementById('idSitio').value,
+                nombreSitio: document.getElementById('siteSearch').value,
+                descripcion: document.getElementById('equipoSearch').value,
+                marca: document.getElementById('marca').value,
+                serie: document.getElementById('serie').value
             };
 
             try {
+                // 1. Enviar a tu Google Apps Script
                 const resp = await fetch(CONFIG.URL_APPS_SCRIPT, {
                     method: 'POST',
-                    body: new URLSearchParams(params)
+                    body: new URLSearchParams(data)
                 });
                 const res = await resp.json();
 
                 if (res.result === "success") {
-                    // MAPEO DE ENTRY.XXX SEGÚN TU LISTA
-                    const finalUrl = `${CONFIG.URL_FORMS_EXTERNO}?entry.795516044=${encodeURIComponent(params.bodega)}&entry.1265319450=${encodeURIComponent(params.idSitio)}&entry.1509520939=${encodeURIComponent(params.nombreSitio)}&entry.554570123=${encodeURIComponent(params.marca)}&entry.1914147166=${encodeURIComponent(params.descripcion)}&entry.1497572830=${encodeURIComponent(params.serie)}&entry.733439703=${encodeURIComponent(res.fileUrl)}`;
-                    window.location.href = finalUrl;
+                    btn.innerText = "ABRIENDO FORMULARIO EXTERNO...";
+                    
+                    // 2. Construir URL de pre-llenado con tus entry.xxx
+                    const prefilledUrl = `${CONFIG.URL_FORMS_EXTERNO}?entry.795516044=${encodeURIComponent(data.bodega)}&entry.1265319450=${encodeURIComponent(data.idSitio)}&entry.1509520939=${encodeURIComponent(data.nombreSitio)}&entry.554570123=${encodeURIComponent(data.marca)}&entry.1914147166=${encodeURIComponent(data.descripcion)}&entry.1497572830=${encodeURIComponent(data.serie)}&entry.733439703=${encodeURIComponent(res.fileUrl)}`;
+                    
+                    // 3. Redirigir
+                    window.location.href = prefilledUrl;
                 }
             } catch (err) {
-                alert("Error crítico. Revisa la URL del Script.");
-                btn.disabled = false; btn.innerText = "REINTENTAR ENVÍO";
+                alert("Error de conexión. Verifique el Script de Google.");
+                btn.disabled = false;
+                btn.innerText = "REINTENTAR ENVÍO";
             }
         };
         reader.readAsDataURL(file);
     };
+
+    // Cerrar sugerencias al hacer clic fuera
+    document.addEventListener('click', (e) => {
+        if (!sInput.contains(e.target)) sSug.style.display = 'none';
+        if (!eInput.contains(e.target)) eSug.style.display = 'none';
+    });
 </script>
+
 </body>
-</html> 
+</html>
