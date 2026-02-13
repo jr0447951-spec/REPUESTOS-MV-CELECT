@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Salida de Repuestos - El Salvador</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+    <style>
+        :root { --primary: #2c3e50; --accent: #3498db; --bg: #f4f7f6; }
+        body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg); margin: 0; padding: 20px; display: flex; justify-content: center; }
+        .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); width: 100%; max-width: 500px; }
+        .hidden { display: none; }
+        .header { text-align: center; border-bottom: 2px solid var(--bg); margin-bottom: 20px; padding-bottom: 10px; }
+        .timer { font-size: 1.8em; font-weight: bold; color: var(--primary); margin: 5px 0; font-family: 'Courier New', monospace; }
+        .location-tag { font-size: 0.7em; color: #7f8c8d; text-transform: uppercase; letter-spacing: 1px; }
+        label { display: block; margin-top: 15px; font-weight: 600; color: #444; font-size: 0.9em; }
+        input, select, button { width: 100%; padding: 12px; margin-top: 5px; border-radius: 6px; border: 1px solid #ddd; box-sizing: border-box; }
+        input:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 5px rgba(52,152,219,0.3); }
+        .readonly { background-color: #f8f9fa; color: #7f8c8d; cursor: not-allowed; }
+        button { background-color: var(--accent); color: white; border: none; font-weight: bold; margin-top: 25px; cursor: pointer; transition: 0.3s; }
+        button:hover { background-color: #2980b9; }
+        .autocomplete-container { position: relative; }
+        .suggestions { border: 1px solid #ddd; position: absolute; z-index: 100; width: 100%; background: white; max-height: 200px; overflow-y: auto; border-radius: 0 0 6px 6px; box-shadow: 0 8px 16px rgba(0,0,0,0.1); }
+        .suggestion-item { padding: 12px; cursor: pointer; font-size: 0.9em; border-bottom: 1px solid #eee; }
+        .suggestion-item:last-child { border-bottom: none; }
+        .suggestion-item:hover { background-color: #f1f1f1; color: var(--accent); }
+        .nav-back { text-decoration: none; color: var(--accent); font-size: 0.85em; display: inline-block; margin-bottom: 15px; }
+    </style>
+</head>
+<body>
+
+<div class="card" id="card-consentimiento">
+    <div class="header"><h2>Paso 1: Identificación</h2></div>
+    <p>Para registrar la salida, el sistema detectará su cuenta de Google y solicitará permiso para almacenar la fotografía en su unidad de Drive.</p>
+    <button onclick="iniciarFormulario()">ACEPTAR Y CONTINUAR</button>
+</div>
+
+<div class="card hidden" id="card-formulario">
+    <a href="index.html" class="nav-back">← Volver al Menú Principal</a>
+    <div class="header">
+        <div class="location-tag">Hora Oficial El Salvador (CST)</div>
+        <div class="timer" id="reloj">00:00:00</div>
+    </div>
+
+    <form id="formSalida">
+        <label>1. BODEGA DE RETIRO</label>
+        <select id="f-bodega" required>
+            <option value="">Seleccione bodega...</option>
+            <option value="SAN BENITO">SAN BENITO</option>
+            <option value="CENTRAL">CENTRAL</option>
+            <option value="TALNIQUE">TALNIQUE</option>
+        </select>
+
+        <div class="autocomplete-container">
+            <label>2. SITIO (BUSCADOR)</label>
+            <input type="text" id="f-busqueda-sitio" placeholder="Escriba nombre del sitio..." autocomplete="off" required>
+            <div id="sug-sitios" class="suggestions hidden"></div>
+        </div>
+
+        <label>3. ID SITIO (AUTO)</label>
+        <input type="text" id="f-id-sitio" class="readonly" readonly required>
+
+        <div class="autocomplete-container">
+            <label>4. DESCRIPCIÓN DE EQUIPO</label>
+            <input type="text" id="f-busqueda-equipo" placeholder="Busque repuesto en inventario..." autocomplete="off" required>
+            <div id="sug-equipos" class="suggestions hidden"></div>
+        </div>
+
+        <label>5. MARCA (AUTO)</label>
+        <input type="text" id="f-marca" class="readonly" readonly required>
+
+        <label>6. NÚMERO DE SERIE</label>
+        <input type="text" id="f-serie" placeholder="Ingrese S/N o Único" required>
+
+        <label>7. FOTOGRAFÍA (SE SUBIRÁ A SU DRIVE)</label>
+        <input type="file" id="f-foto" accept="image/*" required>
+
+        <button type="submit" id="btn-enviar">REGISTRAR Y PRE-LLENAR FORMULARIO</button>
+    </form>
+</div>
+
+<script>
+    // --- CONFIGURACIÓN ---
+    const CONFIG = {
+        URL_APPS_SCRIPT: 'TU_URL_DE_APPS_SCRIPT', 
+        URL_SITIOS_CSV: 'TU_URL_SHEET_COMO_CSV', 
+        URL_FORMS_EXTERNO: 'https://docs.google.com/forms/d/e/TU_ID_FORM/viewform'
+    };
+
+    let baseSitios = [];
+    let baseEquipos = [];
+
+    // RELOJ FORZADO A EL SALVADOR
+    setInterval(() => {
+        const horaSV = new Date().toLocaleTimeString("es-SV", {
+            timeZone: "America/El_Salvador",
+            hour: '2-digit', minute: '2-digit', second: '2-digit',
+            hour12: false
+        });
+        document.getElementById('reloj').innerText = horaSV;
+    }, 1000);
+
+    async function iniciarFormulario() {
+        document.getElementById('card-consentimiento').classList.add('hidden');
+        document.getElementById('card-formulario').classList.remove('hidden');
+        
+        try {
+            // Cargar Sitios
+            const resS = await fetch(CONFIG.URL_SITIOS_CSV);
+            const dataS = await resS.text();
+            Papa.parse(dataS, { complete: (r) => { baseSitios = r.data; } });
+
+            // Cargar Equipos (Desde tu CSV en GitHub)
+            Papa.parse("inventario_repuestos.csv", {
+                download: true, header: true, delimiter: ";",
+                complete: (r) => { baseEquipos = r.data; }
+            });
+        } catch (e) { console.error("Error de carga:", e); }
+    }
+
+    // AUTOCOMPLETADO
+    function setupSearch(inputId, sugId, dataProvider, fields) {
+        const input = document.getElementById(inputId);
+        const sugBox = document.getElementById(sugId);
+
+        input.addEventListener('input', () => {
+            const val = input.value.toLowerCase();
+            sugBox.innerHTML = '';
+            if (val.length < 2) { sugBox.classList.add('hidden'); return; }
+
+            const filtered = dataProvider().filter(item => 
+                JSON.stringify(item).toLowerCase().includes(val)
+            ).slice(0, 6);
+
+            filtered.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'suggestion-item';
+                div.innerText = item[fields.display] || item.Descripcion;
+                div.onclick = () => {
+                    input.value = item[fields.display] || item.Descripcion;
+                    document.getElementById(fields.target).value = item[fields.meta] || item.Marca;
+                    sugBox.classList.add('hidden');
+                };
+                sugBox.appendChild(div);
+            });
+            sugBox.classList.remove('hidden');
+        });
+    }
+
+    setupSearch('f-busqueda-sitio', 'sug-sitios', () => baseSitios, {display: 1, meta: 0, target: 'f-id-sitio'});
+    setupSearch('f-busqueda-equipo', 'sug-equipos', () => baseEquipos, {display: 'Descripcion', meta: 'Marca', target: 'f-marca'});
+
+    // ENVÍO
+    document.getElementById('formSalida').onsubmit = async (e) => {
+        e.preventDefault();
+        const btn = document.getElementById('btn-enviar');
+        btn.disabled = true; btn.innerText = "PROCESANDO ENVÍO...";
+
+        const file = document.getElementById('f-foto').files[0];
+        const reader = new FileReader();
+
+        reader.onload = async function() {
+            const base64 = reader.result.split(',')[1];
+            const params = {
+                fileData: base64, fileName: file.name, mimeType: file.type,
+                bodega: document.getElementById('f-bodega').value,
+                idSitio: document.getElementById('f-id-sitio').value,
+                nombreSitio: document.getElementById('f-busqueda-sitio').value,
+                descripcion: document.getElementById('f-busqueda-equipo').value,
+                marca: document.getElementById('f-marca').value,
+                serie: document.getElementById('f-serie').value
+            };
+
+            try {
+                const resp = await fetch(CONFIG.URL_APPS_SCRIPT, {
+                    method: 'POST',
+                    body: new URLSearchParams(params)
+                });
+                const res = await resp.json();
+
+                if (res.result === "success") {
+                    // MAPEO DE ENTRY.XXX SEGÚN TU LISTA
+                    const finalUrl = `${CONFIG.URL_FORMS_EXTERNO}?entry.795516044=${encodeURIComponent(params.bodega)}&entry.1265319450=${encodeURIComponent(params.idSitio)}&entry.1509520939=${encodeURIComponent(params.nombreSitio)}&entry.554570123=${encodeURIComponent(params.marca)}&entry.1914147166=${encodeURIComponent(params.descripcion)}&entry.1497572830=${encodeURIComponent(params.serie)}&entry.733439703=${encodeURIComponent(res.fileUrl)}`;
+                    window.location.href = finalUrl;
+                }
+            } catch (err) {
+                alert("Error crítico. Revisa la URL del Script.");
+                btn.disabled = false; btn.innerText = "REINTENTAR ENVÍO";
+            }
+        };
+        reader.readAsDataURL(file);
+    };
+</script>
+</body>
+</html> 
