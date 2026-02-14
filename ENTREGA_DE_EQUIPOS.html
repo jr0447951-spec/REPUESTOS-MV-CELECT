@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Entrega Repuestos - Network Ops</title>
+    <title>Repuestos Go! - Network Ops</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
     <style>
@@ -64,7 +64,25 @@
             color: #64748b; margin-left: 5px;
         }
 
-        input, select, textarea {
+        .bodega-grid {
+            display: grid; grid-template-columns: repeat(3, 1fr);
+            gap: 12px; margin-top: 8px;
+        }
+
+        .btn-bodega {
+            background: #f1f5f9; border: 2px solid transparent;
+            padding: 12px 5px; border-radius: 16px;
+            font-size: 0.7rem; font-weight: 600; color: #475569;
+            cursor: pointer; transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .btn-bodega.selected {
+            background: #fff; border-color: var(--brand);
+            color: var(--brand); transform: scale(1.05);
+            box-shadow: 0 8px 15px rgba(79, 70, 229, 0.15);
+        }
+
+        input {
             width: 100%; padding: 14px; margin-top: 6px;
             border-radius: 16px; border: 1.5px solid #e2e8f0;
             background: #f8fafc; color: var(--text);
@@ -75,33 +93,11 @@
         input:focus { border-color: var(--brand-light); background: #fff; box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1); }
         .readonly { background: #f1f5f9; color: #94a3b8; border-style: none; font-size: 0.9rem; }
 
-        .opt-grid {
-            display: grid; grid-template-columns: repeat(2, 1fr);
-            gap: 12px; margin-top: 8px;
-        }
-        .bodega-grid {
-            display: grid; grid-template-columns: repeat(3, 1fr);
-            gap: 12px; margin-top: 8px;
-        }
-
-        .btn-opt {
-            background: #f1f5f9; border: 2px solid transparent;
-            padding: 12px 5px; border-radius: 16px;
-            font-size: 0.7rem; font-weight: 600; color: #475569;
-            cursor: pointer; transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-
-        .btn-opt.selected {
-            background: #fff; border-color: var(--brand);
-            color: var(--brand); transform: scale(1.05);
-            box-shadow: 0 8px 15px rgba(79, 70, 229, 0.15);
-        }
-
         .suggestions {
             position: absolute; width: 100%; background: #fff;
             border-radius: 16px; box-shadow: 0 15px 35px rgba(0,0,0,0.1);
             z-index: 100; display: none; margin-top: 5px;
-            border: 1px solid #e2e8f0; overflow-y: auto; max-height: 200px;
+            border: 1px solid #e2e8f0; overflow: hidden;
         }
         .suggestion-item {
             padding: 15px; border-bottom: 1px solid #f1f5f9;
@@ -119,57 +115,52 @@
         }
         .btn-send:active { transform: scale(0.96); }
 
-        .hidden { display: none !important; }
-
-        #box_ref {
-            background: #fef2f2; 
-            padding: 15px; 
-            border-radius: 18px; 
-            margin-bottom: 15px; 
-            border: 1.5px dashed #fecaca;
+        #imgPreview {
+            max-width: 100%; border-radius: 12px; margin-top: 10px; display: none;
+            border: 2px solid var(--brand-light);
         }
+
+        .hidden { display: none !important; }
     </style>
 </head>
 <body>
 
 <header>
     <div class="timer-pill" id="reloj">00:00:00</div>
-    <h1>Registro de Entrega</h1>
+    <h1>Registro de Salida</h1>
 </header>
 
 <div class="container">
-    <form id="entregaForm">
+    <div class="card" id="consentimiento" style="text-align: center;">
+        <div style="font-size: 3rem; margin-bottom: 10px;">📦</div>
+        <h2 style="font-size: 1.2rem; margin-bottom: 10px;">¡Hola!</h2>
+        <p style="color: #64748b; font-size: 0.9rem; line-height: 1.5;">Para registrar un repuesto necesitamos acceso para guardar tu foto de evidencia.</p>
+        <button onclick="activar()" id="btnStart" disabled class="btn-send" style="background: #94a3b8;">Cargando inventario...</button>
+        <div id="load-info" style="font-size: 0.7rem; color: #94a3b8; margin-top: 15px;">Sincronizando repuestos...</div>
+    </div>
+
+    <form id="mainForm" class="hidden">
         <div class="card">
             <label>Nombre del Técnico</label>
-            <input type="text" id="tecnico_nombre" placeholder="Nombre + Apellido" required>
+            <input type="text" id="tecnico" placeholder="Nombre + Apellido" required>
             
+            <label>¿Desde qué bodega retiras?</label>
+            <div class="bodega-grid">
+                <button type="button" class="btn-bodega" onclick="selectB(this, 'SAN BENITO')">San Benito</button>
+                <button type="button" class="btn-bodega" onclick="selectB(this, 'CENTRAL')">Central</button>
+                <button type="button" class="btn-bodega" onclick="selectB(this, 'TALNIQUE')">Talnique</button>
+            </div>
+            <input type="hidden" id="bodega" required>
+
             <div style="position:relative">
                 <label>Nombre del Sitio</label>
-                <input type="text" id="siteSearch" placeholder="Escribe para buscar sitio..." autocomplete="off" required>
+                <input type="text" id="siteSearch" placeholder="Escribe para buscar..." autocomplete="off" required>
                 <div id="siteSug" class="suggestions"></div>
             </div>
-            <input type="text" id="sitio_id" class="readonly" placeholder="ID automático" readonly required>
-        </div>
-
-        <div class="card">
-            <label>¿En qué estado entregas?</label>
-            <div class="opt-grid">
-                <button type="button" class="btn-opt" onclick="selectOpt(this, 'DAÑADO', 'estado')">DAÑADO</button>
-                <button type="button" class="btn-opt" onclick="selectOpt(this, 'NO UTILIZADO', 'estado')">NO UTILIZADO</button>
-                <button type="button" class="btn-opt" onclick="selectOpt(this, 'USADO', 'estado')">USADO</button>
-                <button type="button" class="btn-opt" onclick="selectOpt(this, 'POR REPARACIÓN', 'estado')">REPARACIÓN</button>
-            </div>
-            <input type="hidden" id="equipo_estado" required>
-        </div>
-
-        <div class="card">
-            <div id="box_ref" class="hidden">
-                <label style="color: #b91c1c; margin-top: 0;">Referencia de Salida (Pendientes)</label>
-                <select id="ref_salida_desc" onchange="llenarDesdeSalida()" style="background: white;"></select>
-            </div>
+            <input type="text" id="idSitio" class="readonly" placeholder="ID automático" readonly required>
 
             <div style="position:relative">
-                <label>Descripción del Repuesto</label>
+                <label>¿Qué repuesto llevas?</label>
                 <input type="text" id="eqSearch" placeholder="Busca tu repuesto..." autocomplete="off" required>
                 <div id="eqSug" class="suggestions"></div>
             </div>
@@ -177,21 +168,12 @@
 
             <label>Número de Serie</label>
             <input type="text" id="serie" placeholder="S/N Físico" required>
-        </div>
 
-        <div class="card">
-            <label>¿A qué bodega ingresa?</label>
-            <div class="bodega-grid">
-                <button type="button" class="btn-opt" onclick="selectOpt(this, 'SAN BENITO', 'bodega')">San Benito</button>
-                <button type="button" class="btn-opt" onclick="selectOpt(this, 'CENTRAL', 'bodega')">Central</button>
-                <button type="button" class="btn-opt" onclick="selectOpt(this, 'TALNIQUE', 'bodega')">Talnique</button>
-            </div>
-            <input type="hidden" id="bodega" required>
+            <label>Foto de Evidencia</label>
+            <input type="file" id="foto" accept="image/*" capture="camera" required style="padding: 10px; font-size: 0.8rem; background: none; border: 1.5px dashed #cbd5e1;">
+            <img id="imgPreview">
 
-            <label>Comentarios</label>
-            <textarea id="comentarios" rows="2" style="width: 100%; margin-top: 10px; border-radius: 16px; border: 1.5px solid #e2e8f0; padding: 10px; font-family: inherit; font-size: 0.9rem;"></textarea>
-
-            <button type="submit" id="btnEnviar" class="btn-send">FINALIZAR ENTREGA</button>
+            <button type="submit" id="btnEnviar" class="btn-send">FINALIZAR REGISTRO</button>
         </div>
     </form>
 </div>
@@ -199,32 +181,29 @@
 <script>
     const CONFIG = {
         URL_SITIOS_CSV: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTE_5CZtD7qHGW5cWHGAjn7ALTphVm5h88lco9cySYoAe2VBW4fq8DQ7-SZY6cd_FHtNQJS3MpE88hs/pub?gid=1955381502&single=true&output=csv',
-        URL_PENDIENTES_CSV: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQBNrpLKc_GPFT6Ik9Yr4s1qo8zaOOqrDgTc_9DGeMd20rNTsEtLktTCoeDcRrts6kvgne86KZDfKQS/pub?output=csv',
-        URL_APPS_SCRIPT: 'https://script.google.com/macros/s/AKfycbxJyDENWy4Zmwye7tcREXVGdAur50ggJ-QQTeexEeEoWN2VseEp3EeMUQRaRTMQzJik/exec'
+        URL_APPS_SCRIPT: 'https://script.google.com/macros/s/AKfycbz_Wv6DikTWQuqnAd9gMrjfEoFOFa9E9YdUuY5cSkr4ICqBKOo5WPvmJrhYF5_dv5fa/exec',
+        URL_FORMS_EXTERNO: 'https://docs.google.com/forms/d/e/1FAIpQLSdeek133oAtejD-fC1LPvFPDHiej3l0tokNW9N31LdHFpS06g/viewform'
     };
 
-    let sites = [], pendientes = [], equipos = [];
+    let sites = [], equipos = [];
 
-    // Reloj
+    // Reloj El Salvador
     setInterval(() => {
         document.getElementById('reloj').innerText = new Date().toLocaleTimeString("es-SV", { hour12: false });
     }, 1000);
 
     // Carga de Datos
-    window.onload = async () => {
-        const [r1, r2, r3] = await Promise.all([
-            fetch(CONFIG.URL_SITIOS_CSV),
-            fetch(CONFIG.URL_PENDIENTES_CSV),
-            fetch('inventario_repuestos.csv')
-        ]);
-        const [t1, t2, t3] = await Promise.all([r1.text(), r2.text(), r3.text()]);
-        
-        sites = parseCSV(t1);
-        pendientes = t2.split("\n").map(l => l.split(",").map(c => c.replace(/"/g,"").trim()));
-        
-        Papa.parse(t3, {
-            header: true, skipEmptyLines: true,
-            complete: (res) => { equipos = res.data; }
+    window.onload = () => {
+        fetch(CONFIG.URL_SITIOS_CSV).then(r => r.text()).then(t => { sites = parseCSV(t); });
+
+        Papa.parse("inventario_repuestos.csv", {
+            download: true, header: true, skipEmptyLines: true,
+            complete: function(res) {
+                equipos = res.data;
+                const b = document.getElementById('btnStart');
+                b.disabled = false; b.style.background = "var(--brand)"; b.innerText = "¡EMPEZAR!";
+                document.getElementById('load-info').innerText = "Inventario sincronizado: " + equipos.length + " items";
+            }
         });
     };
 
@@ -238,30 +217,18 @@
         });
     }
 
-    // Lógica de Selección y Visibilidad Condicional
-    function selectOpt(btn, val, grupo) {
-        const parent = btn.parentElement;
-        parent.querySelectorAll('.btn-opt').forEach(x => x.classList.remove('selected'));
+    function selectB(btn, v) {
+        document.querySelectorAll('.btn-bodega').forEach(x => x.classList.remove('selected'));
         btn.classList.add('selected');
-
-        if(grupo === 'estado') {
-            document.getElementById('equipo_estado').value = val;
-            const boxRef = document.getElementById('box_ref');
-            
-            // Si es DAÑADO o NO UTILIZADO, mostramos Referencia de Salida
-            if(val === 'DAÑADO' || val === 'NO UTILIZADO') {
-                boxRef.classList.remove('hidden');
-                cargarPendientes();
-            } else {
-                boxRef.classList.add('hidden');
-                document.getElementById('ref_salida_desc').innerHTML = "";
-            }
-        } else {
-            document.getElementById('bodega').value = val;
-        }
+        document.getElementById('bodega').value = v;
     }
 
-    // Buscador de Sitios (Réplica exacta Salida)
+    function activar() {
+        document.getElementById('consentimiento').classList.add('hidden');
+        document.getElementById('mainForm').classList.remove('hidden');
+    }
+
+    // Buscador Sitios
     const si = document.getElementById('siteSearch'), ss = document.getElementById('siteSug');
     si.addEventListener('input', () => {
         const v = si.value.toLowerCase().trim();
@@ -271,85 +238,9 @@
         ss.style.display = m.length ? 'block' : 'none';
     });
 
-    function setS(i, n) { 
-        si.value = n; document.getElementById('sitio_id').value = i; ss.style.display = 'none'; 
-        const est = document.getElementById('equipo_estado').value;
-        if(est === 'DAÑADO' || est === 'NO UTILIZADO') cargarPendientes();
-    }
+    function setS(i, n) { si.value = n; document.getElementById('idSitio').value = i; ss.style.display = 'none'; }
 
-    // Buscador de Repuestos (Réplica exacta Salida)
+    // Buscador Equipos
     const ei = document.getElementById('eqSearch'), es = document.getElementById('eqSug');
     ei.addEventListener('input', () => {
-        const v = ei.value.toLowerCase().trim();
-        if(v.length < 2) { es.style.display = 'none'; return; }
-        const m = equipos.filter(e => e["DESCRIPCION DE EQUIPO"] && e["DESCRIPCION DE EQUIPO"].toLowerCase().includes(v)).slice(0,6);
-        es.innerHTML = m.map(e => `<div class="suggestion-item" onclick="setE('${e["DESCRIPCION DE EQUIPO"].replace(/'/g, "")}', '${e["MARCA"]}')"><strong>${e["DESCRIPCION DE EQUIPO"]}</strong><br><small style="color:var(--brand)">${e["MARCA"]}</small></div>`).join('');
-        es.style.display = m.length ? 'block' : 'none';
-    });
-
-    function setE(d, m) { ei.value = d; document.getElementById('marca').value = m; es.style.display = 'none'; }
-
-    // Carga de Referencias Pendientes
-    function cargarPendientes() {
-        const id = document.getElementById('sitio_id').value;
-        const sel = document.getElementById('ref_salida_desc');
-        if(!id) {
-            sel.innerHTML = '<option value="">⚠️ Seleccione sitio primero</option>';
-            return;
-        }
-        const lista = pendientes.filter(f => f[3] === id && f[9] === 'PENDIENTE');
-        if(lista.length > 0) {
-            sel.innerHTML = '<option value="">Seleccione equipo de salida...</option>';
-            lista.forEach(f => {
-                let o = document.createElement('option');
-                o.value = f[5]; o.innerText = f[5]; sel.appendChild(o);
-            });
-        } else {
-            sel.innerHTML = '<option value="">No hay salidas pendientes</option>';
-        }
-    }
-
-    function llenarDesdeSalida() {
-        const ref = document.getElementById('ref_salida_desc').value;
-        const f = pendientes.find(l => l[5]===ref && l[9]==='PENDIENTE');
-        if(f) { ei.value = f[5]; document.getElementById('marca').value = f[6]; }
-    }
-
-    // Envío al Apps Script
-    document.getElementById('entregaForm').onsubmit = async (e) => {
-        e.preventDefault();
-        const b = document.getElementById('btnEnviar');
-        b.disabled = true; b.innerText = "PROCESANDO...";
-
-        const params = new URLSearchParams({
-            action: "entregar",
-            tecnico_nombre: document.getElementById('tecnico_nombre').value,
-            "nombreSitio": document.getElementById('siteSearch').value,
-            sitio_id: document.getElementById('sitio_id').value,
-            equipo_estado: document.getElementById('equipo_estado').value,
-            ref_salida_desc: document.getElementById('ref_salida_desc').value,
-            equipo_desc: ei.value,
-            equipo_marca: document.getElementById('marca').value,
-            bodega_destino: document.getElementById('bodega').value,
-            equipo_serie: document.getElementById('serie').value,
-            comentarios: document.getElementById('comentarios').value
-        });
-
-        try {
-            await fetch(CONFIG.URL_APPS_SCRIPT, { method: 'POST', body: params, mode: 'no-cors' });
-            alert("✅ Entrega registrada con éxito");
-            location.reload();
-        } catch(err) {
-            alert("Error de conexión");
-            b.disabled = false; b.innerText = "REINTENTAR";
-        }
-    };
-
-    // Cerrar sugerencias al clickear fuera
-    document.addEventListener('click', (e) => {
-        if(!si.contains(e.target)) ss.style.display = 'none';
-        if(!ei.contains(e.target)) es.style.display = 'none';
-    });
-</script>
-</body>
-</html>
+        const v = ei.value
