@@ -7,26 +7,127 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
     <style>
-        :root { --brand: #4f46e5; --brand-light: #818cf8; --bg: #f8fafc; --card-bg: #ffffff; --text: #1e293b; }
-        body { font-family: 'Poppins', sans-serif; background: radial-gradient(circle at top left, #eef2ff 0%, #f8fafc 100%); color: var(--text); margin: 0; padding: 0; min-height: 100vh; display: flex; flex-direction: column; }
-        header { padding: 25px 20px; text-align: center; background: var(--card-bg); border-bottom-left-radius: 30px; border-bottom-right-radius: 30px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
-        header h1 { margin: 0; font-size: 1.4rem; color: var(--brand); font-weight: 600; }
+        :root {
+            --brand: #4f46e5;
+            --brand-light: #818cf8;
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --text: #1e293b;
+            --success: #10b981;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: radial-gradient(circle at top left, #eef2ff 0%, #f8fafc 100%);
+            color: var(--text);
+            margin: 0; padding: 0;
+            min-height: 100vh;
+            display: flex; flex-direction: column;
+        }
+
+        header {
+            padding: 25px 20px;
+            text-align: center;
+            background: var(--card-bg);
+            border-bottom-left-radius: 30px;
+            border-bottom-right-radius: 30px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+        }
+
+        header h1 { 
+            margin: 0; font-size: 1.4rem; color: var(--brand); 
+            font-weight: 600; letter-spacing: -0.5px;
+        }
+
         .container { width: 90%; max-width: 450px; margin: 20px auto; flex: 1; }
-        .timer-pill { background: var(--brand); color: white; padding: 6px 15px; border-radius: 20px; font-size: 0.8rem; font-weight: 600; display: inline-block; margin-bottom: 15px; }
-        .card { background: var(--card-bg); border-radius: 24px; padding: 25px; box-shadow: 0 10px 25px rgba(0,0,0,0.03); border: 1px solid rgba(255,255,255,0.8); margin-bottom: 20px; }
-        label { display: block; margin-top: 15px; font-size: 0.75rem; font-weight: 600; color: #64748b; margin-left: 5px; }
-        input, select, textarea { width: 100%; padding: 14px; margin-top: 6px; border-radius: 16px; border: 1.5px solid #e2e8f0; background: #f8fafc; color: var(--text); font-size: 1rem; outline: none; box-sizing: border-box; }
+
+        .timer-pill {
+            background: var(--brand); color: white;
+            padding: 6px 15px; border-radius: 20px;
+            font-size: 0.8rem; font-weight: 600;
+            display: inline-block; margin-bottom: 15px;
+            box-shadow: 0 4px 10px rgba(79, 70, 229, 0.3);
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 24px;
+            padding: 25px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.03);
+            border: 1px solid rgba(255,255,255,0.8);
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block; margin-top: 15px;
+            font-size: 0.75rem; font-weight: 600;
+            color: #64748b; margin-left: 5px;
+        }
+
+        input, select, textarea {
+            width: 100%; padding: 14px; margin-top: 6px;
+            border-radius: 16px; border: 1.5px solid #e2e8f0;
+            background: #f8fafc; color: var(--text);
+            font-size: 1rem; outline: none; transition: 0.3s;
+            box-sizing: border-box;
+        }
+
+        input:focus { border-color: var(--brand-light); background: #fff; box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1); }
         .readonly { background: #f1f5f9; color: #94a3b8; border-style: none; font-size: 0.9rem; }
-        .opt-grid, .bodega-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-top: 8px; }
-        .bodega-grid { grid-template-columns: repeat(3, 1fr); }
-        .btn-opt { background: #f1f5f9; border: 2px solid transparent; padding: 12px 5px; border-radius: 16px; font-size: 0.7rem; font-weight: 600; color: #475569; cursor: pointer; transition: 0.2s; }
-        .btn-opt.selected { background: #fff; border-color: var(--brand); color: var(--brand); transform: scale(1.05); box-shadow: 0 8px 15px rgba(79, 70, 229, 0.15); }
-        .suggestions { position: absolute; width: 100%; background: #fff; border-radius: 16px; box-shadow: 0 15px 35px rgba(0,0,0,0.1); z-index: 100; display: none; margin-top: 5px; border: 1px solid #e2e8f0; max-height: 200px; overflow-y: auto; }
+
+        .opt-grid {
+            display: grid; grid-template-columns: repeat(2, 1fr);
+            gap: 12px; margin-top: 8px;
+        }
+        .bodega-grid {
+            display: grid; grid-template-columns: repeat(3, 1fr);
+            gap: 12px; margin-top: 8px;
+        }
+
+        .btn-opt {
+            background: #f1f5f9; border: 2px solid transparent;
+            padding: 12px 5px; border-radius: 16px;
+            font-size: 0.7rem; font-weight: 600; color: #475569;
+            cursor: pointer; transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .btn-opt.selected {
+            background: #fff; border-color: var(--brand);
+            color: var(--brand); transform: scale(1.05);
+            box-shadow: 0 8px 15px rgba(79, 70, 229, 0.15);
+        }
+
+        .suggestions {
+            position: absolute; width: 100%; background: #fff;
+            border-radius: 16px; box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+            z-index: 100; display: none; margin-top: 5px;
+            border: 1px solid #e2e8f0; overflow-y: auto; max-height: 200px;
+        }
         .suggestion-item { padding: 15px; border-bottom: 1px solid #f1f5f9; font-size: 0.9rem; cursor: pointer; }
-        .btn-send { width: 100%; padding: 18px; border-radius: 18px; background: linear-gradient(135deg, var(--brand), var(--brand-light)); color: white; border: none; font-weight: 600; font-size: 1rem; margin-top: 30px; cursor: pointer; }
-        #imgPreview { max-width: 100%; border-radius: 12px; margin-top: 10px; display: none; border: 2px solid var(--brand-light); }
+
+        .btn-send {
+            width: 100%; padding: 18px; border-radius: 18px;
+            background: linear-gradient(135deg, var(--brand), var(--brand-light));
+            color: white; border: none; font-weight: 600;
+            font-size: 1rem; margin-top: 30px;
+            box-shadow: 0 10px 20px rgba(79, 70, 229, 0.2);
+            cursor: pointer; transition: 0.3s;
+        }
+
+        #imgPreview {
+            max-width: 100%; border-radius: 12px; margin-top: 10px; display: none;
+            border: 2px solid var(--brand-light);
+        }
+
         .hidden { display: none !important; }
-        #box_ref { background: #fef2f2; padding: 15px; border-radius: 18px; margin-bottom: 15px; border: 1.5px dashed #fecaca; }
+
+        #box_ref {
+            background: #fef2f2; 
+            padding: 15px; 
+            border-radius: 18px; 
+            margin-bottom: 15px; 
+            border: 1.5px dashed #fecaca;
+        }
     </style>
 </head>
 <body>
@@ -78,7 +179,7 @@
             <input type="text" id="serie" placeholder="S/N Físico" required>
 
             <label>Foto de Evidencia</label>
-            <input type="file" id="foto" accept="image/*" capture="camera" required style="padding: 10px; font-size: 0.8rem; border: 1.5px dashed #cbd5e1;">
+            <input type="file" id="foto" accept="image/*" capture="camera" required style="padding: 10px; font-size: 0.8rem; background: none; border: 1.5px dashed #cbd5e1;">
             <img id="imgPreview">
         </div>
 
@@ -92,7 +193,7 @@
             <input type="hidden" id="bodega" required>
 
             <label>Comentarios</label>
-            <textarea id="comentarios" rows="2"></textarea>
+            <textarea id="comentarios" rows="2" placeholder="Notas adicionales..."></textarea>
 
             <button type="submit" id="btnEnviar" class="btn-send">FINALIZAR ENTREGA</button>
         </div>
@@ -108,14 +209,27 @@
 
     let sites = [], pendientes = [], equipos = [];
 
-    setInterval(() => { document.getElementById('reloj').innerText = new Date().toLocaleTimeString("es-SV", { hour12: false }); }, 1000);
+    setInterval(() => {
+        document.getElementById('reloj').innerText = new Date().toLocaleTimeString("es-SV", { hour12: false });
+    }, 1000);
 
     window.onload = async () => {
-        const [r1, r2, r3] = await Promise.all([ fetch(CONFIG.URL_SITIOS_CSV), fetch(CONFIG.URL_PENDIENTES_CSV), fetch('inventario_repuestos.csv') ]);
-        const [t1, t2, t3] = await Promise.all([r1.text(), r2.text(), r3.text()]);
-        sites = parseCSV(t1);
-        pendientes = t2.split("\n").map(l => l.split(",").map(c => c.replace(/"/g,"").trim()));
-        Papa.parse(t3, { header: true, skipEmptyLines: true, complete: (res) => { equipos = res.data; } });
+        try {
+            const [r1, r2, r3] = await Promise.all([
+                fetch(CONFIG.URL_SITIOS_CSV),
+                fetch(CONFIG.URL_PENDIENTES_CSV),
+                fetch('inventario_repuestos.csv')
+            ]);
+            const [t1, t2, t3] = await Promise.all([r1.text(), r2.text(), r3.text()]);
+            
+            sites = parseCSV(t1);
+            pendientes = t2.split("\n").map(l => l.split(",").map(c => c.replace(/"/g,"").trim()));
+            
+            Papa.parse(t3, {
+                header: true, skipEmptyLines: true,
+                complete: (res) => { equipos = res.data; }
+            });
+        } catch (e) { console.error("Error cargando datos", e); }
     };
 
     function parseCSV(d) {
@@ -132,14 +246,21 @@
         const parent = btn.parentElement;
         parent.querySelectorAll('.btn-opt').forEach(x => x.classList.remove('selected'));
         btn.classList.add('selected');
+
         if(grupo === 'estado') {
             document.getElementById('equipo_estado').value = val;
-            if(val === 'DAÑADO' || val === 'NO UTILIZADO') { document.getElementById('box_ref').classList.remove('hidden'); cargarPendientes(); }
-            else { document.getElementById('box_ref').classList.add('hidden'); }
-        } else { document.getElementById('bodega').value = val; }
+            const boxRef = document.getElementById('box_ref');
+            if(val === 'DAÑADO' || val === 'NO UTILIZADO') {
+                boxRef.classList.remove('hidden');
+                cargarPendientes();
+            } else {
+                boxRef.classList.add('hidden');
+            }
+        } else {
+            document.getElementById('bodega').value = val;
+        }
     }
 
-    // Buscadores
     const si = document.getElementById('siteSearch'), ss = document.getElementById('siteSug');
     si.addEventListener('input', () => {
         const v = si.value.toLowerCase().trim();
@@ -165,8 +286,11 @@
         const sel = document.getElementById('ref_salida_desc');
         if(!id) return;
         const lista = pendientes.filter(f => f[3] === id && f[9] === 'PENDIENTE');
-        sel.innerHTML = lista.length > 0 ? '<option value="">Seleccione equipo...</option>' : '<option value="">Sin pendientes</option>';
-        lista.forEach(f => { let o = document.createElement('option'); o.value = f[5]; o.innerText = f[5]; sel.appendChild(o); });
+        sel.innerHTML = lista.length > 0 ? '<option value="">Seleccione equipo de salida...</option>' : '<option value="">No hay salidas pendientes</option>';
+        lista.forEach(f => {
+            let o = document.createElement('option');
+            o.value = f[5]; o.innerText = f[5]; sel.appendChild(o);
+        });
     }
 
     function llenarDesdeSalida() {
@@ -175,48 +299,51 @@
         if(f) { ei.value = f[5]; document.getElementById('marca').value = f[6]; }
     }
 
-    // Foto
     document.getElementById('foto').onchange = function() {
         const [file] = this.files;
-        if (file) { document.getElementById('imgPreview').src = URL.createObjectURL(file); document.getElementById('imgPreview').style.display = 'block'; }
+        if (file) {
+            document.getElementById('imgPreview').src = URL.createObjectURL(file);
+            document.getElementById('imgPreview').style.display = 'block';
+        }
     };
 
-   // ENVÍO FINAL CON REDIRECCIÓN (CORREGIDO CON TUS ENTRIES)
+    // LÓGICA DE ENVÍO CON REDIRECCIÓN (AHORRO DE TIEMPO)
     document.getElementById('entregaForm').onsubmit = async (e) => {
         e.preventDefault();
         const b = document.getElementById('btnEnviar');
         const file = document.getElementById('foto').files[0];
         
-        if(!document.getElementById('bodega').value || !document.getElementById('equipo_estado').value) { 
-            alert("⚠️ Elige estado y bodega"); return; 
+        if(!document.getElementById('bodega').value || !document.getElementById('equipo_estado').value) {
+            alert("⚠️ Selecciona estado y bodega"); return;
         }
         
         b.disabled = true; b.innerText = "PROCESANDO...";
-        
-        const fechaHoy = new Date().toISOString().split('T')[0]; // Formato YYYY-MM-DD
+
+        const fechaHoy = new Date().toISOString().split('T')[0];
         const reader = new FileReader();
-        
         reader.onload = async () => {
             const formData = {
                 action: "entregar",
                 tecnico_nombre: document.getElementById('tecnico_nombre').value,
-                sitio_id: document.getElementById('sitio_id').value,
                 nombreSitio: document.getElementById('siteSearch').value,
-                equipo_desc: document.getElementById('eqSearch').value,
-                equipo_marca: document.getElementById('marca').value,
-                equipo_serie: document.getElementById('serie').value,
+                sitio_id: document.getElementById('sitio_id').value,
                 equipo_estado: document.getElementById('equipo_estado').value,
+                ref_salida_desc: document.getElementById('ref_salida_desc').value,
+                equipo_desc: ei.value,
+                equipo_marca: document.getElementById('marca').value,
                 bodega_destino: document.getElementById('bodega').value,
+                equipo_serie: document.getElementById('serie').value,
+                comentarios: document.getElementById('comentarios').value,
                 fileData: reader.result.split(',')[1],
                 fileName: file.name,
                 mimeType: file.type
             };
 
             try {
-                // 1. Guardar en Sheets y Columna L a través de Apps Script
+                // 1. Envío al Apps Script (Guardado en Sheets + Foto en Columna L)
                 await fetch(CONFIG.URL_APPS_SCRIPT, { method: 'POST', body: new URLSearchParams(formData), mode: 'no-cors' });
 
-                // 2. AHORRO DE TIEMPO: Redirección con tus ENTRIES específicos
+                // 2. AHORRO DE TIEMPO: Redirección con prellenado automático
                 const urlGoogleForm = `https://docs.google.com/forms/d/e/1FAIpQLSfz-IGCT2vdfUplh2MipdjgBLcspDE_TWChhrWn1wBaVMnWOQ/viewform?` +
                     `entry.997804380=${fechaHoy}` + 
                     `&entry.821288735=${encodeURIComponent(formData.sitio_id)}` +
@@ -226,19 +353,23 @@
                     `&entry.1183702054=${encodeURIComponent(formData.equipo_serie)}` +
                     `&entry.1370238515=${encodeURIComponent(formData.equipo_estado)}` +
                     `&entry.1372699954=${encodeURIComponent(formData.bodega_destino)}` +
-                    `&entry.908256573=CELECT`; // VALOR FIJO SIEMPRE
+                    `&entry.908256573=CELECT`;
 
+                alert("✅ Registro exitoso. Redireccionando...");
                 window.location.href = urlGoogleForm;
 
-            } catch(err) { 
-                alert("Error de red"); 
-                b.disabled = false; b.innerText = "REINTENTAR"; 
+            } catch(err) {
+                alert("Error de conexión");
+                b.disabled = false; b.innerText = "REINTENTAR";
             }
         };
         reader.readAsDataURL(file);
     };
 
-    document.addEventListener('click', (e) => { if(!si.contains(e.target)) ss.style.display = 'none'; if(!ei.contains(e.target)) es.style.display = 'none'; });
+    document.addEventListener('click', (e) => {
+        if(!si.contains(e.target)) ss.style.display = 'none';
+        if(!ei.contains(e.target)) es.style.display = 'none';
+    });
 </script>
 </body>
 </html>
