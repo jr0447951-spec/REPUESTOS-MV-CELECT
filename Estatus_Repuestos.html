@@ -122,18 +122,13 @@ let datosPendientes = [], datosEntregas = [];
 
 async function cargarDashboard() {
     try {
-        const [respSalidas, respEntregas] = await Promise.all([
-            fetch(URL_SALIDAS), fetch(URL_ENTREGAS)
-        ]);
-
+        const [respSalidas, respEntregas] = await Promise.all([fetch(URL_SALIDAS), fetch(URL_ENTREGAS)]);
         const textoSalidas = await respSalidas.text();
         const textoEntregas = await respEntregas.text();
-
         procesarPendientes(textoSalidas);
         procesarEntregados(textoEntregas);
-
         document.getElementById('lastUpdate').innerText = "Última actualización: " + new Date().toLocaleString();
-    } catch (e) { console.error("Error al cargar datos", e); }
+    } catch(e){ console.error("Error al cargar datos", e); }
 }
 
 // --------------------- PENDIENTES ---------------------
@@ -142,12 +137,10 @@ function procesarPendientes(csv) {
         const ahora = new Date();
         const limite90 = new Date(ahora); 
         limite90.setDate(ahora.getDate() - 90);
-
         datosPendientes = results.data.filter(fila=>{
             const fecha = parseFechaElSalvador(fila[0]);
             return fecha >= limite90 && fila[9] === 'PENDIENTE';
         });
-
         document.getElementById('stat-pendientes').innerText = datosPendientes.length;
         document.getElementById('tag-pendientes').innerText = "Total: " + datosPendientes.length;
         renderPendientes();
@@ -158,8 +151,7 @@ function renderPendientes() {
     const tbody = document.querySelector('#tablaPendientes tbody');
     const sitioFilter = document.getElementById('filterSitioPendientes').value.toLowerCase();
     const tecnicoFilter = document.getElementById('filterTecnicoPendientes').value.toLowerCase();
-
-    tbody.innerHTML = datosPendientes.filter(f => 
+    tbody.innerHTML = datosPendientes.filter(f =>
         f[3].toLowerCase().includes(sitioFilter) &&
         f[1].toLowerCase().includes(tecnicoFilter)
     ).map(f=>`
@@ -180,16 +172,13 @@ function procesarEntregados(csv) {
         const hoy = new Date();
         const inicioSemana = new Date(hoy);
         inicioSemana.setDate(hoy.getDate() - hoy.getDay() + 1); // lunes
-
         datosEntregas = results.data.filter(fila=>{
             const fecha = parseFechaElSalvador(fila[0]);
             return fecha >= inicioSemana;
         });
-
         document.getElementById('stat-semanal').innerText = datosEntregas.length;
         const semanaActual = numeroSemana(new Date());
         document.getElementById('tag-semanal').innerText = "Semana " + semanaActual;
-
         renderEntregas();
     }});
 }
@@ -199,7 +188,6 @@ function renderEntregas() {
     const sitioFilter = document.getElementById('filterSitioEntregas').value.toLowerCase();
     const tecnicoFilter = document.getElementById('filterTecnicoEntregas').value.toLowerCase();
     const semanaFilter = document.getElementById('filterSemanaEntregas').value;
-
     tbody.innerHTML = datosEntregas.filter(f=>{
         const numSemanaFila = numeroSemana(parseFechaElSalvador(f[0]));
         return f[2].toLowerCase().includes(sitioFilter) &&
@@ -227,7 +215,6 @@ document.getElementById('filterSemanaEntregas').addEventListener('input', render
 
 // --------------------- FECHAS ---------------------
 function parseFechaElSalvador(fechaStr) {
-    // formato dd/mm/yyyy hh:mm:ss
     const partes = fechaStr.split(/[/ :]/);
     return new Date(partes[2], partes[1]-1, partes[0], partes[3]||0, partes[4]||0, partes[5]||0);
 }
@@ -242,17 +229,21 @@ function numeroSemana(fecha) {
 function exportTableAsImage(tablaId, nombreArchivo) {
     const tabla = document.getElementById(tablaId);
     const clone = tabla.cloneNode(true);
+    clone.style.background = '#ffffff';
+    clone.style.width = tabla.offsetWidth + 'px';
     const contenedor = document.createElement('div');
-    contenedor.style.background = '#ffffff';
-    contenedor.style.padding = '20px';
+    contenedor.style.position = 'fixed';
+    contenedor.style.top = '-10000px';
     contenedor.appendChild(clone);
+    document.body.appendChild(contenedor);
 
-    html2canvas(contenedor, { scale:2 }).then(canvas=>{
+    html2canvas(clone, { scale:2 }).then(canvas=>{
         const enlace = document.createElement('a');
         enlace.href = canvas.toDataURL('image/png');
         enlace.download = nombreArchivo + '.png';
         enlace.click();
-    });
+        document.body.removeChild(contenedor);
+    }).catch(err => console.error("Error exportando imagen:", err));
 }
 
 document.getElementById('exportPendientes').addEventListener('click', ()=>exportTableAsImage('tablaPendientes','Pendientes_Gestion'));
@@ -262,4 +253,3 @@ window.onload = cargarDashboard;
 </script>
 </body>
 </html>
-
