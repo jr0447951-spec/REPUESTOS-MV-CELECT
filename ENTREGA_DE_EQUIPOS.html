@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Portal Repuestos Go!</title>
+  <style>
+    :root { --primary: #2c3e50; --success: #27ae60; --info: #2980b9; --danger: #e74c3c; }
+    body { font-family: sans-serif; margin: 0; padding: 15px; background: #f4f4f4; }
+    .container { max-width: 500px; margin: auto; background: white; padding: 20px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
+    h2, h3 { text-align: center; color: var(--primary); }
+    .btn-portal { width: 100%; padding: 18px; margin: 10px 0; border: none; border-radius: 10px; color: white; font-size: 16px; font-weight: bold; cursor: pointer; }
+    .btn-salida { background: var(--info); }
+    .btn-entrega { background: var(--success); }
+    .btn-back { background: #95a5a6; padding: 10px; margin-bottom: 15px; }
+    .form-group { margin-bottom: 15px; }
+    label { display: block; margin-bottom: 5px; font-weight: bold; color: #333; }
+    input, select, textarea { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; }
+    .hidden { display: none; }
+    .active { display: block; }
+    #status-msg { text-align: center; font-weight: bold; margin-top: 10px; }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  
+  <div id="menu-principal" class="active">
+    <h2>GESTOR DE EQUIPOS</h2>
+    <button class="btn-portal btn-salida" onclick="showView('vista-salida')">REGISTRO DE SALIDA</button>
+    <button class="btn-portal btn-entrega" onclick="showView('vista-entrega')">ENTREGA DE EQUIPOS</button>
+  </div>
+
+  <div id="vista-entrega" class="hidden">
+    <button class="btn-portal btn-back" onclick="showView('menu-principal')">← VOLVER</button>
+    <h3>Entrega de Equipos (Bodega)</h3>
+    
+    <form id="form-entrega-actual">
+      <div class="form-group">
+        <label>Nombre del Técnico (B)</label>
+        <input type="text" id="ent_tecnico" required placeholder="Tu nombre">
+      </div>
+
+      <div class="form-group">
+        <label>Sitio (C)</label>
+        <input type="text" id="ent_sitio" placeholder="Nombre del Sitio" onblur="buscarPendientes()">
+      </div>
+
+      <div class="form-group">
+        <label>ID Sitio (D)</label>
+        <input type="text" id="ent_id_sitio" readonly style="background:#eee;">
+      </div>
+
+      <div class="form-group">
+        <label>Estado del Equipo (E)</label>
+        <select id="ent_estado" onchange="toggleLogicaEstado()" required>
+          <option value="">Seleccione Estado...</option>
+          <option value="DAÑADO">DAÑADO</option>
+          <option value="NO UTILIZADO">NO UTILIZADO</option>
+          <option value="USADO EN BUEN ESTADO">USADO EN BUEN ESTADO</option>
+          <option value="POR REPARACION">POR REPARACIÓN</option>
+        </select>
+      </div>
+
+      <div id="div_referencia" class="form-group hidden">
+        <label style="color:var(--danger)">Seleccionar Equipo Pendiente (F)</label>
+        <select id="ent_ref_salida" onchange="autocompletarDesdeSalida()">
+          <option value="">Cargando pendientes...</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Descripción / Modelo (G)</label>
+        <input type="text" id="ent_descripcion" required placeholder="Nombre del equipo">
+      </div>
+
+      <div class="form-group">
+        <label>Marca (H)</label>
+        <input type="text" id="ent_marca" required>
+      </div>
+
+      <div class="form-group">
+        <label>Bodega (I)</label>
+        <select id="ent_bodega">
+          <option value="SAN BENITO">SAN BENITO</option>
+          <option value="CENTRAL">CENTRAL</option>
+          <option value="TALNIQUE">TALNIQUE</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Serie (J)</label>
+        <input type="text" id="ent_serie" required>
+      </div>
+
+      <div class="form-group">
+        <label>Comentarios / Problema (K)</label>
+        <textarea id="ent_comentario"></textarea>
+      </div>
+
+      <button type="button" class="btn-portal btn-entrega" onclick="enviarEntrega()">FINALIZAR ENTREGA</button>
+    </form>
+    <div id="status-msg"></div>
+  </div>
+
+  <div id="vista-salida" class="hidden">
+    <button class="btn-portal btn-back" onclick="showView('menu-principal')">← VOLVER</button>
+    <h3>Registro de Salida</h3>
+    <p style="text-align:center">Aquí va tu formulario de salida existente.</p>
+  </div>
+
+</div>
+
+<script>
+  // MAPEO DE TUS ENTRY
+  const ENTRIES = {
+    fecha: "entry.997804380",
+    idSitio: "entry.821288735",
+    nombreSitio: "entry.1024047478",
+    marca: "entry.808319871",
+    modelo: "entry.735015225",
+    serie: "entry.1183702054",
+    estado: "entry.1370238515",
+    problema: "entry.110589533",
+    tipoIngreso: "entry.1467261011", // REFERENCIA SALIDA
+    bodega: "entry.1372699954",
+    contrata: "entry.908256573"
+  };
+
+  function showView(id) {
+    document.getElementById('menu-principal').style.display = 'none';
+    document.getElementById('vista-entrega').style.display = 'none';
+    document.getElementById('vista-salida').style.display = 'none';
+    document.getElementById(id).style.display = 'block';
+  }
+
+  function toggleLogicaEstado() {
+    const estado = document.getElementById('ent_estado').value;
+    const divRef = document.getElementById('div_referencia');
+    if (estado === "DAÑADO" || estado === "NO UTILIZADO") {
+      divRef.classList.remove('hidden');
+    } else {
+      divRef.classList.add('hidden');
+      document.getElementById('ent_ref_salida').value = "";
+    }
+  }
+
+  function autocompletarDesdeSalida() {
+    const descOriginal = document.getElementById('ent_ref_salida').value;
+    if(descOriginal) {
+      // LLENAMOS F Y G CON EL MISMO DATO
+      document.getElementById('ent_descripcion').value = descOriginal;
+    }
+  }
+
+  function enviarEntrega() {
+    const formID = "TU_ID_DE_GOOGLE_FORM"; // PEGA AQUÍ EL ID DE TU FORM
+    const baseUrl = `https://docs.google.com/forms/d/e/${formID}/formResponse?`;
+    
+    const query = new URLSearchParams();
+    query.append(ENTRIES.nombreSitio, document.getElementById('ent_sitio').value);
+    query.append(ENTRIES.idSitio, document.getElementById('ent_id_sitio').value);
+    query.append(ENTRIES.estado, document.getElementById('ent_estado').value);
+    query.append(ENTRIES.tipoIngreso, document.getElementById('ent_ref_salida').value); // F
+    query.append(ENTRIES.modelo, document.getElementById('ent_descripcion').value);    // G
+    query.append(ENTRIES.marca, document.getElementById('ent_marca').value);
+    query.append(ENTRIES.bodega, document.getElementById('ent_bodega').value);
+    query.append(ENTRIES.serie, document.getElementById('ent_serie').value);
+    query.append(ENTRIES.problema, document.getElementById('ent_comentario').value);
+    query.append(ENTRIES.contrata, "CELECT");
+
+    const finalUrl = baseUrl + query.toString() + "&submit=Submit";
+
+    document.getElementById('status-msg').innerText = "Enviando...";
+
+    fetch(finalUrl, { mode: 'no-cors' })
+      .then(() => {
+        document.getElementById('status-msg').innerText = "✅ ¡Entrega Exitosa!";
+        
+        // SI ES DAÑADO, MARCAMOS EN LA HOJA DE SALIDAS
+        const estado = document.getElementById('ent_estado').value;
+        if (estado === "DAÑADO" || estado === "NO UTILIZADO") {
+           const ref = document.getElementById('ent_ref_salida').value;
+           google.script.run.marcarComoEntregado(ref);
+        }
+        
+        setTimeout(() => {
+          document.getElementById('form-entrega-actual').reset();
+          showView('menu-principal');
+          document.getElementById('status-msg').innerText = "";
+        }, 2000);
+      });
+  }
+</script>
+
+</body>
+</html>
