@@ -1,71 +1,143 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Retorno de Equipos</title>
+    <title>Retorno de Equipos - CELECT-MV</title>
     <style>
-        body { font-family: sans-serif; padding: 20px; background: #f4f4f4; }
-        .box { background: white; padding: 20px; border-radius: 8px; max-width: 400px; margin: auto; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        input, select, button { width: 100%; padding: 10px; margin: 10px 0; border-radius: 5px; border: 1px solid #ccc; }
-        button { background: #27ae60; color: white; font-weight: bold; cursor: pointer; border: none; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background-color: #f0f2f5; padding: 20px; display: flex; justify-content: center; }
+        .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 450px; }
+        h2 { text-align: center; color: #1a73e8; margin-bottom: 20px; }
+        .group { margin-bottom: 15px; }
+        label { display: block; font-weight: 600; margin-bottom: 8px; color: #444; }
+        input, select { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; box-sizing: border-box; }
+        .btn { width: 100%; padding: 14px; background-color: #1a73e8; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        .btn:disabled { background-color: #ccc; }
+        #status { margin-top: 15px; text-align: center; font-size: 14px; padding: 10px; border-radius: 5px; display: none; font-weight: bold; }
     </style>
 </head>
 <body>
-    <div class="box">
-        <h2>🔄 Retorno de Equipo</h2>
-        <input type="text" id="idSitio" placeholder="ID del Sitio (Ej: SAL001)" oninput="cargarEquipos()">
-        <select id="equipoSelect"><option value="">-- Seleccione Equipo --</option></select>
-        <select id="estado"><option value="USADO">USADO / FUNCIONAL</option><option value="DAÑADO">DAÑADO</option></select>
-        <input type="text" id="serie" placeholder="Confirmar Serie">
-        <button onclick="registrar()">REGISTRAR ENTREGA</button>
-        <p id="msg"></p>
+
+<div class="card">
+    <h2>🔄 Registro de Entrega</h2>
+    
+    <div class="group">
+        <label>ID del Sitio (Búsqueda)</label>
+        <input type="text" id="idSitio" placeholder="Ej: SAL001" oninput="consultarPendientes()">
     </div>
 
-    <script>
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzn16lKWQbMW-wdMufejz764fK-Kizf8WLNYcwHCCeL1aeEqMtsKbhNORQx6tFBBW0O/exec";
-        const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQBNrpLKc_GPFT6Ik9Yr4s1qo8zaOOqrDgTc_9DGeMd20rNTsEtLktTCoeDcRrts6kvgne86KZDfKQS/pub?output=csv";
+    <div class="group">
+        <label>Equipo Pendiente (Filtro CSV)</label>
+        <select id="equipoSelect">
+            <option value="">-- Escriba ID de Sitio --</option>
+        </select>
+    </div>
 
-        async function cargarEquipos() {
-            const id = document.getElementById('idSitio').value.toUpperCase();
-            if(id.length < 3) return;
-            const res = await fetch(CSV_URL);
-            const text = await res.text();
-            const filas = text.split("\n").map(r => r.split(","));
+    <div class="group">
+        <label>Estado Físico al Retornar</label>
+        <select id="estadoFisico">
+            <option value="USADO / FUNCIONAL">USADO / FUNCIONAL</option>
+            <option value="DAÑADO / AVERIADO">DAÑADO / AVERIADO</option>
+            <option value="NO UTILIZADO">NO UTILIZADO</option>
+        </select>
+    </div>
+
+    <div class="group">
+        <label>Confirmar Serie del Equipo</label>
+        <input type="text" id="serieConfirmada" placeholder="Ingrese número de serie físico">
+    </div>
+
+    <button id="btnRegistrar" class="btn" onclick="ejecutarEntrega()">FINALIZAR ENTREGA</button>
+    <div id="status"></div>
+</div>
+
+<script>
+    // CONFIGURACIÓN DE ENLACES
+    const URL_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQBNrpLKc_GPFT6Ik9Yr4s1qo8zaOOqrDgTc_9DGeMd20rNTsEtLktTCoeDcRrts6kvgne86KZDfKQS/pub?output=csv";
+    const URL_SCRIPT = "https://script.google.com/macros/s/AKfycby5wT1f4xxRQvBrCaMuIQzwzsXxl5tqxFREl376TNjRIYhXFjrOSU2GobJby1KJ6rYg/exec";
+    const URL_FORM_RESPALDO = "https://docs.google.com/forms/d/e/1FAIpQLSfz-IGCT2vdfUplh2MipdjgBLcspDE_TWChhrWn1wBaVMnWOQ/formResponse";
+
+    // 1. FILTRAR EQUIPOS PENDIENTES
+    async function consultarPendientes() {
+        const idBuscado = document.getElementById('idSitio').value.trim().toUpperCase();
+        if (idBuscado.length < 3) return;
+
+        try {
+            const response = await fetch(URL_CSV);
+            const data = await response.text();
+            const filas = data.split("\n").map(f => f.split(","));
             const select = document.getElementById('equipoSelect');
-            select.innerHTML = '<option value="">-- Seleccione Equipo --</option>';
             
-            filas.forEach(f => {
-                if(f[3]?.replace(/"/g,"") == id && f[9]?.replace(/"/g,"") == "PENDIENTE") {
+            select.innerHTML = '<option value="">Seleccione el equipo...</option>';
+
+            filas.forEach(col => {
+                const idSheet = col[3]?.replace(/"/g, "").trim();    // Col D: ID Sitio
+                const descSheet = col[5]?.replace(/"/g, "").trim();  // Col F: Descripción
+                const estadoSheet = col[9]?.replace(/"/g, "").trim(); // Col J: Estado
+
+                if (idSheet === idBuscado && estadoSheet === "PENDIENTE") {
                     let opt = document.createElement('option');
-                    opt.value = f[5].replace(/"/g,"");
-                    opt.textContent = f[5].replace(/"/g,"");
+                    opt.value = descSheet;
+                    opt.textContent = descSheet;
                     select.appendChild(opt);
                 }
             });
+        } catch (e) { console.error("Error leyendo CSV:", e); }
+    }
+
+    // 2. PROCESO DE ENTREGA (DOBLE ENVÍO)
+    async function ejecutarEntrega() {
+        const id = document.getElementById('idSitio').value;
+        const equipo = document.getElementById('equipoSelect').value;
+        const estado = document.getElementById('estadoFisico').value;
+        const serie = document.getElementById('serieConfirmada').value;
+        const statusDiv = document.getElementById('status');
+        const btn = document.getElementById('btnRegistrar');
+
+        if (!equipo || !serie) {
+            alert("Por favor, seleccione el equipo y confirme la serie.");
+            return;
         }
 
-        async function registrar() {
-            const btn = document.querySelector("button");
-            const msg = document.getElementById("msg");
-            btn.disabled = true; msg.innerText = "Procesando...";
+        btn.disabled = true;
+        statusDiv.style.display = "block";
+        statusDiv.style.backgroundColor = "#fff3cd";
+        statusDiv.innerHTML = "⌛ Registrando en Google Sheets y Formulario...";
 
-            const params = new URLSearchParams({
-                action: "entregar",
-                descripcion: document.getElementById('equipoSelect').value,
-                estado: document.getElementById('estado').value,
-                serie: document.getElementById('serie').value
-            });
+        try {
+            // A. ENVÍO AL GOOGLE FORM (RESPALDO EXTERNO)
+            const formParams = new URLSearchParams();
+            formParams.append("entry.821288735", id);        // ID Sitio
+            formParams.append("entry.1467261011", equipo);    // Descripción
+            formParams.append("entry.1183702054", serie);     // Serie
+            // Nota: Se usa no-cors para Google Forms
+            fetch(`${URL_FORM_RESPALDO}?${formParams.toString()}`, { mode: 'no-cors' });
 
-            try {
-                const res = await fetch(SCRIPT_URL + "?" + params.toString(), { method: 'POST' });
-                const text = await res.text();
-                if(text.includes("EXITOSA")) {
-                    msg.innerText = "✅ Entrega anotada con fecha en el sistema.";
-                    setTimeout(() => location.reload(), 2000);
-                } else { msg.innerText = "❌ " + text; btn.disabled = false; }
-            } catch(e) { msg.innerText = "❌ Error de conexión"; btn.disabled = false; }
+            // B. ENVÍO AL APPS SCRIPT (ACTUALIZACIÓN DE FILA)
+            const scriptParams = new URLSearchParams();
+            scriptParams.append("action", "entregar");
+            scriptParams.append("descripcion", equipo);
+            scriptParams.append("estado", estado);
+            scriptParams.append("serie", serie);
+
+            const resScript = await fetch(URL_SCRIPT + "?" + scriptParams.toString(), { method: 'POST' });
+            const resultText = await resScript.text();
+
+            if (resultText.includes("EXITOSA")) {
+                statusDiv.style.backgroundColor = "#d4edda";
+                statusDiv.innerHTML = "✅ ¡ENTREGA REGISTRADA!<br>Fila actualizada y respaldo enviado.";
+                setTimeout(() => location.reload(), 3000);
+            } else {
+                throw new Error(resultText);
+            }
+
+        } catch (e) {
+            statusDiv.style.backgroundColor = "#f8d7da";
+            statusDiv.innerHTML = "❌ ERROR: " + e.message;
+            btn.disabled = false;
         }
-    </script>
+    }
+</script>
+
 </body>
 </html>
