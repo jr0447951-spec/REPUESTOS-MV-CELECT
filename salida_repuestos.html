@@ -2,77 +2,127 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Salida de Repuestos - Network Ops</title>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Repuestos Go! - Network Ops</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
     <style>
-        :root { 
-            --primary: #00a1ff; 
-            --dark-bg: #0f172a;
-            --glass: rgba(255, 255, 255, 0.08);
-            --border: rgba(255, 255, 255, 0.15);
-            --success: #22c55e;
-            --warning: #fbbf24;
+        :root {
+            --brand: #4f46e5;
+            --brand-light: #818cf8;
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --text: #1e293b;
+            --success: #10b981;
         }
 
-        body { 
-            font-family: 'Segoe UI', sans-serif; margin: 0; padding: 0; 
-            background: radial-gradient(circle at top right, #1e293b, var(--dark-bg));
-            color: white; min-height: 100vh;
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: radial-gradient(circle at top left, #eef2ff 0%, #f8fafc 100%);
+            color: var(--text);
+            margin: 0; padding: 0;
+            min-height: 100vh;
+            display: flex; flex-direction: column;
         }
 
-        header { 
-            background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(12px);
-            padding: 15px 0; text-align: center; border-bottom: 1px solid var(--border);
+        /* Header Amigable */
+        header {
+            padding: 25px 20px;
+            text-align: center;
+            background: var(--card-bg);
+            border-bottom-left-radius: 30px;
+            border-bottom-right-radius: 30px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.05);
         }
 
-        h1 { font-family: 'Orbitron', sans-serif; margin: 0; font-size: 1.1rem; letter-spacing: 2px; background: linear-gradient(to bottom, #ffffff, #00a1ff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-
-        .container { width: 92%; max-width: 500px; margin: 20px auto; padding-bottom: 50px; }
-        
-        .timer { text-align: center; font-family: 'Orbitron', sans-serif; font-size: 1.5rem; color: var(--primary); margin-bottom: 20px; }
-
-        .card { background: var(--glass); backdrop-filter: blur(15px); border: 1px solid var(--border); border-radius: 20px; padding: 22px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
-
-        label { display: block; margin-top: 20px; font-size: 0.7rem; color: var(--primary); font-weight: 800; text-transform: uppercase; }
-
-        /* --- BOTONES DE BODEGA (NUEVO) --- */
-        .bodega-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 10px; }
-        .btn-bodega { 
-            background: rgba(255,255,255,0.05); border: 1px solid var(--border); 
-            color: white; padding: 12px 5px; border-radius: 10px; cursor: pointer; 
-            font-size: 0.75rem; font-weight: bold; transition: 0.3s;
-            font-family: 'Orbitron', sans-serif;
-        }
-        .btn-bodega.selected { background: var(--primary); border-color: white; box-shadow: 0 0 15px var(--primary); }
-
-        input { 
-            width: 100%; padding: 14px; margin-top: 6px; border-radius: 12px; 
-            border: 1px solid var(--border); background: rgba(255,255,255,0.05);
-            color: white; outline: none; box-sizing: border-box;
+        header h1 { 
+            margin: 0; font-size: 1.4rem; color: var(--brand); 
+            font-weight: 600; letter-spacing: -0.5px;
         }
 
-        input:focus { border-color: var(--primary); background: rgba(255,255,255,0.1); }
-        .readonly { background: rgba(0,0,0,0.3); color: #888; border-style: dashed; }
+        .container { width: 90%; max-width: 450px; margin: 20px auto; flex: 1; }
 
-        /* Buscador / Sugerencias */
-        .search-container { position: relative; }
-        .suggestions { 
-            position: absolute; top: 100%; left: 0; right: 0; 
-            background: #1e293b; border: 1px solid var(--primary); 
-            border-radius: 12px; max-height: 200px; overflow-y: auto; z-index: 3000;
-            display: none; margin-top: 5px;
+        .timer-pill {
+            background: var(--brand); color: white;
+            padding: 6px 15px; border-radius: 20px;
+            font-size: 0.8rem; font-weight: 600;
+            display: inline-block; margin-bottom: 15px;
+            box-shadow: 0 4px 10px rgba(79, 70, 229, 0.3);
         }
-        .suggestion-item { padding: 14px; border-bottom: 1px solid var(--border); cursor: pointer; font-size: 0.85rem; }
-        .suggestion-item:hover { background: rgba(0, 161, 255, 0.2); }
 
-        button#btnEnviar { 
-            width: 100%; padding: 18px; border-radius: 16px; border: none;
-            background: linear-gradient(135deg, var(--primary), #0072ff);
-            color: white; font-family: 'Orbitron', sans-serif; font-weight: bold;
-            margin-top: 30px; cursor: pointer;
+        /* Tarjetas Estilo iOS */
+        .card {
+            background: var(--card-bg);
+            border-radius: 24px;
+            padding: 25px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.03);
+            border: 1px solid rgba(255,255,255,0.8);
         }
+
+        label {
+            display: block; margin-top: 15px;
+            font-size: 0.75rem; font-weight: 600;
+            color: #64748b; margin-left: 5px;
+        }
+
+        /* Botones de Bodega Estilo Pop */
+        .bodega-grid {
+            display: grid; grid-template-columns: repeat(3, 1fr);
+            gap: 12px; margin-top: 8px;
+        }
+
+        .btn-bodega {
+            background: #f1f5f9; border: 2px solid transparent;
+            padding: 12px 5px; border-radius: 16px;
+            font-size: 0.7rem; font-weight: 600; color: #475569;
+            cursor: pointer; transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .btn-bodega.selected {
+            background: #fff; border-color: var(--brand);
+            color: var(--brand); transform: scale(1.05);
+            box-shadow: 0 8px 15px rgba(79, 70, 229, 0.15);
+        }
+
+        /* Inputs Modernos */
+        input {
+            width: 100%; padding: 14px; margin-top: 6px;
+            border-radius: 16px; border: 1.5px solid #e2e8f0;
+            background: #f8fafc; color: var(--text);
+            font-size: 1rem; outline: none; transition: 0.3s;
+            box-sizing: border-box;
+        }
+
+        input:focus { border-color: var(--brand-light); background: #fff; box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1); }
+
+        .readonly { background: #f1f5f9; color: #94a3b8; border-style: none; font-size: 0.9rem; }
+
+        /* Buscador Sugerencias */
+        .suggestions {
+            position: absolute; width: 100%; background: #fff;
+            border-radius: 16px; box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+            z-index: 100; display: none; margin-top: 5px;
+            border: 1px solid #e2e8f0; overflow: hidden;
+        }
+        .suggestion-item {
+            padding: 15px; border-bottom: 1px solid #f1f5f9;
+            font-size: 0.9rem; cursor: pointer;
+        }
+        .suggestion-item:active { background: #f1f5f9; }
+
+        /* Botón de Envío */
+        .btn-send {
+            width: 100%; padding: 18px; border-radius: 18px;
+            background: linear-gradient(135deg, var(--brand), var(--brand-light));
+            color: white; border: none; font-weight: 600;
+            font-size: 1rem; margin-top: 30px;
+            box-shadow: 0 10px 20px rgba(79, 70, 229, 0.2);
+            cursor: pointer; transition: 0.3s;
+        }
+
+        .btn-send:active { transform: scale(0.96); }
+
+        #load-info { font-size: 0.7rem; color: #94a3b8; text-align: center; margin-top: 15px; }
 
         .hidden { display: none; }
     </style>
@@ -80,48 +130,50 @@
 <body>
 
 <header>
-    <h1>SALIDA DE REPUESTOS</h1>
+    <div class="timer-pill" id="reloj">00:00:00</div>
+    <h1>Registro de Salida</h1>
 </header>
 
 <div class="container">
-    <div class="timer" id="reloj">00:00:00</div>
-
-    <div class="card" id="consentimiento">
-        <p style="text-align: center;">Requiere acceso a Drive para fotos e identidad de red.</p>
-        <button onclick="activarFormulario()" style="width: 100%; padding: 15px; border-radius: 10px; border: none; background: var(--primary); color: white; font-weight: bold;">ACEPTAR</button>
+    <div class="card" id="consentimiento" style="text-align: center;">
+        <div style="font-size: 3rem; margin-bottom: 10px;">📦</div>
+        <h2 style="font-size: 1.2rem; margin-bottom: 10px;">¡Hola!</h2>
+        <p style="color: #64748b; font-size: 0.9rem; line-height: 1.5;">Para registrar un repuesto necesitamos acceso para guardar tu foto de evidencia.</p>
+        <button onclick="activar()" id="btnStart" disabled class="btn-send" style="background: #94a3b8;">Cargando inventario...</button>
+        <div id="load-info">Sincronizando repuestos 2026...</div>
     </div>
 
     <form id="mainForm" class="hidden">
         <div class="card">
-            <label>1. Bodega de Retiro</label>
+            <label>¿Desde qué bodega retiras?</label>
             <div class="bodega-grid">
-                <button type="button" class="btn-bodega" onclick="selectBodega(this, 'SAN BENITO')">SAN BENITO</button>
-                <button type="button" class="btn-bodega" onclick="selectBodega(this, 'CENTRAL')">CENTRAL</button>
-                <button type="button" class="btn-bodega" onclick="selectBodega(this, 'TALNIQUE')">TALNIQUE</button>
+                <button type="button" class="btn-bodega" onclick="selectB(this, 'SAN BENITO')">San Benito</button>
+                <button type="button" class="btn-bodega" onclick="selectB(this, 'CENTRAL')">Central</button>
+                <button type="button" class="btn-bodega" onclick="selectB(this, 'TALNIQUE')">Talnique</button>
             </div>
-            <input type="hidden" id="bodegaSeleccionada" required>
+            <input type="hidden" id="bodega" required>
 
-            <div class="search-container">
-                <label>2. Buscar Sitio</label>
-                <input type="text" id="siteSearch" placeholder="🔍 ID o Nombre..." autocomplete="off" required>
+            <div style="position:relative">
+                <label>Nombre del Sitio</label>
+                <input type="text" id="siteSearch" placeholder="Escribe para buscar..." autocomplete="off" required>
                 <div id="siteSug" class="suggestions"></div>
             </div>
             <input type="text" id="idSitio" class="readonly" placeholder="ID automático" readonly required>
 
-            <div class="search-container">
-                <label>3. Descripción de Equipo (Repuesto)</label>
-                <input type="text" id="equipoSearch" placeholder="🔍 Escriba para buscar..." autocomplete="off" required>
-                <div id="equipoSug" class="suggestions"></div>
+            <div style="position:relative">
+                <label>¿Qué repuesto llevas?</label>
+                <input type="text" id="eqSearch" placeholder="Busca tu repuesto..." autocomplete="off" required>
+                <div id="eqSug" class="suggestions"></div>
             </div>
-            <input type="text" id="marca" class="readonly" placeholder="Marca automática" readonly required>
+            <input type="text" id="marca" class="readonly" placeholder="Marca" readonly required>
 
-            <label>4. Número de Serie</label>
-            <input type="text" id="serie" placeholder="Ingrese S/N" required>
+            <label>Número de Serie</label>
+            <input type="text" id="serie" placeholder="Escanea o escribe S/N" required>
 
-            <label>5. Fotografía</label>
-            <input type="file" id="foto" accept="image/*" required>
+            <label>Foto de la pieza</label>
+            <input type="file" id="foto" accept="image/*" required style="padding: 10px; font-size: 0.8rem; background: none; border: 1.5px dashed #cbd5e1;">
 
-            <button type="submit" id="btnEnviar">REGISTRAR SALIDA</button>
+            <button type="submit" id="btnEnviar" class="btn-send">FINALIZAR REGISTRO</button>
         </div>
     </form>
 </div>
@@ -133,137 +185,102 @@
         URL_FORMS_EXTERNO: 'https://docs.google.com/forms/d/e/TU_ID_DE_FORMS/viewform'
     };
 
-    let sites = [];
-    let equipos = [];
+    let sites = [], equipos = [];
 
     setInterval(() => {
         document.getElementById('reloj').innerText = new Date().toLocaleTimeString("es-SV", { timeZone: "America/El_Salvador", hour12: false });
     }, 1000);
 
-    // Selección de Bodega tipo Pop
-    function selectBodega(btn, valor) {
-        document.querySelectorAll('.btn-bodega').forEach(b => b.classList.remove('selected'));
-        btn.classList.add('selected');
-        document.getElementById('bodegaSeleccionada').value = valor;
-    }
+    window.onload = () => {
+        // Cargar Sitios
+        fetch(CONFIG.URL_SITIOS_CSV).then(r => r.text()).then(t => { sites = parseCSV(t); });
 
-    async function cargarDatos() {
-        try {
-            // Sitios
-            const resS = await fetch(CONFIG.URL_SITIOS_CSV);
-            const textS = await resS.text();
-            sites = parseCSV(textS);
+        // Cargar Repuestos con el nombre de tus columnas
+        Papa.parse("inventario_repuestos.csv", {
+            download: true, header: true, delimiter: ";", skipEmptyLines: true,
+            complete: function(res) {
+                equipos = res.data;
+                const b = document.getElementById('btnStart');
+                b.disabled = false; b.style.background = "var(--brand)"; b.innerText = "¡EMPEZAR!";
+                document.getElementById('load-info').innerText = "Inventario sincronizado: " + equipos.length + " items";
+            }
+        });
+    };
 
-            // Equipos (Forzamos la carga del CSV local)
-            Papa.parse("inventario_repuestos.csv", {
-                download: true,
-                header: true,
-                skipEmptyLines: true,
-                complete: function(results) {
-                    equipos = results.data;
-                    console.log("Inventario cargado:", equipos.length, "items");
-                }
-            });
-        } catch (e) { console.error("Error cargando bases."); }
-    }
-
-    function parseCSV(data) {
-        const rows = data.split(/\r?\n/).filter(row => row.trim().length > 0);
-        const headers = rows[0].split(',').map(h => h.trim().replace(/"/g, ''));
-        return rows.slice(1).map(row => {
-            const values = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
-            let obj = {};
-            headers.forEach((h, i) => obj[h] = values[i] ? values[i].trim().replace(/"/g, '') : '');
-            return obj;
+    function parseCSV(d) {
+        const r = d.split(/\r?\n/).filter(x => x.trim().length > 0);
+        const h = r[0].split(',').map(x => x.trim().replace(/"/g, ''));
+        return r.slice(1).map(row => {
+            const v = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+            let o = {}; h.forEach((k, i) => o[k] = v[i] ? v[i].trim().replace(/"/g, '') : '');
+            return o;
         });
     }
 
-    function activarFormulario() {
+    function selectB(btn, v) {
+        document.querySelectorAll('.btn-bodega').forEach(x => x.classList.remove('selected'));
+        btn.classList.add('selected');
+        document.getElementById('bodega').value = v;
+    }
+
+    function activar() {
         document.getElementById('consentimiento').classList.add('hidden');
         document.getElementById('mainForm').classList.remove('hidden');
-        cargarDatos();
     }
 
-    // BUSCADOR DE SITIOS
-    const sInput = document.getElementById('siteSearch');
-    const sSug = document.getElementById('siteSug');
-    sInput.addEventListener('input', () => {
-        const val = sInput.value.toLowerCase().trim();
-        if (val.length < 2) { sSug.style.display = 'none'; return; }
-        const matches = sites.filter(s => (s.SITEID && s.SITEID.toLowerCase().includes(val)) || (s['NOMBRE DE SITIO'] && s['NOMBRE DE SITIO'].toLowerCase().includes(val))).slice(0,6);
-        sSug.innerHTML = matches.map(s => `<div class="suggestion-item" onclick="setSitio('${s.SITEID}', '${s['NOMBRE DE SITIO']}')"><strong>${s.SITEID}</strong> - ${s['NOMBRE DE SITIO']}</div>`).join('');
-        sSug.style.display = matches.length ? 'block' : 'none';
+    // Buscador Sitios
+    const si = document.getElementById('siteSearch'), ss = document.getElementById('siteSug');
+    si.addEventListener('input', () => {
+        const v = si.value.toLowerCase().trim();
+        if(v.length < 2) { ss.style.display = 'none'; return; }
+        const m = sites.filter(s => (s.SITEID && s.SITEID.toString().toLowerCase().includes(v)) || (s['NOMBRE DE SITIO'] && s['NOMBRE DE SITIO'].toLowerCase().includes(v))).slice(0,5);
+        ss.innerHTML = m.map(s => `<div class="suggestion-item" onclick="setS('${s.SITEID}', '${s['NOMBRE DE SITIO'].replace(/'/g, "")}')"><strong>${s.SITEID}</strong><br><small>${s['NOMBRE DE SITIO']}</small></div>`).join('');
+        ss.style.display = m.length ? 'block' : 'none';
     });
 
-    function setSitio(id, nombre) {
-        sInput.value = nombre;
-        document.getElementById('idSitio').value = id;
-        sSug.style.display = 'none';
-    }
+    function setS(i, n) { si.value = n; document.getElementById('idSitio').value = i; ss.style.display = 'none'; }
 
-    // BUSCADOR DE EQUIPOS (CORREGIDO)
-    const eInput = document.getElementById('equipoSearch');
-    const eSug = document.getElementById('equipoSug');
-    eInput.addEventListener('input', () => {
-        const val = eInput.value.toLowerCase().trim();
-        if (val.length < 2) { eSug.style.display = 'none'; return; }
-        
-        // Buscamos en la columna "Descripcion" (asegúrate que el CSV tenga ese encabezado exacto)
-        const matches = equipos.filter(eq => 
-            eq.Descripcion && eq.Descripcion.toLowerCase().includes(val)
-        ).slice(0, 6);
-
-        eSug.innerHTML = matches.map(eq => `
-            <div class="suggestion-item" onclick="setEquipo('${eq.Descripcion.replace(/'/g, "\\'")}', '${eq.Marca.replace(/'/g, "\\'")}')">
-                ${eq.Descripcion} <br> <small style="color:var(--primary)">Marca: ${eq.Marca}</small>
-            </div>
-        `).join('');
-        eSug.style.display = matches.length ? 'block' : 'none';
+    // Buscador Equipos (Usando tus nombres de columna)
+    const ei = document.getElementById('eqSearch'), es = document.getElementById('eqSug');
+    ei.addEventListener('input', () => {
+        const v = ei.value.toLowerCase().trim();
+        if(v.length < 2) { es.style.display = 'none'; return; }
+        const m = equipos.filter(e => e["DESCRIPCION DE EQUIPO"] && e["DESCRIPCION DE EQUIPO"].toLowerCase().includes(v)).slice(0,6);
+        es.innerHTML = m.map(e => `<div class="suggestion-item" onclick="setE('${e["DESCRIPCION DE EQUIPO"].replace(/'/g, "")}', '${e["MARCA"]}')"><strong>${e["DESCRIPCION DE EQUIPO"]}</strong><br><small style="color:var(--brand)">${e["MARCA"]}</small></div>`).join('');
+        es.style.display = m.length ? 'block' : 'none';
     });
 
-    function setEquipo(desc, marca) {
-        eInput.value = desc;
-        document.getElementById('marca').value = marca;
-        eSug.style.display = 'none';
-    }
+    function setE(d, m) { ei.value = d; document.getElementById('marca').value = m; es.style.display = 'none'; }
 
-    // ENVÍO
+    // Envío
     document.getElementById('mainForm').onsubmit = async (e) => {
         e.preventDefault();
-        if(!document.getElementById('bodegaSeleccionada').value) { alert("Seleccione una bodega"); return; }
+        const b = document.getElementById('btnEnviar');
+        b.disabled = true; b.innerText = "Subiendo datos...";
         
-        const btn = document.getElementById('btnEnviar');
-        btn.disabled = true; btn.innerText = "REGISTRANDO...";
-
         const file = document.getElementById('foto').files[0];
         const reader = new FileReader();
-        reader.onload = async function() {
-            const base64 = reader.result.split(',')[1];
-            const payload = {
-                fileData: base64, fileName: file.name, mimeType: file.type,
-                bodega: document.getElementById('bodegaSeleccionada').value,
-                idSitio: document.getElementById('idSitio').value,
-                nombreSitio: document.getElementById('siteSearch').value,
-                descripcion: document.getElementById('equipoSearch').value,
-                marca: document.getElementById('marca').value,
+        reader.onload = async () => {
+            const p = {
+                fileData: reader.result.split(',')[1], fileName: file.name, mimeType: file.type,
+                bodega: document.getElementById('bodega').value, idSitio: document.getElementById('idSitio').value,
+                nombreSitio: si.value, descripcion: ei.value, marca: document.getElementById('marca').value,
                 serie: document.getElementById('serie').value
             };
-
             try {
-                const resp = await fetch(CONFIG.URL_APPS_SCRIPT, { method: 'POST', body: new URLSearchParams(payload) });
-                const res = await resp.json();
-                if (res.result === "success") {
-                    const finalUrl = `${CONFIG.URL_FORMS_EXTERNO}?entry.795516044=${encodeURIComponent(payload.bodega)}&entry.1265319450=${encodeURIComponent(payload.idSitio)}&entry.1509520939=${encodeURIComponent(payload.nombreSitio)}&entry.554570123=${encodeURIComponent(payload.marca)}&entry.1914147166=${encodeURIComponent(payload.descripcion)}&entry.1497572830=${encodeURIComponent(payload.serie)}&entry.733439703=${encodeURIComponent(res.fileUrl)}`;
-                    window.location.href = finalUrl;
+                const r = await fetch(CONFIG.URL_APPS_SCRIPT, { method: 'POST', body: new URLSearchParams(p) });
+                const res = await r.json();
+                if(res.result === "success") {
+                    window.location.href = `${CONFIG.URL_FORMS_EXTERNO}?entry.795516044=${encodeURIComponent(p.bodega)}&entry.1265319450=${encodeURIComponent(p.idSitio)}&entry.1509520939=${encodeURIComponent(p.nombreSitio)}&entry.554570123=${encodeURIComponent(p.marca)}&entry.1914147166=${encodeURIComponent(p.descripcion)}&entry.1497572830=${encodeURIComponent(p.serie)}&entry.733439703=${encodeURIComponent(res.fileUrl)}`;
                 }
-            } catch (err) { alert("Error de red"); btn.disabled = false; }
+            } catch(x) { alert("Error"); b.disabled = false; }
         };
         reader.readAsDataURL(file);
     };
 
     document.addEventListener('click', (e) => {
-        if (!sInput.contains(e.target)) sSug.style.display = 'none';
-        if (!eInput.contains(e.target)) eSug.style.display = 'none';
+        if(!si.contains(e.target)) ss.style.display = 'none';
+        if(!ei.contains(e.target)) es.style.display = 'none';
     });
 </script>
 </body>
