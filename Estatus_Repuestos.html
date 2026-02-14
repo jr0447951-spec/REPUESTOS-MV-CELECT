@@ -226,16 +226,17 @@ function aplicarFiltroEntregas() {
                (semana === "" || numSemanaFila == semana);
     }).map(f => `
         <tr>
-            <td>${f[0]}</td>
-            <td>${f[3]}</td>
-            <td>${f[2]}</td>
-            <td>${f[6]}</td>
-            <td>${f[9]}</td>
-            <td>${f[8]}</td>
-            <td>${f[1]}</td>
+            <td>${f[0]}</td>   <!-- Fecha Entrega -->
+            <td>${f[3]}</td>   <!-- ID Sitio -->
+            <td>${f[2]}</td>   <!-- Sitio -->
+            <td>${f[6]}</td>   <!-- Nombre de Equipo -->
+            <td>${f[9]}</td>   <!-- Serie -->
+            <td>${f[8]}</td>   <!-- Bodega CORREGIDO -->
+            <td>${f[1]}</td>   <!-- Técnico -->
         </tr>
     `).join('');
 }
+
 
 // Eventos de filtros
 document.getElementById('filterSitioPendientes').addEventListener('input', aplicarFiltroPendientes);
