@@ -1,177 +1,136 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
-  <base target="_top">
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Entrega de Equipos</title>
-  <style>
-    :root { --success: #27ae60; --primary: #2c3e50; --danger: #e74c3c; }
-    body { font-family: 'Segoe UI', sans-serif; margin: 0; padding: 15px; background: #f4f4f4; }
-    .container { max-width: 500px; margin: auto; background: white; padding: 20px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
-    h2 { text-align: center; color: var(--primary); margin-top: 0; }
-    .form-group { margin-bottom: 15px; }
-    label { display: block; margin-bottom: 5px; font-weight: bold; color: #333; font-size: 14px; }
-    input, select, textarea { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
-    input[readonly] { background-color: #eee; color: #555; }
-    .hidden { display: none; }
-    .btn-enviar { width: 100%; padding: 18px; background: var(--success); border: none; border-radius: 10px; color: white; font-size: 18px; font-weight: bold; cursor: pointer; margin-top: 10px; }
-    #status-msg { text-align: center; font-weight: bold; margin-top: 15px; color: var(--primary); }
-    .ref-label { color: var(--danger); font-size: 13px; margin-top: 5px; display: block; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Retorno de Equipos - CELECT-MV</title>
+    <style>
+        body { font-family: 'Segoe UI', Arial, sans-serif; background-color: #f0f2f5; padding: 20px; display: flex; justify-content: center; }
+        .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 450px; }
+        h2 { text-align: center; color: #1a73e8; margin-bottom: 20px; }
+        .group { margin-bottom: 15px; }
+        label { display: block; font-weight: 600; margin-bottom: 8px; color: #444; }
+        input, select { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; box-sizing: border-box; }
+        .btn { width: 100%; padding: 14px; background-color: #1a73e8; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        .btn:hover { background-color: #1557b0; }
+        #status { margin-top: 15px; text-align: center; font-size: 14px; padding: 10px; border-radius: 5px; display: none; }
+    </style>
 </head>
 <body>
 
-<div class="container">
-    <h2>ENTREGA DE EQUIPOS</h2>
+<div class="card">
+    <h2>🔄 Retorno de Equipo</h2>
     
-    <form id="form-entrega">
-      <div class="form-group">
-        <label>Técnico Responsable</label>
-        <input type="text" id="ent_tecnico" required placeholder="Nombre completo">
-      </div>
+    <div class="group">
+        <label>ID del Sitio</label>
+        <input type="text" id="idSitio" placeholder="Ej: SAL001" oninput="consultarPendientes()">
+    </div>
 
-      <div class="form-group">
-        <label>Nombre del Sitio (C)</label>
-        <input type="text" id="ent_sitio" placeholder="Buscar sitio..." onblur="buscarPendientes()">
-      </div>
-      <div class="form-group">
-        <label>ID Sitio (D)</label>
-        <input type="text" id="ent_id_sitio" readonly>
-      </div>
-
-      <div class="form-group">
-        <label>Estado del Equipo (E)</label>
-        <select id="ent_estado" onchange="toggleLogicaEstado()" required>
-          <option value="">Seleccione Estado...</option>
-          <option value="DAÑADO">DAÑADO</option>
-          <option value="NO UTILIZADO">NO UTILIZADO</option>
-          <option value="USADO EN BUEN ESTADO">USADO EN BUEN ESTADO</option>
-          <option value="POR REPARACION">POR REPARACIÓN</option>
+    <div class="group">
+        <label>Equipo a Entregar</label>
+        <select id="equipoSelect">
+            <option value="">-- Ingrese ID primero --</option>
         </select>
-      </div>
+    </div>
 
-      <div id="div_referencia" class="form-group hidden">
-        <label class="ref-label">EQUIPO PENDIENTE DE RETORNO (F)</label>
-        <select id="ent_ref_salida" onchange="copiarDatosSalida()">
-          <option value="">Cargando equipos del sitio...</option>
+    <div class="group">
+        <label>Estado de Retorno</label>
+        <select id="estado">
+            <option value="USADO">USADO / FUNCIONAL</option>
+            <option value="DAÑADO">DAÑADO / AVERIADO</option>
+            <option value="NO UTILIZADO">NO UTILIZADO</option>
         </select>
-      </div>
+    </div>
 
-      <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
+    <div class="group">
+        <label>Confirmar Serie</label>
+        <input type="text" id="serieConfirmada" placeholder="Ingrese número de serie">
+    </div>
 
-      <div class="form-group">
-        <label>Descripción / Modelo del Equipo (G)</label>
-        <input type="text" id="ent_descripcion" required placeholder="Nombre del repuesto">
-      </div>
-
-      <div class="form-group">
-        <label>Marca (H)</label>
-        <input type="text" id="ent_marca" required>
-      </div>
-
-      <div class="form-group">
-        <label>Bodega de Destino (I)</label>
-        <select id="ent_bodega">
-          <option value="SAN BENITO">SAN BENITO</option>
-          <option value="CENTRAL">CENTRAL</option>
-          <option value="TALNIQUE">TALNIQUE</option>
-        </select>
-      </div>
-
-      <div class="form-group">
-        <label>Número de Serie (J)</label>
-        <input type="text" id="ent_serie" required placeholder="S/N">
-      </div>
-
-      <div class="form-group">
-        <label>Comentarios o Problema (K)</label>
-        <textarea id="ent_comentario" rows="3" placeholder="Detalles adicionales..."></textarea>
-      </div>
-
-      <button type="button" class="btn-enviar" onclick="enviarEntrega()">REGISTRAR ENTREGA</button>
-    </form>
-    <div id="status-msg"></div>
+    <button class="btn" onclick="ejecutarEntrega()">REGISTRAR ENTREGA</button>
+    <div id="status"></div>
 </div>
 
 <script>
-  // MAPEADO DE TUS ENTRY.ID
-  const ENTRIES = {
-    idSitio: "entry.821288735",
-    nombreSitio: "entry.1024047478",
-    marca: "entry.808319871",
-    modelo: "entry.735015225",     
-    serie: "entry.1183702054",
-    estado: "entry.1370238515",
-    problema: "entry.110589533",    
-    tipoIngreso: "entry.1467261011", 
-    bodega: "entry.1372699954",
-    contrata: "entry.908256573"
-  };
+    const URL_CSV_SALIDAS = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQBNrpLKc_GPFT6Ik9Yr4s1qo8zaOOqrDgTc_9DGeMd20rNTsEtLktTCoeDcRrts6kvgne86KZDfKQS/pub?output=csv";
+    const URL_SCRIPT = "https://script.google.com/macros/s/AKfycby5wT1f4xxRQvBrCaMuIQzwzsXxl5tqxFREl376TNjRIYhXFjrOSU2GobJby1KJ6rYg/exec";
+    const URL_FORM = "https://docs.google.com/forms/d/e/1FAIpQLSfz-IGCT2vdfUplh2MipdjgBLcspDE_TWChhrWn1wBaVMnWOQ/formResponse";
 
-  function toggleLogicaEstado() {
-    const estado = document.getElementById('ent_estado').value;
-    const divRef = document.getElementById('div_referencia');
-    if (estado === "DAÑADO" || estado === "NO UTILIZADO") {
-      divRef.classList.remove('hidden');
-    } else {
-      divRef.classList.add('hidden');
-      document.getElementById('ent_ref_salida').value = "";
+    // 1. FILTRAR EQUIPOS PENDIENTES DESDE EL CSV
+    async function consultarPendientes() {
+        const idBuscado = document.getElementById('idSitio').value.trim().toUpperCase();
+        if (idBuscado.length < 3) return;
+
+        try {
+            const response = await fetch(URL_CSV_SALIDAS);
+            const data = await response.text();
+            const filas = data.split("\n").map(f => f.split(","));
+            
+            const select = document.getElementById('equipoSelect');
+            select.innerHTML = '<option value="">Seleccione equipo...</option>';
+
+            filas.forEach(col => {
+                // Columna D (3) = ID Sitio, Columna J (9) = Estado
+                const idSheet = col[3]?.replace(/"/g, "").trim();
+                const estadoSheet = col[9]?.replace(/"/g, "").trim();
+
+                if (idSheet === idBuscado && estadoSheet === "PENDIENTE") {
+                    let opt = document.createElement('option');
+                    opt.value = col[5]; // Descripción (Columna F)
+                    opt.textContent = col[5]; 
+                    select.appendChild(opt);
+                }
+            });
+        } catch (e) { console.error("Error CSV:", e); }
     }
-  }
 
-  function buscarPendientes() {
-    const idSitio = document.getElementById('ent_id_sitio').value;
-    if (!idSitio) return;
-    google.script.run.withSuccessHandler(function(json) {
-      const pendientes = JSON.parse(json);
-      const select = document.getElementById('ent_ref_salida');
-      select.innerHTML = '<option value="">-- Seleccione el equipo --</option>';
-      pendientes.forEach(p => {
-        let opt = document.createElement('option');
-        opt.value = p.descripcion;
-        opt.text = p.descripcion + " (" + p.marca + ")";
-        select.appendChild(opt);
-      });
-    }).obtenerEquiposPendientes(idSitio);
-  }
+    // 2. ENVIAR DATOS A FORMULARIO Y ACTUALIZAR EXCEL
+    async function ejecutarEntrega() {
+        const id = document.getElementById('idSitio').value;
+        const equipo = document.getElementById('equipoSelect').value;
+        const estado = document.getElementById('estado').value;
+        const serie = document.getElementById('serieConfirmada').value;
+        const statusDiv = document.getElementById('status');
 
-  function copiarDatosSalida() {
-    const equipo = document.getElementById('ent_ref_salida').value;
-    if (equipo) document.getElementById('ent_descripcion').value = equipo;
-  }
+        if (!equipo || !serie) {
+            alert("Complete todos los campos");
+            return;
+        }
 
-  function enviarEntrega() {
-    // URL DE TU FORMULARIO PROPORCIONADO
-    const baseUrl = "https://docs.google.com/forms/d/e/1FAIpQLSfz-IGCT2vdfUplh2MipdjgBLcspDE_TWChhrWn1wBaVMnWOQ/formResponse?";
-    
-    const query = new URLSearchParams();
-    query.append(ENTRIES.nombreSitio, document.getElementById('ent_sitio').value);
-    query.append(ENTRIES.idSitio, document.getElementById('ent_id_sitio').value);
-    query.append(ENTRIES.estado, document.getElementById('ent_estado').value);
-    query.append(ENTRIES.tipoIngreso, document.getElementById('ent_ref_salida').value);
-    query.append(ENTRIES.modelo, document.getElementById('ent_descripcion').value);
-    query.append(ENTRIES.marca, document.getElementById('ent_marca').value);
-    query.append(ENTRIES.bodega, document.getElementById('ent_bodega').value);
-    query.append(ENTRIES.serie, document.getElementById('ent_serie').value);
-    query.append(ENTRIES.problema, document.getElementById('ent_comentario').value);
-    query.append(ENTRIES.contrata, "CELECT");
+        statusDiv.style.display = "block";
+        statusDiv.style.backgroundColor = "#fff3cd";
+        statusDiv.innerHTML = "Procesando... no cierre la página.";
 
-    document.getElementById('status-msg').innerText = "Enviando registro...";
+        try {
+            // A. Envío al Google Form (Back-up)
+            const formParams = new URLSearchParams();
+            formParams.append("entry.821288735", id);
+            formParams.append("entry.1467261011", equipo);
+            formParams.append("entry.1183702054", serie);
+            fetch(`${URL_FORM}?${formParams.toString()}`, { mode: 'no-cors' });
 
-    fetch(baseUrl + query.toString() + "&submit=Submit", { mode: 'no-cors' })
-      .then(() => {
-        document.getElementById('status-msg').innerText = "✅ Entrega registrada exitosamente";
-        
-        // Ejecución de marca en hoja de Salidas
-        const ref = document.getElementById('ent_ref_salida').value;
-        if(ref) google.script.run.marcarComoEntregado(ref);
-        
-        setTimeout(() => { location.reload(); }, 2500);
-      })
-      .catch(err => {
-        document.getElementById('status-msg').innerText = "❌ Error al enviar";
-      });
+            // B. Envío al Script para marcar la fila en el Excel
+            const scriptParams = new URLSearchParams();
+            scriptParams.append("action", "entregar");
+            scriptParams.append("descripcion", equipo);
+            scriptParams.append("estado", estado);
+            scriptParams.append("serie", serie);
+
+            await fetch(`${URL_SCRIPT}?${scriptParams.toString()}`, { method: 'POST' });
+
+            statusDiv.style.backgroundColor = "#d4edda";
+            statusDiv.innerHTML = "✅ Entrega registrada y stock actualizado.";
+            setTimeout(() => location.reload(), 3000);
+
+        } catch (e) {
+            statusDiv.style.backgroundColor = "#f8d7da";
+            statusDiv.innerHTML = "❌ Error en el proceso. Reintente.";
+        }
+    }
+</script>
+
+</body>
+</html>
   }
 </script>
 </body>
