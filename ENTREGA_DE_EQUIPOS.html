@@ -108,7 +108,6 @@
 
     let sites = [], pendientes = [], equipos = [];
 
-    // Reloj y Carga Inicial
     setInterval(() => { document.getElementById('reloj').innerText = new Date().toLocaleTimeString("es-SV", { hour12: false }); }, 1000);
 
     window.onload = async () => {
@@ -116,7 +115,7 @@
         const [t1, t2, t3] = await Promise.all([r1.text(), r2.text(), r3.text()]);
         sites = parseCSV(t1);
         pendientes = t2.split("\n").map(l => l.split(",").map(c => c.replace(/"/g,"").trim()));
-        Papa.parse(t3, { header: true, skipEmptyLines: true, complete: (res) => { equipos = res.data; prellenarDesdeURL(); } });
+        Papa.parse(t3, { header: true, skipEmptyLines: true, complete: (res) => { equipos = res.data; } });
     };
 
     function parseCSV(d) {
@@ -127,24 +126,6 @@
             let o = {}; h.forEach((k, i) => o[k] = v[i] ? v[i].trim().replace(/"/g, '') : '');
             return o;
         });
-    }
-
-    // Prellenado desde la URL (entries)
-    function prellenarDesdeURL() {
-        const p = new URLSearchParams(window.location.search);
-        if(p.has('entry.1637897291')) document.getElementById('tecnico_nombre').value = p.get('entry.1637897291');
-        if(p.has('entry.1265319450')) {
-            const id = p.get('entry.1265319450');
-            document.getElementById('sitio_id').value = id;
-            const s = sites.find(x => x.SITEID == id);
-            if(s) document.getElementById('siteSearch').value = s['NOMBRE DE SITIO'];
-        }
-        if(p.has('entry.1914147166')) {
-            document.getElementById('eqSearch').value = p.get('entry.1914147166');
-            const e = equipos.find(x => x["DESCRIPCION DE EQUIPO"] == p.get('entry.1914147166'));
-            if(e) document.getElementById('marca').value = e["MARCA"];
-        }
-        if(p.has('entry.1497572830')) document.getElementById('serie').value = p.get('entry.1497572830');
     }
 
     function selectOpt(btn, val, grupo) {
@@ -194,42 +175,54 @@
         if(f) { ei.value = f[5]; document.getElementById('marca').value = f[6]; }
     }
 
-    // Foto y Envío
+    // Foto
     document.getElementById('foto').onchange = function() {
         const [file] = this.files;
         if (file) { document.getElementById('imgPreview').src = URL.createObjectURL(file); document.getElementById('imgPreview').style.display = 'block'; }
     };
 
+    // ENVÍO FINAL CON AHORRO DE TIEMPO (REDIRECCIÓN)
     document.getElementById('entregaForm').onsubmit = async (e) => {
         e.preventDefault();
         const b = document.getElementById('btnEnviar');
         const file = document.getElementById('foto').files[0];
         if(!document.getElementById('bodega').value || !document.getElementById('equipo_estado').value) { alert("⚠️ Elige estado y bodega"); return; }
         
-        b.disabled = true; b.innerText = "ENVIANDO...";
+        b.disabled = true; b.innerText = "PROCESANDO...";
         const reader = new FileReader();
         reader.onload = async () => {
-            const params = new URLSearchParams({
+            const formData = {
                 action: "entregar",
                 tecnico_nombre: document.getElementById('tecnico_nombre').value,
                 sitio_id: document.getElementById('sitio_id').value,
                 nombreSitio: document.getElementById('siteSearch').value,
-                equipo_estado: document.getElementById('equipo_estado').value,
-                ref_salida_desc: document.getElementById('ref_salida_desc').value,
                 equipo_desc: ei.value,
                 equipo_marca: document.getElementById('marca').value,
-                bodega_destino: document.getElementById('bodega').value,
                 equipo_serie: document.getElementById('serie').value,
-                comentarios: document.getElementById('comentarios').value,
+                bodega_destino: document.getElementById('bodega').value,
                 fileData: reader.result.split(',')[1],
                 fileName: file.name,
                 mimeType: file.type
-            });
+            };
+
+            const params = new URLSearchParams(formData);
 
             try {
+                // 1. Guardar en Sheets y Columna L
                 await fetch(CONFIG.URL_APPS_SCRIPT, { method: 'POST', body: params, mode: 'no-cors' });
-                alert("✅ Registro guardado con éxito");
-                location.reload();
+
+                // 2. AHORRO DE TIEMPO: Redirección con prellenado automático
+                const urlGoogleForm = `https://docs.google.com/forms/d/e/1FAIpQLSfz-IGCT2vdfUplh2MipdjgBLcspDE_TWChhrWn1wBaVMnWOQ/viewform?` +
+                    `entry.1637897291=${encodeURIComponent(formData.tecnico_nombre)}` +
+                    `&entry.1265319450=${encodeURIComponent(formData.sitio_id)}` +
+                    `&entry.1509520939=${encodeURIComponent(formData.nombreSitio)}` +
+                    `&entry.1914147166=${encodeURIComponent(formData.equipo_desc)}` +
+                    `&entry.554570123=${encodeURIComponent(formData.equipo_marca)}` +
+                    `&entry.1497572830=${encodeURIComponent(formData.equipo_serie)}` +
+                    `&entry.795516044=${encodeURIComponent(formData.bodega_destino)}`;
+
+                window.location.href = urlGoogleForm;
+
             } catch(err) { alert("Error de red"); b.disabled = false; b.innerText = "REINTENTAR"; }
         };
         reader.readAsDataURL(file);
