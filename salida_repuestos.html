@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Entrega Repuestos - Network Ops</title>
+    <title>Repuestos Go! - Network Ops</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
     <style>
@@ -25,6 +25,7 @@
             display: flex; flex-direction: column;
         }
 
+        /* Header Amigable */
         header {
             padding: 25px 20px;
             text-align: center;
@@ -49,13 +50,13 @@
             box-shadow: 0 4px 10px rgba(79, 70, 229, 0.3);
         }
 
+        /* Tarjetas Estilo iOS */
         .card {
             background: var(--card-bg);
             border-radius: 24px;
             padding: 25px;
             box-shadow: 0 10px 25px rgba(0,0,0,0.03);
             border: 1px solid rgba(255,255,255,0.8);
-            margin-bottom: 20px;
         }
 
         label {
@@ -64,7 +65,27 @@
             color: #64748b; margin-left: 5px;
         }
 
-        input, select, textarea {
+        /* Botones de Bodega Estilo Pop */
+        .bodega-grid {
+            display: grid; grid-template-columns: repeat(3, 1fr);
+            gap: 12px; margin-top: 8px;
+        }
+
+        .btn-bodega {
+            background: #f1f5f9; border: 2px solid transparent;
+            padding: 12px 5px; border-radius: 16px;
+            font-size: 0.7rem; font-weight: 600; color: #475569;
+            cursor: pointer; transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .btn-bodega.selected {
+            background: #fff; border-color: var(--brand);
+            color: var(--brand); transform: scale(1.05);
+            box-shadow: 0 8px 15px rgba(79, 70, 229, 0.15);
+        }
+
+        /* Inputs Modernos */
+        input {
             width: 100%; padding: 14px; margin-top: 6px;
             border-radius: 16px; border: 1.5px solid #e2e8f0;
             background: #f8fafc; color: var(--text);
@@ -73,32 +94,10 @@
         }
 
         input:focus { border-color: var(--brand-light); background: #fff; box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1); }
+
         .readonly { background: #f1f5f9; color: #94a3b8; border-style: none; font-size: 0.9rem; }
 
-        /* Grid de Botones Estilo Salida */
-        .opt-grid {
-            display: grid; grid-template-columns: repeat(2, 1fr);
-            gap: 12px; margin-top: 8px;
-        }
-        .bodega-grid {
-            display: grid; grid-template-columns: repeat(3, 1fr);
-            gap: 12px; margin-top: 8px;
-        }
-
-        .btn-opt {
-            background: #f1f5f9; border: 2px solid transparent;
-            padding: 12px 5px; border-radius: 16px;
-            font-size: 0.7rem; font-weight: 600; color: #475569;
-            cursor: pointer; transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-
-        .btn-opt.selected {
-            background: #fff; border-color: var(--brand);
-            color: var(--brand); transform: scale(1.05);
-            box-shadow: 0 8px 15px rgba(79, 70, 229, 0.15);
-        }
-
-        /* Buscador Sugerencias Replicado */
+        /* Buscador Sugerencias */
         .suggestions {
             position: absolute; width: 100%; background: #fff;
             border-radius: 16px; box-shadow: 0 15px 35px rgba(0,0,0,0.1);
@@ -111,6 +110,7 @@
         }
         .suggestion-item:active { background: #f1f5f9; }
 
+        /* Botón de Envío */
         .btn-send {
             width: 100%; padding: 18px; border-radius: 18px;
             background: linear-gradient(135deg, var(--brand), var(--brand-light));
@@ -119,7 +119,10 @@
             box-shadow: 0 10px 20px rgba(79, 70, 229, 0.2);
             cursor: pointer; transition: 0.3s;
         }
+
         .btn-send:active { transform: scale(0.96); }
+
+        #load-info { font-size: 0.7rem; color: #94a3b8; text-align: center; margin-top: 15px; }
 
         .hidden { display: none; }
     </style>
@@ -128,64 +131,51 @@
 
 <header>
     <div class="timer-pill" id="reloj">00:00:00</div>
-    <h1>Registro de Entrega</h1>
+    <h1>Registro de Salida</h1>
 </header>
 
 <div class="container">
-    <form id="entregaForm">
+    <div class="card" id="consentimiento" style="text-align: center;">
+        <div style="font-size: 3rem; margin-bottom: 10px;">📦</div>
+        <h2 style="font-size: 1.2rem; margin-bottom: 10px;">¡Hola!</h2>
+        <p style="color: #64748b; font-size: 0.9rem; line-height: 1.5;">Para registrar un repuesto necesitamos acceso para guardar tu foto de evidencia.</p>
+        <button onclick="activar()" id="btnStart" disabled class="btn-send" style="background: #94a3b8;">Cargando inventario...</button>
+        <div id="load-info">Sincronizando repuestos 2026...</div>
+    </div>
+
+    <form id="mainForm" class="hidden">
         <div class="card">
             <label>Nombre del Técnico</label>
-            <input type="text" id="tecnico_nombre" placeholder="Nombre + Apellido" required>
-            
+<input type="text" id="tecnico" placeholder="Nombre + Apellido" required>
+            <label>¿Desde qué bodega retiras?</label>
+            <div class="bodega-grid">
+                <button type="button" class="btn-bodega" onclick="selectB(this, 'SAN BENITO')">San Benito</button>
+                <button type="button" class="btn-bodega" onclick="selectB(this, 'BODEGA CENTRAL')">Central</button>
+                <button type="button" class="btn-bodega" onclick="selectB(this, 'TALNIQUE')">Talnique</button>
+            </div>
+            <input type="hidden" id="bodega" required>
+
             <div style="position:relative">
                 <label>Nombre del Sitio</label>
-                <input type="text" id="siteSearch" placeholder="Escribe para buscar sitio..." autocomplete="off" required>
+                <input type="text" id="siteSearch" placeholder="Escribe para buscar..." autocomplete="off" required>
                 <div id="siteSug" class="suggestions"></div>
             </div>
-            <input type="text" id="sitio_id" class="readonly" placeholder="ID automático" readonly required>
-        </div>
-
-        <div class="card">
-            <label>¿En qué estado entregas?</label>
-            <div class="opt-grid">
-                <button type="button" class="btn-opt" onclick="selectOpt(this, 'DAÑADO', 'estado')">DAÑADO</button>
-                <button type="button" class="btn-opt" onclick="selectOpt(this, 'NO UTILIZADO', 'estado')">NO UTILIZADO</button>
-                <button type="button" class="btn-opt" onclick="selectOpt(this, 'USADO', 'estado')">USADO</button>
-                <button type="button" class="btn-opt" onclick="selectOpt(this, 'POR REPARACIÓN', 'estado')">REPARACIÓN</button>
-            </div>
-            <input type="hidden" id="equipo_estado" required>
-        </div>
-
-        <div class="card">
-            <div id="box_ref" class="hidden">
-                <label>Referencia de Salida (Pendientes)</label>
-                <select id="ref_salida_desc" onchange="llenarDesdeSalida()"></select>
-            </div>
+            <input type="text" id="idSitio" class="readonly" placeholder="ID automático" readonly required>
 
             <div style="position:relative">
-                <label>Descripción del Repuesto</label>
+                <label>¿Qué repuesto llevas?</label>
                 <input type="text" id="eqSearch" placeholder="Busca tu repuesto..." autocomplete="off" required>
                 <div id="eqSug" class="suggestions"></div>
             </div>
             <input type="text" id="marca" class="readonly" placeholder="Marca" readonly required>
 
             <label>Número de Serie</label>
-            <input type="text" id="serie" placeholder="S/N Físico" required>
-        </div>
+            <input type="text" id="serie" placeholder="Escanea o escribe S/N" required>
 
-        <div class="card">
-            <label>¿A qué bodega ingresa?</label>
-            <div class="bodega-grid">
-                <button type="button" class="btn-opt" onclick="selectOpt(this, 'SAN BENITO', 'bodega')">San Benito</button>
-                <button type="button" class="btn-opt" onclick="selectOpt(this, 'CENTRAL', 'bodega')">Central</button>
-                <button type="button" class="btn-opt" onclick="selectOpt(this, 'TALNIQUE', 'bodega')">Talnique</button>
-            </div>
-            <input type="hidden" id="bodega" required>
+            <label>Foto de la pieza</label>
+            <input type="file" id="foto" accept="image/*" required style="padding: 10px; font-size: 0.8rem; background: none; border: 1.5px dashed #cbd5e1;">
 
-            <label>Comentarios</label>
-            <textarea id="comentarios" rows="2" style="width: 100%; margin-top: 10px; border-radius: 16px; border: 1.5px solid #e2e8f0; padding: 10px; font-family: inherit;"></textarea>
-
-            <button type="submit" id="btnEnviar" class="btn-send">FINALIZAR ENTREGA</button>
+            <button type="submit" id="btnEnviar" class="btn-send">FINALIZAR REGISTRO</button>
         </div>
     </form>
 </div>
@@ -193,30 +183,29 @@
 <script>
     const CONFIG = {
         URL_SITIOS_CSV: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTE_5CZtD7qHGW5cWHGAjn7ALTphVm5h88lco9cySYoAe2VBW4fq8DQ7-SZY6cd_FHtNQJS3MpE88hs/pub?gid=1955381502&single=true&output=csv',
-        URL_PENDIENTES_CSV: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQBNrpLKc_GPFT6Ik9Yr4s1qo8zaOOqrDgTc_9DGeMd20rNTsEtLktTCoeDcRrts6kvgne86KZDfKQS/pub?output=csv',
-        URL_APPS_SCRIPT: 'https://script.google.com/macros/s/AKfycbzn16lKWQbMW-wdMufejz764fK-Kizf8WLNYcwHCCeL1aeEqMtsKbhNORQx6tFBBW0O/exec'
+        URL_APPS_SCRIPT: 'https://script.google.com/macros/s/AKfycbzn16lKWQbMW-wdMufejz764fK-Kizf8WLNYcwHCCeL1aeEqMtsKbhNORQx6tFBBW0O/exec',
+        URL_FORMS_EXTERNO: 'https://docs.google.com/forms/d/e/1FAIpQLSdeek133oAtejD-fC1LPvFPDHiej3l0tokNW9N31LdHFpS06g/viewform'
     };
 
-    let sites = [], pendientes = [], equipos = [];
+    let sites = [], equipos = [];
 
     setInterval(() => {
-        document.getElementById('reloj').innerText = new Date().toLocaleTimeString("es-SV", { hour12: false });
+        document.getElementById('reloj').innerText = new Date().toLocaleTimeString("es-SV", { timeZone: "America/El_Salvador", hour12: false });
     }, 1000);
 
-    window.onload = async () => {
-        const [r1, r2, r3] = await Promise.all([
-            fetch(CONFIG.URL_SITIOS_CSV),
-            fetch(CONFIG.URL_PENDIENTES_CSV),
-            fetch('inventario_repuestos.csv')
-        ]);
-        const [t1, t2, t3] = await Promise.all([r1.text(), r2.text(), r3.text()]);
-        
-        sites = parseCSV(t1);
-        pendientes = t2.split("\n").map(l => l.split(",").map(c => c.replace(/"/g,"").trim()));
-        
-        Papa.parse(t3, {
-            header: true, skipEmptyLines: true,
-            complete: (res) => { equipos = res.data; }
+    window.onload = () => {
+        // Cargar Sitios
+        fetch(CONFIG.URL_SITIOS_CSV).then(r => r.text()).then(t => { sites = parseCSV(t); });
+
+        // Cargar Repuestos con el nombre de tus columnas
+        Papa.parse("inventario_repuestos.csv", {
+            download: true, header: true, delimiter: ";", skipEmptyLines: true,
+            complete: function(res) {
+                equipos = res.data;
+                const b = document.getElementById('btnStart');
+                b.disabled = false; b.style.background = "var(--brand)"; b.innerText = "¡EMPEZAR!";
+                document.getElementById('load-info').innerText = "Inventario sincronizado: " + equipos.length + " items";
+            }
         });
     };
 
@@ -230,20 +219,18 @@
         });
     }
 
-    function selectOpt(btn, val, grupo) {
-        const parent = btn.parentElement;
-        parent.querySelectorAll('.btn-opt').forEach(x => x.classList.remove('selected'));
+    function selectB(btn, v) {
+        document.querySelectorAll('.btn-bodega').forEach(x => x.classList.remove('selected'));
         btn.classList.add('selected');
-        if(grupo === 'estado') {
-            document.getElementById('equipo_estado').value = val;
-            document.getElementById('box_ref').classList.toggle('hidden', !(val==='DAÑADO' || val==='NO UTILIZADO'));
-            if(val==='DAÑADO' || val==='NO UTILIZADO') cargarPendientes();
-        } else {
-            document.getElementById('bodega').value = val;
-        }
+        document.getElementById('bodega').value = v;
     }
 
-    // BUSCADOR REPLICADO: SITIOS
+    function activar() {
+        document.getElementById('consentimiento').classList.add('hidden');
+        document.getElementById('mainForm').classList.remove('hidden');
+    }
+
+    // Buscador Sitios
     const si = document.getElementById('siteSearch'), ss = document.getElementById('siteSug');
     si.addEventListener('input', () => {
         const v = si.value.toLowerCase().trim();
@@ -253,12 +240,9 @@
         ss.style.display = m.length ? 'block' : 'none';
     });
 
-    function setS(i, n) { 
-        si.value = n; document.getElementById('sitio_id').value = i; ss.style.display = 'none'; 
-        if(document.getElementById('equipo_estado').value) cargarPendientes();
-    }
+    function setS(i, n) { si.value = n; document.getElementById('idSitio').value = i; ss.style.display = 'none'; }
 
-    // BUSCADOR REPLICADO: EQUIPOS
+    // Buscador Equipos (Usando tus nombres de columna)
     const ei = document.getElementById('eqSearch'), es = document.getElementById('eqSug');
     ei.addEventListener('input', () => {
         const v = ei.value.toLowerCase().trim();
@@ -270,45 +254,67 @@
 
     function setE(d, m) { ei.value = d; document.getElementById('marca').value = m; es.style.display = 'none'; }
 
-    function cargarPendientes() {
-        const id = document.getElementById('sitio_id').value;
-        const sel = document.getElementById('ref_salida_desc');
-        sel.innerHTML = '<option value="">Seleccione pendiente...</option>';
-        pendientes.forEach(f => { if(f[3]===id && f[9]==='PENDIENTE') { let o=document.createElement('option'); o.value=f[5]; o.innerText=f[5]; sel.appendChild(o); } });
-    }
-
-    function llenarDesdeSalida() {
-        const ref = document.getElementById('ref_salida_desc').value;
-        const f = pendientes.find(l => l[5]===ref && l[9]==='PENDIENTE');
-        if(f) { ei.value=f[5]; document.getElementById('marca').value=f[6]; }
-    }
-
-    document.getElementById('entregaForm').onsubmit = async (e) => {
+    // Envío
+    document.getElementById('mainForm').onsubmit = async (e) => {
         e.preventDefault();
         const b = document.getElementById('btnEnviar');
-        b.disabled = true; b.innerText = "ENVIANDO...";
+        
+        // Capturamos los valores JUSTO en el momento del click
+        const valTecnico = document.getElementById('tecnico').value;
+        const valBodega = document.getElementById('bodega').value;
+        const valIdSitio = document.getElementById('idSitio').value;
+        const valSerie = document.getElementById('serie').value;
+        const valMarca = document.getElementById('marca').value;
+        const valNombreSitio = document.getElementById('siteSearch').value;
+        const valDescripcion = document.getElementById('eqSearch').value;
 
-        const data = new URLSearchParams({
-            action: "entregar",
-            tecnico_nombre: document.getElementById('tecnico_nombre').value,
-            sitio_id: document.getElementById('sitio_id').value,
-            equipo_estado: document.getElementById('equipo_estado').value,
-            ref_salida_desc: document.getElementById('ref_salida_desc').value,
-            equipo_desc: ei.value,
-            equipo_marca: document.getElementById('marca').value,
-            bodega_destino: document.getElementById('bodega').value,
-            equipo_serie: document.getElementById('serie').value,
-            comentarios: document.getElementById('comentarios').value
-        });
+        if(!valBodega) { alert("Por favor selecciona una bodega"); return; }
 
-        try {
-            await fetch(CONFIG.URL_APPS_SCRIPT, { method: 'POST', body: data, mode: 'no-cors' });
-            alert("✅ Entrega registrada correctamente");
-            location.reload();
-        } catch(err) {
-            alert("Error de conexión");
-            b.disabled = false; b.innerText = "REINTENTAR";
-        }
+        b.disabled = true; b.innerText = "Subiendo datos...";
+        
+        const file = document.getElementById('foto').files[0];
+        const reader = new FileReader();
+        reader.onload = async () => {
+            const p = {
+                tecnico: valTecnico,
+                bodega: valBodega,
+                idSitio: valIdSitio,
+                nombreSitio: valNombreSitio,
+                descripcion: valDescripcion,
+                marca: valMarca,
+                serie: valSerie,
+                fileData: reader.result.split(',')[1], 
+                fileName: file.name, 
+                mimeType: file.type
+            };
+
+            try {
+                const r = await fetch(CONFIG.URL_APPS_SCRIPT, { 
+                    method: 'POST', 
+                    body: new URLSearchParams(p) 
+                });
+                const res = await r.json();
+                
+                if(res.result === "success") {
+                    // REDIRECCIÓN CON DATOS FORZADOS
+                    const urlFinal = `${CONFIG.URL_FORMS_EXTERNO}?entry.1637897291=CELECT` +
+                        `&entry.795516044=${encodeURIComponent(valBodega)}` +
+                        `&entry.1265319450=${encodeURIComponent(valIdSitio)}` +
+                        `&entry.1509520939=${encodeURIComponent(valNombreSitio)}` +
+                        `&entry.554570123=${encodeURIComponent(valMarca)}` +
+                        `&entry.1914147166=${encodeURIComponent(valDescripcion)}` +
+                        `&entry.1497572830=${encodeURIComponent(valSerie)}` +
+                        `&entry.733439703=${encodeURIComponent(res.fileUrl)}`;
+                    
+                    window.location.href = urlFinal;
+                }
+            } catch(x) { 
+                alert("Error de conexión"); 
+                b.disabled = false; 
+                b.innerText = "REINTENTAR ENVÍO";
+            }
+        };
+        reader.readAsDataURL(file);
     };
 
     document.addEventListener('click', (e) => {
