@@ -225,19 +225,22 @@ function numeroSemana(fecha) {
     return Math.ceil((diasTranscurridos + primerDiaAno.getDay()+1)/7);
 }
 
-// --------------------- EXPORTAR IMAGEN ---------------------
+// --------------------- EXPORTAR IMAGEN CON TITULO ---------------------
 function exportTableAsImage(tablaId, nombreArchivo) {
     const tabla = document.getElementById(tablaId);
-    const clone = tabla.cloneNode(true);
-    clone.style.background = '#ffffff';
-    clone.style.width = tabla.offsetWidth + 'px';
+    const header = tabla.parentNode.querySelector('.table-header').cloneNode(true);
     const contenedor = document.createElement('div');
     contenedor.style.position = 'fixed';
     contenedor.style.top = '-10000px';
-    contenedor.appendChild(clone);
+    contenedor.style.background = '#ffffff';
+    contenedor.style.padding = '20px';
+    contenedor.style.borderRadius = '16px';
+    contenedor.style.boxShadow = '0 4px 6px rgba(0,0,0,0.1)';
+    contenedor.appendChild(header);
+    contenedor.appendChild(tabla.cloneNode(true));
     document.body.appendChild(contenedor);
 
-    html2canvas(clone, { scale:2 }).then(canvas=>{
+    html2canvas(contenedor, { scale:2 }).then(canvas=>{
         const enlace = document.createElement('a');
         enlace.href = canvas.toDataURL('image/png');
         enlace.download = nombreArchivo + '.png';
