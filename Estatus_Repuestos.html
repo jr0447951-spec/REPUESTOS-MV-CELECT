@@ -3,164 +3,240 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Network Ops - Control de Gestión</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <title>Estatus Repuestos - Network Ops</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
-        :root { --brand: #4f46e5; --bg: #f8fafc; --text: #1e293b; --danger: #ef4444; --success: #10b981; }
-        body { font-family: 'Poppins', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; }
+        :root { 
+            --brand: #4f46e5; 
+            --bg: #f8fafc; 
+            --text: #334155; 
+            --card: #ffffff;
+            --border-radius: 20px;
+        }
         
-        .header-dash { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
-        .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px; }
-        
-        .card-stat { background: white; padding: 20px; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border-left: 5px solid var(--brand); }
-        .card-stat h3 { margin: 0; font-size: 0.8rem; color: #64748b; text-transform: uppercase; }
-        .card-stat .value { font-size: 1.8rem; font-weight: 600; color: var(--brand); }
+        body { 
+            font-family: 'Poppins', sans-serif; 
+            background-color: var(--bg); 
+            color: var(--text); 
+            margin: 0; padding: 20px; 
+        }
 
-        .table-container { background: white; border-radius: 20px; padding: 20px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); margin-bottom: 30px; overflow-x: auto; }
-        .table-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 2px solid #f1f5f9; padding-bottom: 10px; }
-        .table-header h2 { font-size: 1.1rem; margin: 0; }
+        .dashboard-container { max-width: 1100px; margin: 0 auto; }
+
+        .header-flex {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .header-flex h1 { font-size: 1.6rem; font-weight: 600; color: var(--brand); margin: 0; }
+
+        .actions { display: flex; gap: 10px; }
+
+        .btn {
+            padding: 10px 18px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            cursor: pointer;
+            border: none;
+            transition: 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-download { background: var(--brand); color: white; }
+        .btn-download:hover { background: #4338ca; transform: translateY(-2px); }
+
+        .search-input {
+            padding: 12px 20px;
+            border-radius: 15px;
+            border: 1px solid #e2e8f0;
+            width: 100%;
+            max-width: 300px;
+            outline: none;
+            font-family: inherit;
+        }
+
+        /* Estilo de Tablas Amigables */
+        .table-card {
+            background: var(--card);
+            border-radius: var(--border-radius);
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05);
+            margin-bottom: 30px;
+            overflow: hidden; /* Corta las esquinas de la tabla para que se vean redondeadas */
+            border: 1px solid #f1f5f9;
+        }
+
+        .table-title {
+            padding: 20px 25px;
+            font-weight: 600;
+            font-size: 1rem;
+            border-bottom: 1px solid #f1f5f9;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        table { width: 100%; border-collapse: collapse; }
         
-        table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
-        th { text-align: left; padding: 12px; background: #f8fafc; color: #64748b; font-weight: 600; }
-        td { padding: 12px; border-bottom: 1px solid #f1f5f9; }
+        th { 
+            background: #f8fafc; 
+            padding: 15px 25px; 
+            text-align: left; 
+            font-size: 0.75rem; 
+            text-transform: uppercase; 
+            letter-spacing: 0.05em;
+            color: #64748b;
+        }
+
+        td { padding: 15px 25px; font-size: 0.85rem; border-bottom: 1px solid #f1f5f9; }
+
+        tr:last-child td { border-bottom: none; }
         
-        .badge { padding: 4px 8px; border-radius: 12px; font-size: 0.7rem; font-weight: 600; }
-        .badge-pending { background: #fee2e2; color: #991b1b; }
-        .badge-success { background: #dcfce7; color: #166534; }
+        tr:hover { background-color: #fcfdff; }
+
+        /* Badges Redondeados */
+        .status {
+            padding: 5px 12px;
+            border-radius: 10px;
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+        .status-pending { background: #fff1f2; color: #e11d48; }
+        .status-success { background: #f0fdf4; color: #16a34a; }
+
+        .photo-link { color: var(--brand); text-decoration: none; font-weight: 600; }
+
+        code { background: #f1f5f9; padding: 2px 6px; border-radius: 6px; font-family: monospace; }
+
     </style>
 </head>
 <body>
 
-<div class="header-dash">
-    <h1>Dashboard Operativo</h1>
-    <div id="lastUpdate" style="font-size: 0.8rem; color: #64748b;">Actualizando...</div>
-</div>
+<div class="dashboard-container" id="captureArea">
+    <div class="header-flex">
+        <div>
+            <h1>Estatus Repuestos</h1>
+            <p style="margin: 5px 0 0; font-size: 0.8rem; color: #94a3b8;">Network Ops Dashboard</p>
+        </div>
+        <div class="actions">
+            <input type="text" id="globalSearch" class="search-input" placeholder="🔍 Buscar técnico o sitio..." onkeyup="filtrar()">
+            <button class="btn btn-download" onclick="descargarReporte()">📸 Descargar Reporte</button>
+        </div>
+    </div>
 
-<div class="stats-row">
-    <div class="card-stat">
-        <h3>Pendientes (3 Meses)</h3>
-        <div class="value" id="stat-pendientes">0</div>
+    <div class="table-card">
+        <div class="table-title">
+            <span>⚠️ Salidas sin Entrega (3 meses)</span>
+            <span id="countPend" style="color: #94a3b8;">0</span>
+        </div>
+        <table id="tablaPendientes">
+            <thead>
+                <tr>
+                    <th>Fecha</th>
+                    <th>Técnico</th>
+                    <th>ID Sitio</th>
+                    <th>Repuesto</th>
+                    <th>Estatus</th>
+                </tr>
+            </thead>
+            <tbody id="bodyPend"></tbody>
+        </table>
     </div>
-    <div class="card-stat" style="border-left-color: var(--success);">
-        <h3>Entregados (Semana)</h3>
-        <div class="value" id="stat-semanal">0</div>
-    </div>
-</div>
 
-<div class="table-container">
-    <div class="table-header">
-        <h2>📋 Pendientes de Gestión (Últimos 90 días)</h2>
-        <span class="badge badge-pending" id="tag-pendientes">Total: 0</span>
+    <div class="table-card">
+        <div class="table-title">
+            <span>✅ Entregas Realizadas (Esta Semana)</span>
+            <span id="countEnt" style="color: #94a3b8;">0</span>
+        </div>
+        <table id="tablaEntregados">
+            <thead>
+                <tr>
+                    <th>Fecha</th>
+                    <th>Técnico</th>
+                    <th>Sitio</th>
+                    <th>Serie Ingresada</th>
+                    <th>Evidencia</th>
+                </tr>
+            </thead>
+            <tbody id="bodyEnt"></tbody>
+        </table>
     </div>
-    <table id="tablaPendientes">
-        <thead>
-            <tr>
-                <th>Fecha Salida</th>
-                <th>Técnico</th>
-                <th>ID Sitio</th>
-                <th>Equipo</th>
-                <th>Estado</th>
-            </tr>
-        </thead>
-        <tbody></tbody>
-    </table>
-</div>
-
-<div class="table-container">
-    <div class="table-header">
-        <h2>✅ Entregas Realizadas (Esta Semana)</h2>
-        <span class="badge badge-success" id="tag-semanal">Semana Actual</span>
-    </div>
-    <table id="tablaEntregados">
-        <thead>
-            <tr>
-                <th>Fecha Entrega</th>
-                <th>Técnico</th>
-                <th>Sitio</th>
-                <th>Serie Ingresada</th>
-                <th>Foto</th>
-            </tr>
-        </thead>
-        <tbody></tbody>
-    </table>
 </div>
 
 <script>
-    const URL_SALIDAS = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQBNrpLKc_GPFT6Ik9Yr4s1qo8zaOOqrDgTc_9DGeMd20rNTsEtLktTCoeDcRrts6kvgne86KZDfKQS/pub?output=csv';
-    const URL_ENTREGAS = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTE_5CZtD7qHGW5cWHGAjn7ALTphVm5h88lco9cySYoAe2VBW4fq8DQ7-SZY6cd_FHtNQJS3MpE88hs/pub?gid=0&output=csv';
+    const CONFIG = {
+        URL_S: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQBNrpLKc_GPFT6Ik9Yr4s1qo8zaOOqrDgTc_9DGeMd20rNTsEtLktTCoeDcRrts6kvgne86KZDfKQS/pub?output=csv',
+        URL_E: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTE_5CZtD7qHGW5cWHGAjn7ALTphVm5h88lco9cySYoAe2VBW4fq8DQ7-SZY6cd_FHtNQJS3MpE88hs/pub?gid=0&output=csv'
+    };
 
-    async function cargarDashboard() {
-        try {
-            const [respSalidas, respEntregas] = await Promise.all([
-                fetch(URL_SALIDAS), fetch(URL_ENTREGAS)
-            ]);
-            
-            const textoSalidas = await respSalidas.text();
-            const textoEntregas = await respEntregas.text();
+    async function cargar() {
+        const [rS, rE] = await Promise.all([fetch(CONFIG.URL_S), fetch(CONFIG.URL_E)]);
+        const tS = await rS.text(); const tE = await rE.text();
+        
+        const ahora = new Date();
+        const limite90 = new Date(); limite90.setDate(ahora.getDate() - 90);
+        const inicioSemana = new Date(ahora.setDate(ahora.getDate() - ahora.getDay()));
+        inicioSemana.setHours(0,0,0,0);
 
-            procesarPendientes(textoSalidas);
-            procesarEntregados(textoEntregas);
-            
-            document.getElementById('lastUpdate').innerText = "Última actualización: " + new Date().toLocaleString();
-        } catch (e) { console.error("Error al cargar datos", e); }
+        Papa.parse(tS, { complete: r => {
+            const data = r.data.slice(1).filter(f => new Date(f[0]) >= limite90 && f[9] === 'PENDIENTE');
+            document.getElementById('countPend').innerText = data.length;
+            document.getElementById('bodyPend').innerHTML = data.map(f => `
+                <tr>
+                    <td>${f[0]}</td>
+                    <td><strong>${f[1]}</strong></td>
+                    <td>${f[3]}</td>
+                    <td>${f[5]}</td>
+                    <td><span class="status status-pending">${f[9]}</span></td>
+                </tr>`).join('');
+        }});
+
+        Papa.parse(tE, { complete: r => {
+            const data = r.data.slice(1).filter(f => new Date(f[0]) >= inicioSemana);
+            document.getElementById('countEnt').innerText = data.length;
+            document.getElementById('bodyEnt').innerHTML = data.map(f => `
+                <tr>
+                    <td>${f[0]}</td>
+                    <td><strong>${f[1]}</strong></td>
+                    <td>${f[3]}</td>
+                    <td><code>${f[8]}</code></td>
+                    <td><a href="${f[11]}" target="_blank" class="photo-link">Ver Foto</a></td>
+                </tr>`).join('');
+        }});
     }
 
-    function procesarPendientes(csv) {
-        Papa.parse(csv, {
-            header: false,
-            complete: (results) => {
-                const ahora = new Date();
-                const limite90 = ahora.setDate(ahora.getDate() - 90);
-                
-                const datos = results.data.filter(fila => {
-                    const fecha = new Date(fila[0]); // Columna A: Fecha
-                    return fecha >= limite90 && fila[9] === 'PENDIENTE'; // Columna J: Estatus
-                });
-
-                document.getElementById('stat-pendientes').innerText = datos.length;
-                const tbody = document.querySelector('#tablaPendientes tbody');
-                tbody.innerHTML = datos.map(f => `
-                    <tr>
-                        <td>${f[0]}</td>
-                        <td>${f[1]}</td>
-                        <td>${f[3]}</td>
-                        <td>${f[5]}</td>
-                        <td><span class="badge badge-pending">${f[9]}</span></td>
-                    </tr>
-                `).join('');
-            }
+    function filtrar() {
+        const q = document.getElementById('globalSearch').value.toLowerCase();
+        document.querySelectorAll('tbody tr').forEach(tr => {
+            tr.style.display = tr.innerText.toLowerCase().includes(q) ? '' : 'none';
         });
     }
 
-    function procesarEntregados(csv) {
-        Papa.parse(csv, {
-            header: false,
-            complete: (results) => {
-                const hoy = new Date();
-                const inicioSemana = new Date(hoy.setDate(hoy.getDate() - hoy.getDay())); // Domingo
-                
-                const datos = results.data.filter(fila => {
-                    const fecha = new Date(fila[0]); // Columna A: Fecha de ingreso
-                    return fecha >= inicioSemana;
-                });
+    // FUNCIÓN PARA DESCARGAR COMO IMAGEN
+    async function descargarReporte() {
+        const area = document.getElementById('captureArea');
+        // Ocultamos botones y buscador para la foto
+        document.querySelector('.actions').style.display = 'none';
+        
+        const canvas = await html2canvas(area, { backgroundColor: '#f8fafc', scale: 2 });
+        const link = document.createElement('a');
+        link.download = `Reporte_Repuestos_${new Date().toLocaleDateString()}.png`;
+        link.href = canvas.toDataURL("image/png");
+        link.click();
 
-                document.getElementById('stat-semanal').innerText = datos.length;
-                const tbody = document.querySelector('#tablaEntregados tbody');
-                tbody.innerHTML = datos.map(f => `
-                    <tr>
-                        <td>${f[0]}</td>
-                        <td>${f[1]}</td>
-                        <td>${f[3]}</td>
-                        <td>${f[8]}</td>
-                        <td><a href="${f[11]}" target="_blank">📸 Ver</a></td>
-                    </tr>
-                `).join('');
-            }
-        });
+        // Mostramos botones de nuevo
+        document.querySelector('.actions').style.display = 'flex';
     }
 
-    window.onload = cargarDashboard;
+    window.onload = cargar;
 </script>
+
 </body>
 </html>
