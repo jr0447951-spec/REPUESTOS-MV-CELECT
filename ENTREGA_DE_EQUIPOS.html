@@ -243,4 +243,81 @@
     // Buscador Equipos
     const ei = document.getElementById('eqSearch'), es = document.getElementById('eqSug');
     ei.addEventListener('input', () => {
-        const v = ei.value
+        const v = ei.value.toLowerCase().trim();
+        if(v.length < 2) { es.style.display = 'none'; return; }
+        const m = equipos.filter(e => e["DESCRIPCION DE EQUIPO"] && e["DESCRIPCION DE EQUIPO"].toLowerCase().includes(v)).slice(0,6);
+        es.innerHTML = m.map(e => `<div class="suggestion-item" onclick="setE('${e["DESCRIPCION DE EQUIPO"].replace(/'/g, "")}', '${e["MARCA"]}')"><strong>${e["DESCRIPCION DE EQUIPO"]}</strong><br><small style="color:var(--brand)">${e["MARCA"]}</small></div>`).join('');
+        es.style.display = m.length ? 'block' : 'none';
+    });
+
+    function setE(d, m) { ei.value = d; document.getElementById('marca').value = m; es.style.display = 'none'; }
+
+    // Vista previa de foto
+    document.getElementById('foto').onchange = function(evt) {
+        const [file] = this.files;
+        if (file) {
+            document.getElementById('imgPreview').src = URL.createObjectURL(file);
+            document.getElementById('imgPreview').style.display = 'block';
+        }
+    };
+
+    // Envío Final
+    document.getElementById('mainForm').onsubmit = async (e) => {
+        e.preventDefault();
+        const b = document.getElementById('btnEnviar');
+        const file = document.getElementById('foto').files[0];
+
+        if(!document.getElementById('bodega').value) { alert("Selecciona bodega"); return; }
+        
+        b.disabled = true; b.innerText = "PROCESANDO IMAGEN...";
+
+        const reader = new FileReader();
+        reader.onload = async () => {
+            const base64 = reader.result.split(',')[1];
+            
+            const params = new URLSearchParams({
+                action: "salida", // Identificador para el Script
+                tecnico: document.getElementById('tecnico').value,
+                bodega: document.getElementById('bodega').value,
+                idSitio: document.getElementById('idSitio').value,
+                nombreSitio: document.getElementById('siteSearch').value,
+                descripcion: document.getElementById('eqSearch').value,
+                marca: document.getElementById('marca').value,
+                serie: document.getElementById('serie').value,
+                fileData: base64,
+                fileName: file.name,
+                mimeType: file.type
+            });
+
+            try {
+                // Envío al Apps Script con no-cors para evitar bloqueos
+                await fetch(CONFIG.URL_APPS_SCRIPT, { method: 'POST', body: params, mode: 'no-cors' });
+                
+                alert("✅ Registro guardado en Sheets. Redirigiendo a Formulario externo...");
+                
+                // Redirección al Google Form Externo con Prefill
+                const urlFinal = `${CONFIG.URL_FORMS_EXTERNO}?entry.1637897291=CELECT` +
+                    `&entry.795516044=${encodeURIComponent(params.get('bodega'))}` +
+                    `&entry.1265319450=${encodeURIComponent(params.get('idSitio'))}` +
+                    `&entry.1509520939=${encodeURIComponent(params.get('nombreSitio'))}` +
+                    `&entry.554570123=${encodeURIComponent(params.get('marca'))}` +
+                    `&entry.1914147166=${encodeURIComponent(params.get('descripcion'))}` +
+                    `&entry.1497572830=${encodeURIComponent(params.get('serie'))}`;
+                
+                window.location.href = urlFinal;
+                
+            } catch(x) { 
+                alert("Error de conexión"); 
+                b.disabled = false; b.innerText = "REINTENTAR ENVÍO";
+            }
+        };
+        reader.readAsDataURL(file);
+    };
+
+    document.addEventListener('click', (e) => {
+        if(!si.contains(e.target)) ss.style.display = 'none';
+        if(!ei.contains(e.target)) es.style.display = 'none';
+    });
+</script>
+</body>
+</html>
