@@ -75,7 +75,6 @@
         input:focus { border-color: var(--brand-light); background: #fff; box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1); }
         .readonly { background: #f1f5f9; color: #94a3b8; border-style: none; font-size: 0.9rem; }
 
-        /* Grid de Botones Estilo Salida */
         .opt-grid {
             display: grid; grid-template-columns: repeat(2, 1fr);
             gap: 12px; margin-top: 8px;
@@ -98,12 +97,11 @@
             box-shadow: 0 8px 15px rgba(79, 70, 229, 0.15);
         }
 
-        /* Buscador Sugerencias Replicado */
         .suggestions {
             position: absolute; width: 100%; background: #fff;
             border-radius: 16px; box-shadow: 0 15px 35px rgba(0,0,0,0.1);
             z-index: 100; display: none; margin-top: 5px;
-            border: 1px solid #e2e8f0; overflow: hidden;
+            border: 1px solid #e2e8f0; overflow-y: auto; max-height: 200px;
         }
         .suggestion-item {
             padding: 15px; border-bottom: 1px solid #f1f5f9;
@@ -121,7 +119,15 @@
         }
         .btn-send:active { transform: scale(0.96); }
 
-        .hidden { display: none; }
+        .hidden { display: none !important; }
+
+        #box_ref {
+            background: #fef2f2; 
+            padding: 15px; 
+            border-radius: 18px; 
+            margin-bottom: 15px; 
+            border: 1.5px dashed #fecaca;
+        }
     </style>
 </head>
 <body>
@@ -158,8 +164,8 @@
 
         <div class="card">
             <div id="box_ref" class="hidden">
-                <label>Referencia de Salida (Pendientes)</label>
-                <select id="ref_salida_desc" onchange="llenarDesdeSalida()"></select>
+                <label style="color: #b91c1c; margin-top: 0;">Referencia de Salida (Pendientes)</label>
+                <select id="ref_salida_desc" onchange="llenarDesdeSalida()" style="background: white;"></select>
             </div>
 
             <div style="position:relative">
@@ -183,7 +189,7 @@
             <input type="hidden" id="bodega" required>
 
             <label>Comentarios</label>
-            <textarea id="comentarios" rows="2" style="width: 100%; margin-top: 10px; border-radius: 16px; border: 1.5px solid #e2e8f0; padding: 10px; font-family: inherit;"></textarea>
+            <textarea id="comentarios" rows="2" style="width: 100%; margin-top: 10px; border-radius: 16px; border: 1.5px solid #e2e8f0; padding: 10px; font-family: inherit; font-size: 0.9rem;"></textarea>
 
             <button type="submit" id="btnEnviar" class="btn-send">FINALIZAR ENTREGA</button>
         </div>
@@ -199,10 +205,12 @@
 
     let sites = [], pendientes = [], equipos = [];
 
+    // Reloj
     setInterval(() => {
         document.getElementById('reloj').innerText = new Date().toLocaleTimeString("es-SV", { hour12: false });
     }, 1000);
 
+    // Carga de Datos
     window.onload = async () => {
         const [r1, r2, r3] = await Promise.all([
             fetch(CONFIG.URL_SITIOS_CSV),
@@ -230,20 +238,30 @@
         });
     }
 
+    // Lógica de Selección y Visibilidad Condicional
     function selectOpt(btn, val, grupo) {
         const parent = btn.parentElement;
         parent.querySelectorAll('.btn-opt').forEach(x => x.classList.remove('selected'));
         btn.classList.add('selected');
+
         if(grupo === 'estado') {
             document.getElementById('equipo_estado').value = val;
-            document.getElementById('box_ref').classList.toggle('hidden', !(val==='DAÑADO' || val==='NO UTILIZADO'));
-            if(val==='DAÑADO' || val==='NO UTILIZADO') cargarPendientes();
+            const boxRef = document.getElementById('box_ref');
+            
+            // Si es DAÑADO o NO UTILIZADO, mostramos Referencia de Salida
+            if(val === 'DAÑADO' || val === 'NO UTILIZADO') {
+                boxRef.classList.remove('hidden');
+                cargarPendientes();
+            } else {
+                boxRef.classList.add('hidden');
+                document.getElementById('ref_salida_desc').innerHTML = "";
+            }
         } else {
             document.getElementById('bodega').value = val;
         }
     }
 
-    // BUSCADOR REPLICADO: SITIOS
+    // Buscador de Sitios (Réplica exacta Salida)
     const si = document.getElementById('siteSearch'), ss = document.getElementById('siteSug');
     si.addEventListener('input', () => {
         const v = si.value.toLowerCase().trim();
@@ -255,10 +273,11 @@
 
     function setS(i, n) { 
         si.value = n; document.getElementById('sitio_id').value = i; ss.style.display = 'none'; 
-        if(document.getElementById('equipo_estado').value) cargarPendientes();
+        const est = document.getElementById('equipo_estado').value;
+        if(est === 'DAÑADO' || est === 'NO UTILIZADO') cargarPendientes();
     }
 
-    // BUSCADOR REPLICADO: EQUIPOS
+    // Buscador de Repuestos (Réplica exacta Salida)
     const ei = document.getElementById('eqSearch'), es = document.getElementById('eqSug');
     ei.addEventListener('input', () => {
         const v = ei.value.toLowerCase().trim();
@@ -270,25 +289,39 @@
 
     function setE(d, m) { ei.value = d; document.getElementById('marca').value = m; es.style.display = 'none'; }
 
+    // Carga de Referencias Pendientes
     function cargarPendientes() {
         const id = document.getElementById('sitio_id').value;
         const sel = document.getElementById('ref_salida_desc');
-        sel.innerHTML = '<option value="">Seleccione pendiente...</option>';
-        pendientes.forEach(f => { if(f[3]===id && f[9]==='PENDIENTE') { let o=document.createElement('option'); o.value=f[5]; o.innerText=f[5]; sel.appendChild(o); } });
+        if(!id) {
+            sel.innerHTML = '<option value="">⚠️ Seleccione sitio primero</option>';
+            return;
+        }
+        const lista = pendientes.filter(f => f[3] === id && f[9] === 'PENDIENTE');
+        if(lista.length > 0) {
+            sel.innerHTML = '<option value="">Seleccione equipo de salida...</option>';
+            lista.forEach(f => {
+                let o = document.createElement('option');
+                o.value = f[5]; o.innerText = f[5]; sel.appendChild(o);
+            });
+        } else {
+            sel.innerHTML = '<option value="">No hay salidas pendientes</option>';
+        }
     }
 
     function llenarDesdeSalida() {
         const ref = document.getElementById('ref_salida_desc').value;
         const f = pendientes.find(l => l[5]===ref && l[9]==='PENDIENTE');
-        if(f) { ei.value=f[5]; document.getElementById('marca').value=f[6]; }
+        if(f) { ei.value = f[5]; document.getElementById('marca').value = f[6]; }
     }
 
+    // Envío al Apps Script
     document.getElementById('entregaForm').onsubmit = async (e) => {
         e.preventDefault();
         const b = document.getElementById('btnEnviar');
-        b.disabled = true; b.innerText = "ENVIANDO...";
+        b.disabled = true; b.innerText = "PROCESANDO...";
 
-        const data = new URLSearchParams({
+        const params = new URLSearchParams({
             action: "entregar",
             tecnico_nombre: document.getElementById('tecnico_nombre').value,
             sitio_id: document.getElementById('sitio_id').value,
@@ -302,8 +335,8 @@
         });
 
         try {
-            await fetch(CONFIG.URL_APPS_SCRIPT, { method: 'POST', body: data, mode: 'no-cors' });
-            alert("✅ Entrega registrada correctamente");
+            await fetch(CONFIG.URL_APPS_SCRIPT, { method: 'POST', body: params, mode: 'no-cors' });
+            alert("✅ Entrega registrada con éxito");
             location.reload();
         } catch(err) {
             alert("Error de conexión");
@@ -311,6 +344,7 @@
         }
     };
 
+    // Cerrar sugerencias al clickear fuera
     document.addEventListener('click', (e) => {
         if(!si.contains(e.target)) ss.style.display = 'none';
         if(!ei.contains(e.target)) es.style.display = 'none';
