@@ -3,52 +3,38 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema CONTROL DE REPUESTOS 2026</title>
+    <title>Sistema Control Repuestos 2026</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #eef2f3; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        .menu-container { text-align: center; width: 90%; max-width: 400px; }
-        h1 { color: #2c3e50; margin-bottom: 30px; font-size: 1.5rem; }
-        .menu-card { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); cursor: pointer; transition: transform 0.2s, background 0.2s; text-decoration: none; display: block; margin-bottom: 15px; border: none; width: 100%; }
-        .menu-card:hover { transform: translateY(-5px); background: #3498db; }
-        .menu-card:hover h2, .menu-card:hover p { color: white; }
-        .menu-card h2 { margin: 0; color: #3498db; font-size: 1.2rem; }
-        .menu-card p { margin: 10px 0 0; color: #7f8c8d; font-size: 0.9rem; }
-        .btn-entrega h2 { color: #27ae60; }
-        .btn-entrega:hover { background: #27ae60; }
-        .footer { margin-top: 20px; font-size: 0.8rem; color: #bdc3c7; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f4f7f6; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .container { background: white; padding: 40px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center; width: 320px; }
+        h1 { color: #2c3e50; margin-bottom: 30px; font-size: 22px; }
+        .nav-btn { 
+            display: block; 
+            width: 100%; 
+            padding: 18px; 
+            margin: 15px 0; 
+            text-decoration: none; 
+            color: white; 
+            border-radius: 10px; 
+            font-weight: bold; 
+            font-size: 16px; 
+            transition: transform 0.2s, background 0.3s;
+        }
+        .btn-salida { background: #3498db; }
+        .btn-salida:hover { background: #2980b9; transform: scale(1.02); }
+        .btn-entrega { background: #27ae60; }
+        .btn-entrega:hover { background: #219150; transform: scale(1.02); }
     </style>
 </head>
 <body>
 
-<div class="menu-container">
-    <h1>CONTROL DE REPUESTOS 2026<br>CELECT-MV</h1>
+<div class="container">
+    <h1>CELECT-MV 2026</h1>
     
-    <button onclick="abrir('SALIDA')" class="menu-card">
-        <h2>📦 SALIDA DE REPUESTOS</h2>
-        <p>Registrar retiro de equipo con fotografía.</p>
-    </button>
-
-    <button onclick="abrir('ENTREGA')" class="menu-card btn-entrega">
-        <h2>🔄 ENTREGA DE EQUIPOS</h2>
-        <p>Retorno de equipos dañados o no utilizados.</p>
-    </button>
-
-    <div class="menu-card" style="opacity: 0.6; cursor: not-allowed;">
-        <h2>📊 CONSULTA DE STOCK</h2>
-        <p>(Próximamente)</p>
-    </div>
-
-    <div class="footer">v1.2 - Acceso Técnico</div>
+    <a href="SALIDA_DE_EQUIPOS.html" class="btn-salida nav-btn">📤 REGISTRAR SALIDA</a>
+    <a href="ENTREGA_DE_EQUIPOS.html" class="btn-entrega nav-btn">🔄 REGISTRAR ENTREGA</a>
+    
 </div>
-
-<script>
-  function abrir(vista) {
-    // Esta es la forma correcta de navegar entre archivos HTML en Apps Script
-    google.script.run.withSuccessHandler(function(url) {
-      window.top.location.href = url + "?v=" + vista;
-    }).getScriptUrl();
-  }
-</script>
 
 </body>
 </html>
