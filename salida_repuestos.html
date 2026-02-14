@@ -14,7 +14,6 @@
             --card-bg: #ffffff;
             --text: #1e293b;
             --success: #10b981;
-            --danger: #ef4444;
         }
 
         body {
@@ -23,6 +22,7 @@
             color: var(--text);
             margin: 0; padding: 0;
             min-height: 100vh;
+            display: flex; flex-direction: column;
         }
 
         header {
@@ -34,9 +34,20 @@
             box-shadow: 0 4px 20px rgba(0,0,0,0.05);
         }
 
-        header h1 { margin: 0; font-size: 1.4rem; color: var(--brand); font-weight: 600; }
+        header h1 { 
+            margin: 0; font-size: 1.4rem; color: var(--brand); 
+            font-weight: 600; letter-spacing: -0.5px;
+        }
 
-        .container { width: 90%; max-width: 450px; margin: 20px auto; }
+        .container { width: 90%; max-width: 450px; margin: 20px auto; flex: 1; }
+
+        .timer-pill {
+            background: var(--brand); color: white;
+            padding: 6px 15px; border-radius: 20px;
+            font-size: 0.8rem; font-weight: 600;
+            display: inline-block; margin-bottom: 15px;
+            box-shadow: 0 4px 10px rgba(79, 70, 229, 0.3);
+        }
 
         .card {
             background: var(--card-bg);
@@ -47,65 +58,65 @@
             margin-bottom: 20px;
         }
 
-        .section-title {
-            font-size: 0.7rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            color: var(--brand);
-            font-weight: 600;
-            margin-bottom: 15px;
-            border-bottom: 1px solid #f1f5f9;
-            padding-bottom: 5px;
+        label {
+            display: block; margin-top: 15px;
+            font-size: 0.75rem; font-weight: 600;
+            color: #64748b; margin-left: 5px;
         }
-
-        label { display: block; margin-top: 15px; font-size: 0.75rem; font-weight: 600; color: #64748b; margin-left: 5px; }
 
         input, select, textarea {
             width: 100%; padding: 14px; margin-top: 6px;
             border-radius: 16px; border: 1.5px solid #e2e8f0;
             background: #f8fafc; color: var(--text);
-            font-size: 0.95rem; outline: none; transition: 0.3s;
+            font-size: 1rem; outline: none; transition: 0.3s;
             box-sizing: border-box;
         }
 
         input:focus { border-color: var(--brand-light); background: #fff; box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1); }
-        .readonly { background: #f1f5f9; color: #64748b; border-style: none; }
+        .readonly { background: #f1f5f9; color: #94a3b8; border-style: none; font-size: 0.9rem; }
 
-        /* Grid de Botones */
-        .opt-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 8px; }
-        .bodega-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 8px; }
+        /* Grid de Botones Estilo Salida */
+        .opt-grid {
+            display: grid; grid-template-columns: repeat(2, 1fr);
+            gap: 12px; margin-top: 8px;
+        }
+        .bodega-grid {
+            display: grid; grid-template-columns: repeat(3, 1fr);
+            gap: 12px; margin-top: 8px;
+        }
 
         .btn-opt {
             background: #f1f5f9; border: 2px solid transparent;
             padding: 12px 5px; border-radius: 16px;
-            font-size: 0.75rem; font-weight: 600; color: #475569;
-            cursor: pointer; transition: 0.2s;
+            font-size: 0.7rem; font-weight: 600; color: #475569;
+            cursor: pointer; transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
 
         .btn-opt.selected {
             background: #fff; border-color: var(--brand);
-            color: var(--brand); transform: scale(1.02);
-            box-shadow: 0 8px 15px rgba(79, 70, 229, 0.1);
+            color: var(--brand); transform: scale(1.05);
+            box-shadow: 0 8px 15px rgba(79, 70, 229, 0.15);
         }
 
-        .btn-opt.danger.selected { border-color: var(--danger); color: var(--danger); }
-
-        /* Sugerencias */
+        /* Buscador Sugerencias Replicado */
         .suggestions {
             position: absolute; width: 100%; background: #fff;
             border-radius: 16px; box-shadow: 0 15px 35px rgba(0,0,0,0.1);
             z-index: 100; display: none; margin-top: 5px;
-            border: 1px solid #e2e8f0; max-height: 200px; overflow-y: auto;
+            border: 1px solid #e2e8f0; overflow: hidden;
         }
-        .suggestion-item { padding: 12px 15px; border-bottom: 1px solid #f1f5f9; font-size: 0.85rem; cursor: pointer; }
+        .suggestion-item {
+            padding: 15px; border-bottom: 1px solid #f1f5f9;
+            font-size: 0.9rem; cursor: pointer;
+        }
         .suggestion-item:active { background: #f1f5f9; }
 
         .btn-send {
             width: 100%; padding: 18px; border-radius: 18px;
-            background: linear-gradient(135deg, var(--success), #34d399);
+            background: linear-gradient(135deg, var(--brand), var(--brand-light));
             color: white; border: none; font-weight: 600;
-            font-size: 1rem; margin-top: 10px;
-            box-shadow: 0 10px 20px rgba(16, 185, 129, 0.2);
+            font-size: 1rem; margin-top: 30px;
+            box-shadow: 0 10px 20px rgba(79, 70, 229, 0.2);
             cursor: pointer; transition: 0.3s;
         }
         .btn-send:active { transform: scale(0.96); }
@@ -116,69 +127,63 @@
 <body>
 
 <header>
+    <div class="timer-pill" id="reloj">00:00:00</div>
     <h1>Registro de Entrega</h1>
 </header>
 
 <div class="container">
     <form id="entregaForm">
         <div class="card">
-            <div class="section-title">Identificación</div>
             <label>Nombre del Técnico</label>
-            <input type="text" id="tecnico_nombre" placeholder="¿Quién entrega?" required>
+            <input type="text" id="tecnico_nombre" placeholder="Nombre + Apellido" required>
             
             <div style="position:relative">
                 <label>Nombre del Sitio</label>
                 <input type="text" id="siteSearch" placeholder="Escribe para buscar sitio..." autocomplete="off" required>
                 <div id="siteSug" class="suggestions"></div>
             </div>
-            <label>ID SITIO</label>
             <input type="text" id="sitio_id" class="readonly" placeholder="ID automático" readonly required>
         </div>
 
         <div class="card">
-            <div class="section-title">Estado del Equipo</div>
+            <label>¿En qué estado entregas?</label>
             <div class="opt-grid">
-                <button type="button" class="btn-opt danger" onclick="setEstado('DAÑADO', this)">DAÑADO</button>
-                <button type="button" class="btn-opt" onclick="setEstado('NO UTILIZADO', this)">NO UTILIZADO</button>
-                <button type="button" class="btn-opt" onclick="setEstado('USADO', this)">USADO</button>
-                <button type="button" class="btn-opt" onclick="setEstado('POR REPARACIÓN', this)">REPARACIÓN</button>
+                <button type="button" class="btn-opt" onclick="selectOpt(this, 'DAÑADO', 'estado')">DAÑADO</button>
+                <button type="button" class="btn-opt" onclick="selectOpt(this, 'NO UTILIZADO', 'estado')">NO UTILIZADO</button>
+                <button type="button" class="btn-opt" onclick="selectOpt(this, 'USADO', 'estado')">USADO</button>
+                <button type="button" class="btn-opt" onclick="selectOpt(this, 'POR REPARACIÓN', 'estado')">REPARACIÓN</button>
             </div>
             <input type="hidden" id="equipo_estado" required>
         </div>
 
         <div class="card">
-            <div class="section-title">Datos del Equipo</div>
-            
             <div id="box_ref" class="hidden">
-                <label>Equipo que salió (Referencia)</label>
+                <label>Referencia de Salida (Pendientes)</label>
                 <select id="ref_salida_desc" onchange="llenarDesdeSalida()"></select>
             </div>
 
             <div style="position:relative">
                 <label>Descripción del Repuesto</label>
-                <input type="text" id="eqSearch" placeholder="Busca en inventario..." autocomplete="off" required>
+                <input type="text" id="eqSearch" placeholder="Busca tu repuesto..." autocomplete="off" required>
                 <div id="eqSug" class="suggestions"></div>
             </div>
-            
-            <label>Marca</label>
-            <input type="text" id="equipo_marca" class="readonly" placeholder="Marca automática" readonly required>
-            
-            <label>Número de Serie (Físico)</label>
-            <input type="text" id="equipo_serie" placeholder="S/N obligatorio" required>
+            <input type="text" id="marca" class="readonly" placeholder="Marca" readonly required>
+
+            <label>Número de Serie</label>
+            <input type="text" id="serie" placeholder="S/N Físico" required>
         </div>
 
         <div class="card">
-            <div class="section-title">Recepción</div>
-            <label>Bodega Destino</label>
+            <label>¿A qué bodega ingresa?</label>
             <div class="bodega-grid">
-                <button type="button" class="btn-bodega btn-opt" onclick="setBodega('SAN BENITO', this)">S. BENITO</button>
-                <button type="button" class="btn-bodega btn-opt" onclick="setBodega('CENTRAL', this)">CENTRAL</button>
-                <button type="button" class="btn-bodega btn-opt" onclick="setBodega('TALNIQUE', this)">TALNIQUE</button>
+                <button type="button" class="btn-opt" onclick="selectOpt(this, 'SAN BENITO', 'bodega')">San Benito</button>
+                <button type="button" class="btn-opt" onclick="selectOpt(this, 'CENTRAL', 'bodega')">Central</button>
+                <button type="button" class="btn-opt" onclick="selectOpt(this, 'TALNIQUE', 'bodega')">Talnique</button>
             </div>
-            <input type="hidden" id="bodega_destino" required>
+            <input type="hidden" id="bodega" required>
 
-            <label>Comentarios adicionales</label>
-            <textarea id="comentarios" rows="2" placeholder="Notas de la entrega..."></textarea>
+            <label>Comentarios</label>
+            <textarea id="comentarios" rows="2" style="width: 100%; margin-top: 10px; border-radius: 16px; border: 1.5px solid #e2e8f0; padding: 10px; font-family: inherit;"></textarea>
 
             <button type="submit" id="btnEnviar" class="btn-send">FINALIZAR ENTREGA</button>
         </div>
@@ -187,115 +192,122 @@
 
 <script>
     const CONFIG = {
-        URL_SITIOS: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTE_5CZtD7qHGW5cWHGAjn7ALTphVm5h88lco9cySYoAe2VBW4fq8DQ7-SZY6cd_FHtNQJS3MpE88hs/pub?gid=1955381502&single=true&output=csv',
-        URL_PENDIENTES: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQBNrpLKc_GPFT6Ik9Yr4s1qo8zaOOqrDgTc_9DGeMd20rNTsEtLktTCoeDcRrts6kvgne86KZDfKQS/pub?output=csv',
-        URL_REPUESTOS: 'inventario_repuestos.csv',
-        URL_SCRIPT: 'https://script.google.com/macros/s/AKfycbzn16lKWQbMW-wdMufejz764fK-Kizf8WLNYcwHCCeL1aeEqMtsKbhNORQx6tFBBW0O/exec'
+        URL_SITIOS_CSV: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTE_5CZtD7qHGW5cWHGAjn7ALTphVm5h88lco9cySYoAe2VBW4fq8DQ7-SZY6cd_FHtNQJS3MpE88hs/pub?gid=1955381502&single=true&output=csv',
+        URL_PENDIENTES_CSV: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQBNrpLKc_GPFT6Ik9Yr4s1qo8zaOOqrDgTc_9DGeMd20rNTsEtLktTCoeDcRrts6kvgne86KZDfKQS/pub?output=csv',
+        URL_APPS_SCRIPT: 'https://script.google.com/macros/s/AKfycbzn16lKWQbMW-wdMufejz764fK-Kizf8WLNYcwHCCeL1aeEqMtsKbhNORQx6tFBBW0O/exec'
     };
 
-    let dbS = [], dbP = [], dbR = [];
+    let sites = [], pendientes = [], equipos = [];
+
+    setInterval(() => {
+        document.getElementById('reloj').innerText = new Date().toLocaleTimeString("es-SV", { hour12: false });
+    }, 1000);
 
     window.onload = async () => {
-        const [r1, r2, r3] = await Promise.all([fetch(CONFIG.URL_SITIOS), fetch(CONFIG.URL_PENDIENTES), fetch(CONFIG.URL_REPUESTOS)]);
+        const [r1, r2, r3] = await Promise.all([
+            fetch(CONFIG.URL_SITIOS_CSV),
+            fetch(CONFIG.URL_PENDIENTES_CSV),
+            fetch('inventario_repuestos.csv')
+        ]);
         const [t1, t2, t3] = await Promise.all([r1.text(), r2.text(), r3.text()]);
         
-        dbS = parseCSV(t1);
-        dbP = t2.split("\n").map(l => l.split(",").map(c => c.replace(/"/g,"").trim()));
+        sites = parseCSV(t1);
+        pendientes = t2.split("\n").map(l => l.split(",").map(c => c.replace(/"/g,"").trim()));
         
         Papa.parse(t3, {
             header: true, skipEmptyLines: true,
-            complete: (results) => { dbR = results.data; }
+            complete: (res) => { equipos = res.data; }
         });
     };
 
     function parseCSV(d) {
-        const rows = d.split(/\r?\n/).filter(x => x.trim().length > 0);
-        const headers = rows[0].split(',').map(x => x.trim().replace(/"/g, ''));
-        return rows.slice(1).map(row => {
-            const values = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
-            let obj = {}; headers.forEach((k, i) => obj[k] = values[i] ? values[i].trim().replace(/"/g, '') : '');
-            return obj;
+        const r = d.split(/\r?\n/).filter(x => x.trim().length > 0);
+        const h = r[0].split(',').map(x => x.trim().replace(/"/g, ''));
+        return r.slice(1).map(row => {
+            const v = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+            let o = {}; h.forEach((k, i) => o[k] = v[i] ? v[i].trim().replace(/"/g, '') : '');
+            return o;
         });
     }
 
-    // Buscador Sitios
+    function selectOpt(btn, val, grupo) {
+        const parent = btn.parentElement;
+        parent.querySelectorAll('.btn-opt').forEach(x => x.classList.remove('selected'));
+        btn.classList.add('selected');
+        if(grupo === 'estado') {
+            document.getElementById('equipo_estado').value = val;
+            document.getElementById('box_ref').classList.toggle('hidden', !(val==='DAÑADO' || val==='NO UTILIZADO'));
+            if(val==='DAÑADO' || val==='NO UTILIZADO') cargarPendientes();
+        } else {
+            document.getElementById('bodega').value = val;
+        }
+    }
+
+    // BUSCADOR REPLICADO: SITIOS
     const si = document.getElementById('siteSearch'), ss = document.getElementById('siteSug');
     si.addEventListener('input', () => {
         const v = si.value.toLowerCase().trim();
         if(v.length < 2) { ss.style.display = 'none'; return; }
-        const m = dbS.filter(s => (s.SITEID && s.SITEID.toLowerCase().includes(v)) || (s['NOMBRE DE SITIO'] && s['NOMBRE DE SITIO'].toLowerCase().includes(v))).slice(0,5);
+        const m = sites.filter(s => (s.SITEID && s.SITEID.toString().toLowerCase().includes(v)) || (s['NOMBRE DE SITIO'] && s['NOMBRE DE SITIO'].toLowerCase().includes(v))).slice(0,5);
         ss.innerHTML = m.map(s => `<div class="suggestion-item" onclick="setS('${s.SITEID}', '${s['NOMBRE DE SITIO'].replace(/'/g, "")}')"><strong>${s.SITEID}</strong><br><small>${s['NOMBRE DE SITIO']}</small></div>`).join('');
         ss.style.display = m.length ? 'block' : 'none';
     });
 
     function setS(i, n) { 
         si.value = n; document.getElementById('sitio_id').value = i; ss.style.display = 'none'; 
-        if(document.getElementById('equipo_estado').value) cargarRef();
+        if(document.getElementById('equipo_estado').value) cargarPendientes();
     }
 
-    // Buscador Repuestos
+    // BUSCADOR REPLICADO: EQUIPOS
     const ei = document.getElementById('eqSearch'), es = document.getElementById('eqSug');
     ei.addEventListener('input', () => {
         const v = ei.value.toLowerCase().trim();
         if(v.length < 2) { es.style.display = 'none'; return; }
-        const m = dbR.filter(e => e["DESCRIPCION DE EQUIPO"] && e["DESCRIPCION DE EQUIPO"].toLowerCase().includes(v)).slice(0,6);
+        const m = equipos.filter(e => e["DESCRIPCION DE EQUIPO"] && e["DESCRIPCION DE EQUIPO"].toLowerCase().includes(v)).slice(0,6);
         es.innerHTML = m.map(e => `<div class="suggestion-item" onclick="setE('${e["DESCRIPCION DE EQUIPO"].replace(/'/g, "")}', '${e["MARCA"]}')"><strong>${e["DESCRIPCION DE EQUIPO"]}</strong><br><small style="color:var(--brand)">${e["MARCA"]}</small></div>`).join('');
         es.style.display = m.length ? 'block' : 'none';
     });
 
-    function setE(d, m) { ei.value = d; document.getElementById('equipo_marca').value = m; es.style.display = 'none'; }
+    function setE(d, m) { ei.value = d; document.getElementById('marca').value = m; es.style.display = 'none'; }
 
-    function setEstado(est, btn) {
-        document.querySelectorAll('.btn-opt').forEach(b => b.classList.remove('selected'));
-        btn.classList.add('selected');
-        document.getElementById('equipo_estado').value = est;
-        document.getElementById('box_ref').classList.toggle('hidden', !(est==='DAÑADO'||est==='NO UTILIZADO'));
-        if(est==='DAÑADO'||est==='NO UTILIZADO') cargarRef();
-    }
-
-    function cargarRef() {
+    function cargarPendientes() {
         const id = document.getElementById('sitio_id').value;
         const sel = document.getElementById('ref_salida_desc');
-        sel.innerHTML = '<option value="">Seleccione equipo pendiente...</option>';
-        dbP.forEach(f => { if(f[3]===id && f[9]==='PENDIENTE') { let o=document.createElement('option'); o.value=f[5]; o.textContent=f[5]; sel.appendChild(o); } });
+        sel.innerHTML = '<option value="">Seleccione pendiente...</option>';
+        pendientes.forEach(f => { if(f[3]===id && f[9]==='PENDIENTE') { let o=document.createElement('option'); o.value=f[5]; o.innerText=f[5]; sel.appendChild(o); } });
     }
 
     function llenarDesdeSalida() {
         const ref = document.getElementById('ref_salida_desc').value;
-        const f = dbP.find(l => l[5]===ref && l[9]==='PENDIENTE');
-        if(f) { ei.value=f[5]; document.getElementById('equipo_marca').value=f[6]; }
-    }
-
-    function setBodega(b, btn) {
-        document.querySelectorAll('.btn-bodega').forEach(x => x.classList.remove('selected'));
-        btn.classList.add('selected');
-        document.getElementById('bodega_destino').value = b;
+        const f = pendientes.find(l => l[5]===ref && l[9]==='PENDIENTE');
+        if(f) { ei.value=f[5]; document.getElementById('marca').value=f[6]; }
     }
 
     document.getElementById('entregaForm').onsubmit = async (e) => {
         e.preventDefault();
         const b = document.getElementById('btnEnviar');
-        b.disabled = true; b.innerText = "PROCESANDO...";
+        b.disabled = true; b.innerText = "ENVIANDO...";
 
-        const p = new URLSearchParams({
+        const data = new URLSearchParams({
             action: "entregar",
             tecnico_nombre: document.getElementById('tecnico_nombre').value,
             sitio_id: document.getElementById('sitio_id').value,
             equipo_estado: document.getElementById('equipo_estado').value,
             ref_salida_desc: document.getElementById('ref_salida_desc').value,
             equipo_desc: ei.value,
-            equipo_marca: document.getElementById('equipo_marca').value,
-            bodega_destino: document.getElementById('bodega_destino').value,
-            equipo_serie: document.getElementById('equipo_serie').value,
+            equipo_marca: document.getElementById('marca').value,
+            bodega_destino: document.getElementById('bodega').value,
+            equipo_serie: document.getElementById('serie').value,
             comentarios: document.getElementById('comentarios').value
         });
 
         try {
-            await fetch(CONFIG.URL_SCRIPT, { method: 'POST', body: p, mode: 'no-cors' });
-            alert("✅ Entrega registrada con éxito");
+            await fetch(CONFIG.URL_APPS_SCRIPT, { method: 'POST', body: data, mode: 'no-cors' });
+            alert("✅ Entrega registrada correctamente");
             location.reload();
-        } catch(x) { 
-            alert("Error de red"); b.disabled = false; b.innerText = "REINTENTAR";
+        } catch(err) {
+            alert("Error de conexión");
+            b.disabled = false; b.innerText = "REINTENTAR";
         }
     };
 
