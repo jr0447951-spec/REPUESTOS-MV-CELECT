@@ -181,49 +181,59 @@
         if (file) { document.getElementById('imgPreview').src = URL.createObjectURL(file); document.getElementById('imgPreview').style.display = 'block'; }
     };
 
-    // ENVÍO FINAL CON AHORRO DE TIEMPO (REDIRECCIÓN)
+   // ENVÍO FINAL CON REDIRECCIÓN (CORREGIDO CON TUS ENTRIES)
     document.getElementById('entregaForm').onsubmit = async (e) => {
         e.preventDefault();
         const b = document.getElementById('btnEnviar');
         const file = document.getElementById('foto').files[0];
-        if(!document.getElementById('bodega').value || !document.getElementById('equipo_estado').value) { alert("⚠️ Elige estado y bodega"); return; }
+        
+        if(!document.getElementById('bodega').value || !document.getElementById('equipo_estado').value) { 
+            alert("⚠️ Elige estado y bodega"); return; 
+        }
         
         b.disabled = true; b.innerText = "PROCESANDO...";
+        
+        const fechaHoy = new Date().toISOString().split('T')[0]; // Formato YYYY-MM-DD
         const reader = new FileReader();
+        
         reader.onload = async () => {
             const formData = {
                 action: "entregar",
                 tecnico_nombre: document.getElementById('tecnico_nombre').value,
                 sitio_id: document.getElementById('sitio_id').value,
                 nombreSitio: document.getElementById('siteSearch').value,
-                equipo_desc: ei.value,
+                equipo_desc: document.getElementById('eqSearch').value,
                 equipo_marca: document.getElementById('marca').value,
                 equipo_serie: document.getElementById('serie').value,
+                equipo_estado: document.getElementById('equipo_estado').value,
                 bodega_destino: document.getElementById('bodega').value,
                 fileData: reader.result.split(',')[1],
                 fileName: file.name,
                 mimeType: file.type
             };
 
-            const params = new URLSearchParams(formData);
-
             try {
-                // 1. Guardar en Sheets y Columna L
-                await fetch(CONFIG.URL_APPS_SCRIPT, { method: 'POST', body: params, mode: 'no-cors' });
+                // 1. Guardar en Sheets y Columna L a través de Apps Script
+                await fetch(CONFIG.URL_APPS_SCRIPT, { method: 'POST', body: new URLSearchParams(formData), mode: 'no-cors' });
 
-                // 2. AHORRO DE TIEMPO: Redirección con prellenado automático
+                // 2. AHORRO DE TIEMPO: Redirección con tus ENTRIES específicos
                 const urlGoogleForm = `https://docs.google.com/forms/d/e/1FAIpQLSfz-IGCT2vdfUplh2MipdjgBLcspDE_TWChhrWn1wBaVMnWOQ/viewform?` +
-                    `entry.1637897291=${encodeURIComponent(formData.tecnico_nombre)}` +
-                    `&entry.1265319450=${encodeURIComponent(formData.sitio_id)}` +
-                    `&entry.1509520939=${encodeURIComponent(formData.nombreSitio)}` +
-                    `&entry.1914147166=${encodeURIComponent(formData.equipo_desc)}` +
-                    `&entry.554570123=${encodeURIComponent(formData.equipo_marca)}` +
-                    `&entry.1497572830=${encodeURIComponent(formData.equipo_serie)}` +
-                    `&entry.795516044=${encodeURIComponent(formData.bodega_destino)}`;
+                    `entry.997804380=${fechaHoy}` + 
+                    `&entry.821288735=${encodeURIComponent(formData.sitio_id)}` +
+                    `&entry.1024047478=${encodeURIComponent(formData.nombreSitio)}` +
+                    `&entry.808319871=${encodeURIComponent(formData.equipo_marca)}` +
+                    `&entry.735015225=${encodeURIComponent(formData.equipo_desc)}` +
+                    `&entry.1183702054=${encodeURIComponent(formData.equipo_serie)}` +
+                    `&entry.1370238515=${encodeURIComponent(formData.equipo_estado)}` +
+                    `&entry.1372699954=${encodeURIComponent(formData.bodega_destino)}` +
+                    `&entry.908256573=CELECT`; // VALOR FIJO SIEMPRE
 
                 window.location.href = urlGoogleForm;
 
-            } catch(err) { alert("Error de red"); b.disabled = false; b.innerText = "REINTENTAR"; }
+            } catch(err) { 
+                alert("Error de red"); 
+                b.disabled = false; b.innerText = "REINTENTAR"; 
+            }
         };
         reader.readAsDataURL(file);
     };
