@@ -3,170 +3,129 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ENTREGA CELECT-MV 2026</title>
+    <title>ENTREGA CELECT-MV</title>
     <style>
-        :root { --blue: #1a73e8; --green: #27ae60; --red: #d93025; }
-        body { font-family: 'Segoe UI', sans-serif; background: #eef2f7; padding: 15px; margin: 0; }
-        .card { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 5px 25px rgba(0,0,0,0.1); max-width: 500px; margin: auto; }
-        .section { border-left: 5px solid var(--blue); padding-left: 15px; margin-bottom: 25px; }
-        h3 { font-size: 12px; color: #777; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; }
-        label { display: block; font-weight: 700; margin: 12px 0 5px; font-size: 14px; color: #333; }
-        input, select, textarea { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 10px; box-sizing: border-box; font-size: 16px; }
-        input[readonly] { background-color: #f8f9fa; color: #555; }
-        
-        .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .btn-toggle { padding: 14px; border: 2px solid #eee; border-radius: 10px; background: white; cursor: pointer; font-weight: bold; font-size: 13px; transition: 0.2s; }
-        .btn-toggle.active { border-color: var(--blue); background: #e8f0fe; color: var(--blue); }
-        .btn-toggle.danger.active { border-color: var(--red); background: #fce8e6; color: var(--red); }
-
-        .btn-submit { width: 100%; padding: 20px; background: var(--green); color: white; border: none; border-radius: 12px; font-size: 18px; font-weight: bold; margin-top: 20px; cursor: pointer; box-shadow: 0 4px 10px rgba(39, 174, 96, 0.3); }
-        #status { display: none; margin-top: 15px; text-align: center; padding: 12px; border-radius: 10px; font-weight: bold; }
+        body { font-family: sans-serif; background: #f4f7f6; padding: 15px; }
+        .card { background: white; padding: 20px; border-radius: 12px; max-width: 480px; margin: auto; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .section { border-left: 4px solid #1a73e8; padding-left: 15px; margin-bottom: 20px; }
+        h3 { font-size: 11px; color: #888; text-transform: uppercase; margin: 0 0 10px 0; }
+        label { display: block; font-weight: bold; margin: 10px 0 5px; font-size: 13px; }
+        input, select, textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; font-size: 15px; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .btn-opt { padding: 12px; border: 1px solid #ddd; background: #fff; cursor: pointer; border-radius: 8px; font-weight: bold; font-size: 12px; }
+        .btn-opt.active { background: #1a73e8; color: white; border-color: #1a73e8; }
+        .btn-submit { width: 100%; padding: 18px; background: #27ae60; color: white; border: none; border-radius: 10px; font-size: 17px; font-weight: bold; cursor: pointer; margin-top: 15px; }
     </style>
 </head>
 <body>
 
 <div class="card">
-    <h2 style="text-align:center; color:var(--blue);">🔄 Registro de Entrega</h2>
+    <h2 style="text-align:center; color:#1a73e8;">Registro de Entrega</h2>
 
     <div class="section">
         <h3>Sección 1: Identificación</h3>
-        <label>Nombre del Técnico (Col. B)</label>
-        <input type="text" id="tecnico_nombre" placeholder="Nombre completo">
+        <label>Técnico (Col. B)</label>
+        <input type="text" id="tecnico_nombre" placeholder="Nombre de quien recibe">
         
-        <label>Sitio / Nombre (Col. C)</label>
-        <input type="text" id="sitio_nombre" placeholder="Escriba nombre del sitio..." oninput="buscarSitioEnCSV()">
+        <label>Nombre del Sitio (Col. C)</label>
+        <input type="text" id="sitio_nombre" placeholder="Buscar sitio..." oninput="autoId()">
         
         <label>ID SITIO (Col. D)</label>
-        <input type="text" id="sitio_id" readonly>
+        <input type="text" id="sitio_id" readonly style="background:#eee;">
     </div>
 
     <div class="section">
-        <h3>Sección 2: Estado del Equipo (Col. E)</h3>
-        <div class="btn-grid">
-            <button type="button" class="btn-toggle danger" onclick="setEstado('DAÑADO', this)">DAÑADO</button>
-            <button type="button" class="btn-toggle" onclick="setEstado('NO UTILIZADO', this)">NO UTILIZADO</button>
-            <button type="button" class="btn-toggle" onclick="setEstado('USADO', this)">USADO</button>
-            <button type="button" class="btn-toggle" onclick="setEstado('POR REPARACIÓN', this)">POR REPARACIÓN</button>
+        <h3>Sección 2: Estado (Col. E)</h3>
+        <div class="grid">
+            <button type="button" class="btn-opt" onclick="setEstado('DAÑADO', this)">DAÑADO</button>
+            <button type="button" class="btn-opt" onclick="setEstado('NO UTILIZADO', this)">NO UTILIZADO</button>
+            <button type="button" class="btn-opt" onclick="setEstado('USADO', this)">USADO</button>
+            <button type="button" class="btn-opt" onclick="setEstado('POR REPARACIÓN', this)">REPARACIÓN</button>
         </div>
         <input type="hidden" id="equipo_estado">
     </div>
 
     <div class="section">
         <h3>Sección 3: Datos del Equipo</h3>
-        <div id="div_ref" style="display:none;">
+        <div id="box_ref" style="display:none;">
             <label>Referencia Salida (Col. F)</label>
-            <select id="ref_salida_desc" onchange="seleccionarDePendientes()"></select>
+            <select id="ref_salida_desc" onchange="llenarDesdeSalida()"></select>
         </div>
         
         <label>Descripción (Col. G)</label>
-        <input type="text" id="equipo_desc" list="lista_repuestos" placeholder="Buscar en inventario..." onchange="autoCompletarMarca()">
-        <datalist id="lista_repuestos"></datalist>
+        <input type="text" id="equipo_desc" list="lista_repo" placeholder="Buscar repuesto..." onchange="autoMarca()">
+        <datalist id="lista_repo"></datalist>
         
         <label>Marca (Col. H)</label>
-        <input type="text" id="equipo_marca" readonly>
+        <input type="text" id="equipo_marca" readonly style="background:#eee;">
         
         <label>Serie (Col. J) - MANUAL</label>
-        <input type="text" id="equipo_serie" placeholder="Ingrese S/N físico">
+        <input type="text" id="equipo_serie" placeholder="Ingrese serie física">
     </div>
 
     <div class="section">
         <h3>Sección 4: Recepción</h3>
-        <label>Bodega Destino (Col. I)</label>
-        <div class="btn-grid">
-            <button type="button" class="btn-toggle" onclick="setBodega('SAN BENITO', this)">SB</button>
-            <button type="button" class="btn-toggle" onclick="setBodega('CENTRAL', this)">CE</button>
-            <button type="button" class="btn-toggle" onclick="setBodega('TALNIQUE', this)">TA</button>
+        <label>Bodega (Col. I)</label>
+        <div class="grid">
+            <button type="button" class="btn-opt" onclick="setBodega('SAN BENITO', this)">SB</button>
+            <button type="button" class="btn-opt" onclick="setBodega('CENTRAL', this)">CE</button>
+            <button type="button" class="btn-opt" onclick="setBodega('TALNIQUE', this)">TA</button>
         </div>
         <input type="hidden" id="bodega_destino">
 
         <label>Comentarios (Col. K)</label>
-        <textarea id="comentarios" rows="2" placeholder="Notas adicionales..."></textarea>
-        
-        <label>Fotografía (Col. L)</label>
-        <input type="file" id="foto_evidencia" accept="image/*" capture="camera">
+        <textarea id="comentarios" rows="2"></textarea>
     </div>
 
-    <button class="btn-submit" onclick="enviarDatos()">🚀 FINALIZAR REGISTRO</button>
-    <div id="status"></div>
+    <button class="btn-submit" onclick="enviar()">🚀 FINALIZAR Y ENVIAR</button>
 </div>
 
 <script>
-    // URL de Google Sheets para pendientes
-    const URL_SALIDAS = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQBNrpLKc_GPFT6Ik9Yr4s1qo8zaOOqrDgTc_9DGeMd20rNTsEtLktTCoeDcRrts6kvgne86KZDfKQS/pub?output=csv";
-    // URL Interna de GitHub para el catálogo de repuestos
-    const URL_INTERNA_REPUESTOS = "inventario_repuestos.csv"; 
-    
-    let dbSalidas = [];
-    let dbRepuestos = [];
+    const CSV_SALIDAS = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQBNrpLKc_GPFT6Ik9Yr4s1qo8zaOOqrDgTc_9DGeMd20rNTsEtLktTCoeDcRrts6kvgne86KZDfKQS/pub?output=csv";
+    const CSV_REPUESTOS = "inventario_repuestos.csv";
+    let dbS = [], dbR = [];
 
-    // Carga inicial al abrir
     window.onload = async () => {
-        const [resSalidas, resRepuestos] = await Promise.all([
-            fetch(URL_SALIDAS),
-            fetch(URL_INTERNA_REPUESTOS)
-        ]);
-        const [txtSalidas, txtRepuestos] = await Promise.all([resSalidas.text(), resRepuestos.text()]);
+        const [r1, r2] = await Promise.all([fetch(CSV_SALIDAS), fetch(CSV_REPUESTOS)]);
+        const [t1, t2] = await Promise.all([r1.text(), r2.text()]);
+        dbS = t1.split("\n").map(l => l.split(",").map(c => c.replace(/"/g,"").trim()));
+        dbR = t2.split("\n").map(l => l.split(",").map(c => c.replace(/"/g,"").trim()));
         
-        dbSalidas = txtSalidas.split("\n").map(l => l.split(",").map(c => c.replace(/"/g,"").trim()));
-        dbRepuestos = txtRepuestos.split("\n").map(l => l.split(",").map(c => c.replace(/"/g,"").trim()));
-
-        const dl = document.getElementById('lista_repuestos');
-        dbRepuestos.slice(1).forEach(r => {
-            if(r[0]){
-                let opt = document.createElement('option');
-                opt.value = r[0]; // Descripción en Col A
-                dl.appendChild(opt);
-            }
-        });
+        const list = document.getElementById('lista_repo');
+        dbR.slice(1).forEach(r => { if(r[0]) { let o=document.createElement('option'); o.value=r[0]; list.appendChild(o); } });
     };
 
-    function buscarSitioEnCSV() {
-        const busqueda = document.getElementById('sitio_nombre').value.toUpperCase();
-        if(busqueda.length < 3) return;
-        const fila = dbSalidas.find(f => f[4] && f[4].toUpperCase().includes(busqueda));
-        if(fila) document.getElementById('sitio_id').value = fila[3];
+    function autoId() {
+        const nom = document.getElementById('sitio_nombre').value.toUpperCase();
+        const f = dbS.find(l => l[4] && l[4].toUpperCase().includes(nom));
+        if(f) document.getElementById('sitio_id').value = f[3];
     }
 
     function setEstado(est, btn) {
-        document.querySelectorAll('.btn-toggle').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.btn-opt').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         document.getElementById('equipo_estado').value = est;
-        
-        const divRef = document.getElementById('div_ref');
-        if(est === 'DAÑADO' || est === 'NO UTILIZADO') {
-            divRef.style.display = 'block';
-            cargarPendientes();
-        } else {
-            divRef.style.display = 'none';
-        }
+        document.getElementById('box_ref').style.display = (est==='DAÑADO'||est==='NO UTILIZADO') ? 'block' : 'none';
+        if(est==='DAÑADO'||est==='NO UTILIZADO') cargarRef();
     }
 
-    function cargarPendientes() {
+    function cargarRef() {
         const id = document.getElementById('sitio_id').value;
-        const select = document.getElementById('ref_salida_desc');
-        select.innerHTML = '<option value="">-- Seleccione el que salió --</option>';
-        dbSalidas.forEach(f => {
-            if(f[3] === id && f[9] === 'PENDIENTE') {
-                let o = document.createElement('option');
-                o.value = f[5]; o.textContent = f[5];
-                select.appendChild(o);
-            }
-        });
+        const sel = document.getElementById('ref_salida_desc');
+        sel.innerHTML = '<option value="">Seleccione...</option>';
+        dbS.forEach(f => { if(f[3]===id && f[9]==='PENDIENTE') { let o=document.createElement('option'); o.value=f[5]; o.textContent=f[5]; sel.appendChild(o); } });
     }
 
-    function seleccionarDePendientes() {
+    function llenarDesdeSalida() {
         const ref = document.getElementById('ref_salida_desc').value;
-        const fila = dbSalidas.find(f => f[5] === ref && f[9] === 'PENDIENTE');
-        if(fila) {
-            document.getElementById('equipo_desc').value = fila[5];
-            document.getElementById('equipo_marca').value = fila[6];
-        }
+        const f = dbS.find(l => l[5]===ref && l[9]==='PENDIENTE');
+        if(f) { document.getElementById('equipo_desc').value=f[5]; document.getElementById('equipo_marca').value=f[6]; }
     }
 
-    function autoCompletarMarca() {
-        const desc = document.getElementById('equipo_desc').value;
-        const rep = dbRepuestos.find(r => r[0] === desc);
-        if(rep) document.getElementById('equipo_marca').value = rep[1]; // Marca en Col B
+    function autoMarca() {
+        const d = document.getElementById('equipo_desc').value;
+        const r = dbR.find(l => l[0]===d);
+        if(r) document.getElementById('equipo_marca').value = r[1];
     }
 
     function setBodega(b, btn) {
@@ -174,14 +133,25 @@
         btn.classList.add('active');
     }
 
-    async function enviarDatos() {
-        // Aquí conectamos con tu Apps Script action=entregar
-        const status = document.getElementById('status');
-        status.style.display = "block";
-        status.innerHTML = "⌛ Procesando entrega...";
-        // ... Lógica de fetch ...
+    async function enviar() {
+        const urlParams = new URLSearchParams({
+            action: "entregar",
+            tecnico_nombre: document.getElementById('tecnico_nombre').value,
+            sitio_id: document.getElementById('sitio_id').value,
+            equipo_estado: document.getElementById('equipo_estado').value,
+            ref_salida_desc: document.getElementById('ref_salida_desc').value,
+            equipo_desc: document.getElementById('equipo_desc').value,
+            equipo_marca: document.getElementById('equipo_marca').value,
+            bodega_destino: document.getElementById('bodega_destino').value,
+            equipo_serie: document.getElementById('equipo_serie').value,
+            comentarios: document.getElementById('comentarios').value
+        });
+
+        const resp = await fetch("https://script.google.com/macros/s/AKfycbxFWYZb6qsKFTik0_oFxUFFwD3PLxTriU8eIN7-mHO3BlzO8CQQ6pFYZEAhCcfL68bh/exec", { method: 'POST', body: urlParams });
+        const resText = await resp.text();
+        alert(resText === "OK_ACTUALIZADO" || resText === "OK_NUEVO_REGISTRO" ? "✅ Registro exitoso" : "❌ Error: " + resText);
+        if(!resText.includes("ERROR")) location.reload();
     }
 </script>
-
 </body>
 </html>
