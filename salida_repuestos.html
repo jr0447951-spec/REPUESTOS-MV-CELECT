@@ -258,25 +258,61 @@
     document.getElementById('mainForm').onsubmit = async (e) => {
         e.preventDefault();
         const b = document.getElementById('btnEnviar');
+        
+        // Capturamos los valores JUSTO en el momento del click
+        const valTecnico = document.getElementById('tecnico').value;
+        const valBodega = document.getElementById('bodega').value;
+        const valIdSitio = document.getElementById('idSitio').value;
+        const valSerie = document.getElementById('serie').value;
+        const valMarca = document.getElementById('marca').value;
+        const valNombreSitio = document.getElementById('siteSearch').value;
+        const valDescripcion = document.getElementById('eqSearch').value;
+
+        if(!valBodega) { alert("Por favor selecciona una bodega"); return; }
+
         b.disabled = true; b.innerText = "Subiendo datos...";
         
         const file = document.getElementById('foto').files[0];
         const reader = new FileReader();
         reader.onload = async () => {
             const p = {
-                tecnico: document.getElementById('tecnico').value,
-                fileData: reader.result.split(',')[1], fileName: file.name, mimeType: file.type,
-                bodega: document.getElementById('bodega').value, idSitio: document.getElementById('idSitio').value,
-                nombreSitio: si.value, descripcion: ei.value, marca: document.getElementById('marca').value,
-                serie: document.getElementById('serie').value
+                tecnico: valTecnico,
+                bodega: valBodega,
+                idSitio: valIdSitio,
+                nombreSitio: valNombreSitio,
+                descripcion: valDescripcion,
+                marca: valMarca,
+                serie: valSerie,
+                fileData: reader.result.split(',')[1], 
+                fileName: file.name, 
+                mimeType: file.type
             };
+
             try {
-                const r = await fetch(CONFIG.URL_APPS_SCRIPT, { method: 'POST', body: new URLSearchParams(p) });
+                const r = await fetch(CONFIG.URL_APPS_SCRIPT, { 
+                    method: 'POST', 
+                    body: new URLSearchParams(p) 
+                });
                 const res = await r.json();
+                
                 if(res.result === "success") {
-                    window.location.href =`${CONFIG.URL_FORMS_EXTERNO}?entry.1637897291=CELECT&entry.795516044=${encodeURIComponent(p.bodega)}&entry.1265319450=${encodeURIComponent(p.idSitio)}&entry.1509520939=${encodeURIComponent(p.nombreSitio)}&entry.554570123=${encodeURIComponent(p.marca)}&entry.1914147166=${encodeURIComponent(p.descripcion)}&entry.1497572830=${encodeURIComponent(p.serie)}&entry.733439703=${encodeURIComponent(res.fileUrl)}`;
+                    // REDIRECCIÓN CON DATOS FORZADOS
+                    const urlFinal = `${CONFIG.URL_FORMS_EXTERNO}?entry.1637897291=CELECT` +
+                        `&entry.795516044=${encodeURIComponent(valBodega)}` +
+                        `&entry.1265319450=${encodeURIComponent(valIdSitio)}` +
+                        `&entry.1509520939=${encodeURIComponent(valNombreSitio)}` +
+                        `&entry.554570123=${encodeURIComponent(valMarca)}` +
+                        `&entry.1914147166=${encodeURIComponent(valDescripcion)}` +
+                        `&entry.1497572830=${encodeURIComponent(valSerie)}` +
+                        `&entry.733439703=${encodeURIComponent(res.fileUrl)}`;
+                    
+                    window.location.href = urlFinal;
                 }
-            } catch(x) { alert("Error"); b.disabled = false; }
+            } catch(x) { 
+                alert("Error de conexión"); 
+                b.disabled = false; 
+                b.innerText = "REINTENTAR ENVÍO";
+            }
         };
         reader.readAsDataURL(file);
     };
