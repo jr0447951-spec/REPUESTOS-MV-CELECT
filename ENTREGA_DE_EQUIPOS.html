@@ -1,137 +1,71 @@
 <!DOCTYPE html>
-<html lang="es">
+<html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Retorno de Equipos - CELECT-MV</title>
+    <title>Retorno de Equipos</title>
     <style>
-        body { font-family: 'Segoe UI', Arial, sans-serif; background-color: #f0f2f5; padding: 20px; display: flex; justify-content: center; }
-        .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 450px; }
-        h2 { text-align: center; color: #1a73e8; margin-bottom: 20px; }
-        .group { margin-bottom: 15px; }
-        label { display: block; font-weight: 600; margin-bottom: 8px; color: #444; }
-        input, select { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; box-sizing: border-box; }
-        .btn { width: 100%; padding: 14px; background-color: #1a73e8; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.3s; }
-        .btn:hover { background-color: #1557b0; }
-        #status { margin-top: 15px; text-align: center; font-size: 14px; padding: 10px; border-radius: 5px; display: none; }
+        body { font-family: sans-serif; padding: 20px; background: #f4f4f4; }
+        .box { background: white; padding: 20px; border-radius: 8px; max-width: 400px; margin: auto; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        input, select, button { width: 100%; padding: 10px; margin: 10px 0; border-radius: 5px; border: 1px solid #ccc; }
+        button { background: #27ae60; color: white; font-weight: bold; cursor: pointer; border: none; }
     </style>
 </head>
 <body>
-
-<div class="card">
-    <h2>🔄 Retorno de Equipo</h2>
-    
-    <div class="group">
-        <label>ID del Sitio</label>
-        <input type="text" id="idSitio" placeholder="Ej: SAL001" oninput="consultarPendientes()">
+    <div class="box">
+        <h2>🔄 Retorno de Equipo</h2>
+        <input type="text" id="idSitio" placeholder="ID del Sitio (Ej: SAL001)" oninput="cargarEquipos()">
+        <select id="equipoSelect"><option value="">-- Seleccione Equipo --</option></select>
+        <select id="estado"><option value="USADO">USADO / FUNCIONAL</option><option value="DAÑADO">DAÑADO</option></select>
+        <input type="text" id="serie" placeholder="Confirmar Serie">
+        <button onclick="registrar()">REGISTRAR ENTREGA</button>
+        <p id="msg"></p>
     </div>
 
-    <div class="group">
-        <label>Equipo a Entregar</label>
-        <select id="equipoSelect">
-            <option value="">-- Ingrese ID primero --</option>
-        </select>
-    </div>
+    <script>
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzn16lKWQbMW-wdMufejz764fK-Kizf8WLNYcwHCCeL1aeEqMtsKbhNORQx6tFBBW0O/exec";
+        const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQBNrpLKc_GPFT6Ik9Yr4s1qo8zaOOqrDgTc_9DGeMd20rNTsEtLktTCoeDcRrts6kvgne86KZDfKQS/pub?output=csv";
 
-    <div class="group">
-        <label>Estado de Retorno</label>
-        <select id="estado">
-            <option value="USADO">USADO / FUNCIONAL</option>
-            <option value="DAÑADO">DAÑADO / AVERIADO</option>
-            <option value="NO UTILIZADO">NO UTILIZADO</option>
-        </select>
-    </div>
-
-    <div class="group">
-        <label>Confirmar Serie</label>
-        <input type="text" id="serieConfirmada" placeholder="Ingrese número de serie">
-    </div>
-
-    <button class="btn" onclick="ejecutarEntrega()">REGISTRAR ENTREGA</button>
-    <div id="status"></div>
-</div>
-
-<script>
-    const URL_CSV_SALIDAS = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQBNrpLKc_GPFT6Ik9Yr4s1qo8zaOOqrDgTc_9DGeMd20rNTsEtLktTCoeDcRrts6kvgne86KZDfKQS/pub?output=csv";
-    const URL_SCRIPT = "https://script.google.com/macros/s/AKfycby5wT1f4xxRQvBrCaMuIQzwzsXxl5tqxFREl376TNjRIYhXFjrOSU2GobJby1KJ6rYg/exec";
-    const URL_FORM = "https://docs.google.com/forms/d/e/1FAIpQLSfz-IGCT2vdfUplh2MipdjgBLcspDE_TWChhrWn1wBaVMnWOQ/formResponse";
-
-    // 1. FILTRAR EQUIPOS PENDIENTES DESDE EL CSV
-    async function consultarPendientes() {
-        const idBuscado = document.getElementById('idSitio').value.trim().toUpperCase();
-        if (idBuscado.length < 3) return;
-
-        try {
-            const response = await fetch(URL_CSV_SALIDAS);
-            const data = await response.text();
-            const filas = data.split("\n").map(f => f.split(","));
-            
+        async function cargarEquipos() {
+            const id = document.getElementById('idSitio').value.toUpperCase();
+            if(id.length < 3) return;
+            const res = await fetch(CSV_URL);
+            const text = await res.text();
+            const filas = text.split("\n").map(r => r.split(","));
             const select = document.getElementById('equipoSelect');
-            select.innerHTML = '<option value="">Seleccione equipo...</option>';
-
-            filas.forEach(col => {
-                // Columna D (3) = ID Sitio, Columna J (9) = Estado
-                const idSheet = col[3]?.replace(/"/g, "").trim();
-                const estadoSheet = col[9]?.replace(/"/g, "").trim();
-
-                if (idSheet === idBuscado && estadoSheet === "PENDIENTE") {
+            select.innerHTML = '<option value="">-- Seleccione Equipo --</option>';
+            
+            filas.forEach(f => {
+                if(f[3]?.replace(/"/g,"") == id && f[9]?.replace(/"/g,"") == "PENDIENTE") {
                     let opt = document.createElement('option');
-                    opt.value = col[5]; // Descripción (Columna F)
-                    opt.textContent = col[5]; 
+                    opt.value = f[5].replace(/"/g,"");
+                    opt.textContent = f[5].replace(/"/g,"");
                     select.appendChild(opt);
                 }
             });
-        } catch (e) { console.error("Error CSV:", e); }
-    }
-
-    // 2. ENVIAR DATOS A FORMULARIO Y ACTUALIZAR EXCEL
-    async function ejecutarEntrega() {
-        const id = document.getElementById('idSitio').value;
-        const equipo = document.getElementById('equipoSelect').value;
-        const estado = document.getElementById('estado').value;
-        const serie = document.getElementById('serieConfirmada').value;
-        const statusDiv = document.getElementById('status');
-
-        if (!equipo || !serie) {
-            alert("Complete todos los campos");
-            return;
         }
 
-        statusDiv.style.display = "block";
-        statusDiv.style.backgroundColor = "#fff3cd";
-        statusDiv.innerHTML = "Procesando... no cierre la página.";
+        async function registrar() {
+            const btn = document.querySelector("button");
+            const msg = document.getElementById("msg");
+            btn.disabled = true; msg.innerText = "Procesando...";
 
-        try {
-            // A. Envío al Google Form (Back-up)
-            const formParams = new URLSearchParams();
-            formParams.append("entry.821288735", id);
-            formParams.append("entry.1467261011", equipo);
-            formParams.append("entry.1183702054", serie);
-            fetch(`${URL_FORM}?${formParams.toString()}`, { mode: 'no-cors' });
+            const params = new URLSearchParams({
+                action: "entregar",
+                descripcion: document.getElementById('equipoSelect').value,
+                estado: document.getElementById('estado').value,
+                serie: document.getElementById('serie').value
+            });
 
-            // B. Envío al Script para marcar la fila en el Excel
-            const scriptParams = new URLSearchParams();
-            scriptParams.append("action", "entregar");
-            scriptParams.append("descripcion", equipo);
-            scriptParams.append("estado", estado);
-            scriptParams.append("serie", serie);
-
-            await fetch(`${URL_SCRIPT}?${scriptParams.toString()}`, { method: 'POST' });
-
-            statusDiv.style.backgroundColor = "#d4edda";
-            statusDiv.innerHTML = "✅ Entrega registrada y stock actualizado.";
-            setTimeout(() => location.reload(), 3000);
-
-        } catch (e) {
-            statusDiv.style.backgroundColor = "#f8d7da";
-            statusDiv.innerHTML = "❌ Error en el proceso. Reintente.";
+            try {
+                const res = await fetch(SCRIPT_URL + "?" + params.toString(), { method: 'POST' });
+                const text = await res.text();
+                if(text.includes("EXITOSA")) {
+                    msg.innerText = "✅ Entrega anotada con fecha en el sistema.";
+                    setTimeout(() => location.reload(), 2000);
+                } else { msg.innerText = "❌ " + text; btn.disabled = false; }
+            } catch(e) { msg.innerText = "❌ Error de conexión"; btn.disabled = false; }
         }
-    }
-</script>
-
-</body>
-</html>
-  }
-</script>
+    </script>
 </body>
 </html>
