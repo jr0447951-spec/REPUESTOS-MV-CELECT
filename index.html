@@ -1,16 +1,31 @@
-* {
-    box-sizing: border-box;
-}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sistema Control Repuestos 2026</title>
 
+<style>
 body {
     font-family: 'Segoe UI', sans-serif;
     background: #f4f7f6;
-    margin: 0;
-    padding: 20px;
     display: flex;
     justify-content: center;
     align-items: center;
-    min-height: 100vh; /* mejor que height */
+    height: 100vh;
+    margin: 0;
+}
+
+/* -------- ANIMACIÓN DE ENTRADA -------- */
+@keyframes fadeSlideUp {
+    from {
+        opacity: 0;
+        transform: translateY(25px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .container {
@@ -19,14 +34,16 @@ body {
     border-radius: 15px;
     box-shadow: 0 10px 25px rgba(0,0,0,0.1);
     text-align: center;
-    width: 100%;
-    max-width: 400px; /* adaptable */
+    width: 320px;
+
+    /* Animación aplicada */
+    animation: fadeSlideUp 0.8s ease-out;
 }
 
 h1 {
     color: #2c3e50;
     margin-bottom: 30px;
-    font-size: 24px;
+    font-size: 22px;
 }
 
 .nav-btn {
@@ -36,37 +53,46 @@ h1 {
     margin: 15px 0;
     text-decoration: none;
     color: white;
-    border-radius: 12px;
+    border-radius: 10px;
     font-weight: bold;
     font-size: 16px;
-    transition: transform 0.2s, background 0.3s;
+    transition: transform 0.25s ease, background 0.3s ease;
 }
 
-.btn-salida { background: #3498db; }
-.btn-salida:hover { background: #2980b9; transform: scale(1.02); }
-
-.btn-entrega { background: #27ae60; }
-.btn-entrega:hover { background: #219150; transform: scale(1.02); }
-
-/* -------- RESPONSIVE MOVIL -------- */
-@media (max-width: 480px) {
-
-    body {
-        padding: 15px;
-        align-items: flex-start; /* evita corte en móviles pequeños */
-    }
-
-    .container {
-        padding: 25px;
-        border-radius: 12px;
-    }
-
-    h1 {
-        font-size: 20px;
-    }
-
-    .nav-btn {
-        padding: 16px;
-        font-size: 15px;
-    }
+.btn-salida {
+    background: #3498db;
 }
+
+.btn-salida:hover {
+    background: #2980b9;
+    transform: scale(1.03);
+}
+
+.btn-entrega {
+    background: #27ae60;
+}
+
+.btn-entrega:hover {
+    background: #219150;
+    transform: scale(1.03);
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="container">
+    <h1>CELECT-MV 2026</h1>
+    
+    <a href="salida_repuestos.html" class="btn-salida nav-btn">
+        📤 REGISTRAR SALIDA
+    </a>
+    
+    <a href="ENTREGA_DE_EQUIPOS.html" class="btn-entrega nav-btn">
+        🔄 REGISTRAR ENTREGA
+    </a>
+</div>
+
+</body>
+</html>
