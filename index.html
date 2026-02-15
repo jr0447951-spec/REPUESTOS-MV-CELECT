@@ -2,7 +2,10 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+
+<!-- VIEWPORT CORREGIDO PARA ANDROID -->
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+
 <title>Sistema Control Repuestos 2026</title>
 
 <style>
@@ -11,56 +14,46 @@
     -webkit-tap-highlight-color: transparent;
 }
 
-body {
+html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
     font-family: 'Segoe UI', sans-serif;
     background: linear-gradient(135deg, #eef2f3, #d9e4f5);
-    margin: 0;
 }
 
-/* Contenedor adaptable */
+/* Contenedor ocupa toda la pantalla */
 .container {
-    background: white;
     width: 100%;
     min-height: 100dvh;
     padding: 40px 25px;
-    text-align: center;
 
     display: flex;
     flex-direction: column;
     justify-content: center;
 
-    animation: fadeSlideUp 0.6s ease-out;
+    text-align: center;
 }
 
-/* Animación */
-@keyframes fadeSlideUp {
-    from {
-        opacity: 0;
-        transform: translateY(20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
+/* Título */
 h1 {
     color: #2c3e50;
-    margin-bottom: 40px;
+    margin-bottom: 45px;
     font-size: 22px;
 }
 
-/* Botones grandes tipo app */
+/* Botones grandes */
 .nav-btn {
     display: block;
     width: 100%;
-    padding: 20px;
-    margin: 15px 0;
+    padding: 22px;
+    margin: 18px 0;
     text-decoration: none;
     color: white;
-    border-radius: 18px;
+    border-radius: 20px;
     font-weight: 600;
-    font-size: 17px;
+    font-size: 18px;
     transition: transform 0.15s ease;
 }
 
@@ -72,27 +65,27 @@ h1 {
     background: linear-gradient(135deg, #27ae60, #219150);
 }
 
+/* Efecto táctil real Android */
 .nav-btn:active {
-    transform: scale(0.97);
+    transform: scale(0.96);
 }
 
-/* En pantallas grandes lo centra como tarjeta */
+/* Solo en pantallas grandes se convierte en tarjeta */
 @media (min-width: 768px) {
     body {
         display: flex;
         justify-content: center;
         align-items: center;
-        height: 100vh;
     }
 
     .container {
         max-width: 420px;
         min-height: auto;
-        border-radius: 20px;
+        border-radius: 22px;
+        background: white;
         box-shadow: 0 20px 45px rgba(0,0,0,0.15);
     }
 }
-
 </style>
 </head>
 
