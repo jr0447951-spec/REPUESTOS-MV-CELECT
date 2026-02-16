@@ -63,7 +63,7 @@ footer { text-align:center; padding:15px 0; font-size:0.8rem; color:#64748b; bor
 <div class="table-container">
     <div class="table-header">
         <h2>📋 Pendientes de Gestión/Entrega </h2>
-        <span class="badge badge-pending" id="tag-pendientes">Total: 0</span>
+        <span class="badge badge-pendientes" id="tag-pendientes">Total: 0</span>
     </div>
     <button class="export-btn" id="exportPendientes">📤 Exportar Pendientes a Imagen</button>
     <table id="tablaPendientes">
@@ -165,11 +165,13 @@ function renderPendientes() {
         </tr>
     `).join('');
 }
+
+// --------------------- FECHA DE INICIO DE SEMANA ISO ---------------------
 function inicioSemanaISO(fecha) {
     const dia = fecha.getDay() || 7; // domingo = 7
     const lunes = new Date(fecha);
     lunes.setDate(fecha.getDate() - dia + 1);
-    lunes.setHours(0,0,0,0); // reinicia hora para comparación
+    lunes.setHours(0,0,0,0); // reinicia hora
     return lunes;
 }
 
@@ -185,14 +187,13 @@ function procesarEntregados(csv) {
             return fechaEntrega >= inicioSemana;
         });
 
-        // Actualiza estadísticas y etiqueta
         document.getElementById('stat-semanal').innerText = datosEntregas.length;
         const semanaActual = numeroSemana(hoy);
         document.getElementById('tag-semanal').innerText = "Semana " + semanaActual;
 
-        // Renderizar tabla
         renderEntregas();
     }});
+}
 
 function renderEntregas() {
     const tbody = document.querySelector('#tablaEntregados tbody');
