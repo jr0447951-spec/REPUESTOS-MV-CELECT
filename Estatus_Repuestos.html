@@ -165,23 +165,34 @@ function renderPendientes() {
         </tr>
     `).join('');
 }
+function inicioSemanaISO(fecha) {
+    const dia = fecha.getDay() || 7; // domingo = 7
+    const lunes = new Date(fecha);
+    lunes.setDate(fecha.getDate() - dia + 1);
+    lunes.setHours(0,0,0,0); // reinicia hora para comparación
+    return lunes;
+}
 
 // --------------------- ENTREGAS ---------------------
 function procesarEntregados(csv) {
     Papa.parse(csv, { header:false, complete:(results)=>{
         const hoy = new Date();
-        const inicioSemana = new Date(hoy);
-        inicioSemana.setDate(hoy.getDate() - hoy.getDay() + 1); // lunes
+        const inicioSemana = inicioSemanaISO(hoy); // lunes de la semana actual
+
+        // Filtrar usando la FECHA DE ENTREGA (fila[0])
         datosEntregas = results.data.filter(fila=>{
-            const fecha = parseFechaElSalvador(fila[0]);
-            return fecha >= inicioSemana;
+            const fechaEntrega = parseFechaElSalvador(fila[0]);
+            return fechaEntrega >= inicioSemana;
         });
+
+        // Actualiza estadísticas y etiqueta
         document.getElementById('stat-semanal').innerText = datosEntregas.length;
-        const semanaActual = numeroSemana(new Date());
+        const semanaActual = numeroSemana(hoy);
         document.getElementById('tag-semanal').innerText = "Semana " + semanaActual;
+
+        // Renderizar tabla
         renderEntregas();
     }});
-}
 
 function renderEntregas() {
     const tbody = document.querySelector('#tablaEntregados tbody');
