@@ -139,7 +139,7 @@ function procesarPendientes(csv) {
         limite90.setDate(ahora.getDate() - 90);
         datosPendientes = results.data.filter(fila=>{
             const fecha = parseFechaElSalvador(fila[0]);
-            return fecha >= limite90 && fila[9] === 'PENDIENTE';
+            return fecha >= limite90 && fila[10] === 'PENDIENTE';
         });
         document.getElementById('stat-pendientes').innerText = datosPendientes.length;
         document.getElementById('tag-pendientes').innerText = "Total: " + datosPendientes.length;
