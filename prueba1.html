@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Repuestos Go! - Network Ops</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+
+<style>
+:root{
+--brand:#4f46e5;
+--brand-light:#818cf8;
+--bg:#f8fafc;
+--card-bg:#ffffff;
+--text:#1e293b;
+}
+body{
+font-family:'Poppins',sans-serif;
+background:radial-gradient(circle at top left,#eef2ff 0%,#f8fafc 100%);
+margin:0;
+}
+header{
+padding:20px;
+text-align:center;
+background:white;
+border-bottom-left-radius:30px;
+border-bottom-right-radius:30px;
+box-shadow:0 4px 20px rgba(0,0,0,0.05);
+}
+header h1{
+margin:0;
+font-size:1.4rem;
+color:var(--brand);
+}
+.container{
+width:90%;
+max-width:450px;
+margin:20px auto;
+}
+.card{
+background:white;
+border-radius:24px;
+padding:25px;
+box-shadow:0 10px 25px rgba(0,0,0,0.03);
+}
+label{
+display:block;
+margin-top:15px;
+font-size:0.75rem;
+font-weight:600;
+color:#64748b;
+}
+input{
+width:100%;
+padding:14px;
+margin-top:6px;
+border-radius:16px;
+border:1.5px solid #e2e8f0;
+background:#f8fafc;
+}
+.btn-bodega{
+background:#f1f5f9;
+border:2px solid transparent;
+padding:12px;
+border-radius:16px;
+font-weight:600;
+cursor:pointer;
+}
+.btn-send{
+width:100%;
+padding:18px;
+border-radius:18px;
+background:linear-gradient(135deg,var(--brand),var(--brand-light));
+color:white;
+border:none;
+font-weight:600;
+margin-top:25px;
+cursor:pointer;
+}
+.hidden{display:none;}
+</style>
+</head>
+<body>
+
+<header>
+<h1>Registro de Salida</h1>
+</header>
+
+<div class="container">
+
+<form id="mainForm">
+<div class="card">
+
+<label>Nombre del Técnico</label>
+<input type="text" id="tecnico" required>
+
+<label>Foto de la pieza</label>
+
+<div style="display:flex;gap:10px;margin-top:8px;">
+<button type="button" onclick="activarCamara()" class="btn-bodega">
+📷 Tomar Foto
+</button>
+<button type="button" onclick="abrirGaleria()" class="btn-bodega">
+🖼 Subir Foto
+</button>
+</div>
+
+<input type="file" id="fotoCamara" accept="image/*" capture="environment" hidden>
+<input type="file" id="fotoGaleria" accept="image/*" hidden>
+
+<div id="fotoInfo" style="margin-top:10px;font-size:0.8rem;color:#64748b;"></div>
+
+<button type="submit" id="btnEnviar" class="btn-send">
+FINALIZAR REGISTRO
+</button>
+
+</div>
+</form>
+
+</div>
+
+<script>
+
+let archivoSeleccionado=null;
+
+function activarCamara(){
+document.getElementById('fotoCamara').click();
+}
+
+function abrirGaleria(){
+document.getElementById('fotoGaleria').click();
+}
+
+document.getElementById('fotoCamara').addEventListener('change',manejarFoto);
+document.getElementById('fotoGaleria').addEventListener('change',manejarFoto);
+
+function manejarFoto(e){
+const file=e.target.files[0];
+if(!file)return;
+
+// Validación inicial 8MB
+if(file.size>8*1024*1024){
+alert("Imagen demasiado pesada. Intenta nuevamente.");
+e.target.value="";
+return;
+}
+
+// Compresión automática Android
+const img=new Image();
+const reader=new FileReader();
+
+reader.onload=function(ev){
+img.src=ev.target.result;
+};
+
+img.onload=function(){
+const canvas=document.createElement('canvas');
+const ctx=canvas.getContext('2d');
+
+const maxWidth=1280;
+const scale=Math.min(maxWidth/img.width,1);
+
+canvas.width=img.width*scale;
+canvas.height=img.height*scale;
+
+ctx.drawImage(img,0,0,canvas.width,canvas.height);
+
+canvas.toBlob(function(blob){
+
+archivoSeleccionado=new File(
+[blob],
+"evidencia.jpg",
+{type:"image/jpeg"}
+);
+
+document.getElementById('fotoInfo').innerHTML=
+"✅ Foto optimizada lista<br>Peso final: "+
+(archivoSeleccionado.size/1024/1024).toFixed(2)+" MB";
+
+},"image/jpeg",0.8);
+};
+
+reader.readAsDataURL(file);
+}
+
+document.getElementById('mainForm').onsubmit=async function(e){
+e.preventDefault();
+
+if(!archivoSeleccionado){
+alert("Debes tomar o subir una foto.");
+return;
+}
+
+const btn=document.getElementById('btnEnviar');
+btn.disabled=true;
+btn.innerText="Subiendo...";
+
+const reader=new FileReader();
+
+reader.onload=async function(){
+
+const payload={
+tecnico:document.getElementById('tecnico').value,
+fileData:reader.result.split(',')[1],
+fileName:archivoSeleccionado.name,
+mimeType:archivoSeleccionado.type
+};
+
+try{
+const r=await fetch("TU_URL_APPS_SCRIPT_AQUI",{
+method:"POST",
+body:new URLSearchParams(payload)
+});
+
+const res=await r.json();
+
+if(res.result==="success"){
+alert("Registro exitoso");
+location.reload();
+}
+
+}catch(err){
+alert("Error de conexión");
+btn.disabled=false;
+btn.innerText="REINTENTAR";
+}
+
+};
+
+reader.readAsDataURL(archivoSeleccionado);
+
+};
+
+</script>
+
+</body>
+</html>
