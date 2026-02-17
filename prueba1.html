@@ -2,317 +2,347 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Repuestos Go! - Network Ops</title>
-
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard Network Ops - Control de Gestión</title>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
-
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>
-:root{
---brand:#4f46e5;
---brand-light:#818cf8;
---bg:#f8fafc;
---card-bg:#ffffff;
---text:#1e293b;
-}
-body{
-font-family:'Poppins',sans-serif;
-background:radial-gradient(circle at top left,#eef2ff 0%,#f8fafc 100%);
-margin:0;
-}
-header{
-padding:25px 20px;
-text-align:center;
-background:white;
-border-bottom-left-radius:30px;
-border-bottom-right-radius:30px;
-box-shadow:0 4px 20px rgba(0,0,0,0.05);
-}
-header h1{
-margin:0;
-font-size:1.4rem;
-color:var(--brand);
-}
-.container{
-width:90%;
-max-width:450px;
-margin:20px auto;
-}
-.card{
-background:white;
-border-radius:24px;
-padding:25px;
-box-shadow:0 10px 25px rgba(0,0,0,0.03);
-}
-label{
-display:block;
-margin-top:15px;
-font-size:0.75rem;
-font-weight:600;
-color:#64748b;
-}
-input{
-width:100%;
-padding:14px;
-margin-top:6px;
-border-radius:16px;
-border:1.5px solid #e2e8f0;
-background:#f8fafc;
-}
-.btn-bodega{
-background:#f1f5f9;
-border:2px solid transparent;
-padding:12px;
-border-radius:16px;
-font-weight:600;
-cursor:pointer;
-}
-.btn-send{
-width:100%;
-padding:18px;
-border-radius:18px;
-background:linear-gradient(135deg,var(--brand),var(--brand-light));
-color:white;
-border:none;
-font-weight:600;
-margin-top:25px;
-cursor:pointer;
-}
-.suggestions{
-position:absolute;
-background:white;
-border-radius:16px;
-box-shadow:0 15px 35px rgba(0,0,0,0.1);
-z-index:100;
-display:none;
-width:100%;
-}
-.suggestion-item{
-padding:12px;
-border-bottom:1px solid #f1f5f9;
-cursor:pointer;
-}
-.hidden{display:none;}
+:root { --brand: #4f46e5; --bg: #f8fafc; --text: #1e293b; --danger: #ef4444; --success: #10b981; }
+body { font-family: 'Poppins', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; }
+
+.header-dash { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+.stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px; }
+.card-stat { background: white; padding: 20px; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border-left: 5px solid var(--brand); }
+.card-stat h3 { margin: 0; font-size: 0.8rem; color: #64748b; text-transform: uppercase; }
+.card-stat .value { font-size: 1.8rem; font-weight: 600; color: var(--brand); }
+
+.table-container { background: white; border-radius: 20px; padding: 20px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); margin-bottom: 30px; overflow-x: auto; }
+.table-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 2px solid #f1f5f9; padding-bottom: 10px; }
+.table-header h2 { font-size: 1.1rem; margin: 0; }
+
+table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+th { text-align: left; padding: 12px; background: #f8fafc; color: #64748b; font-weight: 600; }
+td { padding: 12px; border-bottom: 1px solid #f1f5f9; }
+
+.badge { padding: 4px 8px; border-radius: 12px; font-size: 0.7rem; font-weight: 600; }
+.badge-pending { background: #fee2e2; color: #991b1b; }
+.badge-success { background: #dcfce7; color: #166534; }
+
+.filter-row { display:flex; gap:15px; margin-bottom:10px; flex-wrap:wrap; }
+.filter-row input, .filter-row select { padding:5px 8px; border-radius:6px; border:1px solid #cbd5e1; font-size:0.85rem; }
+button.export-btn { padding:6px 10px; border:none; border-radius:6px; background:var(--brand); color:white; cursor:pointer; font-size:0.85rem; }
+
+footer { text-align:center; padding:15px 0; font-size:0.8rem; color:#64748b; border-top:1px solid #e2e8f0; }
 </style>
 </head>
 <body>
 
-<header>
-<div id="reloj"></div>
-<h1>Registro de Salida</h1>
-</header>
-
-<div class="container">
-<form id="mainForm">
-<div class="card">
-
-<label>Nombre del Técnico</label>
-<input type="text" id="tecnico" required>
-
-<label>Nombre del Sitio</label>
-<div style="position:relative">
-<input type="text" id="siteSearch" autocomplete="off" required>
-<div id="siteSug" class="suggestions"></div>
-</div>
-<input type="text" id="idSitio" readonly required>
-
-<label>¿Qué repuesto llevas?</label>
-<div style="position:relative">
-<input type="text" id="eqSearch" autocomplete="off" required>
-<div id="eqSug" class="suggestions"></div>
-</div>
-<input type="text" id="marca" readonly required>
-
-<label>Número de Serie</label>
-<input type="text" id="serie" required>
-
-<label>Foto de la pieza</label>
-<div style="display:flex;gap:10px;margin-top:8px;">
-<button type="button" onclick="activarCamara()" class="btn-bodega">📷 Tomar Foto</button>
-<button type="button" onclick="abrirGaleria()" class="btn-bodega">🖼 Subir Foto</button>
+<div class="header-dash">
+    <h1>CONTROL DE REPUESTOS</h1>
+    <div id="lastUpdate" style="font-size: 0.8rem; color: #64748b;">Actualizando...</div>
 </div>
 
-<input type="file" id="fotoCamara" accept="image/*" capture="environment" hidden>
-<input type="file" id="fotoGaleria" accept="image/*" hidden>
-
-<div id="fotoInfo" style="margin-top:10px;font-size:0.8rem;color:#64748b;"></div>
-
-<button type="submit" id="btnEnviar" class="btn-send">FINALIZAR REGISTRO</button>
-
+<div class="stats-row">
+    <div class="card-stat">
+        <h3>Pendientes (3 Meses)</h3>
+        <div class="value" id="stat-pendientes">0</div>
+    </div>
+    <div class="card-stat" style="border-left-color: var(--success);">
+        <h3>Entregados (Semana)</h3>
+        <div class="value" id="stat-semanal">0</div>
+    </div>
+    <div class="card-stat" style="border-left-color: #64748b;">
+        <h3>Historial (≥15 días)</h3>
+        <div class="value" id="stat-historial">0</div>
+    </div>
 </div>
-</form>
+
+<!-- FILTROS PENDIENTES -->
+<div class="filter-row">
+    <input type="text" id="filterSitioPendientes" placeholder="Filtrar por Sitio">
+    <input type="text" id="filterTecnicoPendientes" placeholder="Filtrar por Técnico">
 </div>
+
+<div class="table-container">
+    <div class="table-header">
+        <h2>📋 Pendientes de Gestión/Entrega </h2>
+        <span class="badge badge-pending" id="tag-pendientes">Total: 0</span>
+    </div>
+    <button class="export-btn" id="exportPendientes">📤 Exportar Pendientes a Imagen</button>
+    <table id="tablaPendientes">
+        <thead>
+            <tr>
+                <th>Fecha Salida</th>
+                <th>ID Sitio</th>
+                <th>Nombre Sitio</th>
+                <th>Equipo</th>
+                <th>Serie</th>
+                <th>Técnico</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+</div>
+
+<!-- FILTROS ENTREGAS -->
+<div class="filter-row">
+    <input type="text" id="filterSitioEntregas" placeholder="Filtrar por Sitio">
+    <input type="text" id="filterTecnicoEntregas" placeholder="Filtrar por Técnico">
+    <input type="number" id="filterSemanaEntregas" placeholder="Número de Semana">
+</div>
+
+<div class="table-container">
+    <div class="table-header">
+        <h2>✅ Entregas Realizadas </h2>
+        <span class="badge badge-success" id="tag-semanal">Semana 0</span>
+    </div>
+    <button class="export-btn" id="exportEntregas">📤 Exportar Entregas a Imagen</button>
+    <table id="tablaEntregados">
+        <thead>
+            <tr>
+                <th>Fecha Entrega</th>
+                <th>ID Sitio</th>
+                <th>Sitio</th>
+                <th>Nombre Equipo</th>
+                <th>Serie</th>
+                <th>Bodega</th>
+                <th>Técnico</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+</div>
+
+<!-- FILTROS HISTORIAL -->
+<div class="filter-row">
+    <input type="text" id="filterSitioHistorial" placeholder="Filtrar por Sitio">
+    <input type="text" id="filterTecnicoHistorial" placeholder="Filtrar por Técnico">
+</div>
+
+<div class="table-container">
+    <div class="table-header">
+        <h2>📜 Historial de Salidas (≥ 15 días)</h2>
+        <span class="badge badge-success" id="tag-historial">Total: 0</span>
+    </div>
+    <button class="export-btn" id="exportHistorial">📤 Exportar Historial a Imagen</button>
+    <table id="tablaHistorial">
+        <thead>
+            <tr>
+                <th>Fecha Salida</th>
+                <th>ID Sitio</th>
+                <th>Nombre Sitio</th>
+                <th>Equipo</th>
+                <th>Serie</th>
+                <th>Técnico</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+</div>
+
+<footer>
+    Dashboard desarrollado por <strong>Operaciones Paracentrales</strong> | &copy; 2026
+</footer>
 
 <script>
+const URL_SALIDAS = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQBNrpLKc_GPFT6Ik9Yr4s1qo8zaOOqrDgTc_9DGeMd20rNTsEtLktTCoeDcRrts6kvgne86KZDfKQS/pub?gid=0&single=true&output=csv';
+const URL_ENTREGAS = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQBNrpLKc_GPFT6Ik9Yr4s1qo8zaOOqrDgTc_9DGeMd20rNTsEtLktTCoeDcRrts6kvgne86KZDfKQS/pub?gid=887165919&single=true&output=csv';
 
-// RELOJ EL SALVADOR
-setInterval(()=>{
-document.getElementById('reloj').innerText=
-new Date().toLocaleTimeString("es-SV",{timeZone:"America/El_Salvador",hour12:false});
-},1000);
+let datosPendientes = [], datosEntregas = [], datosHistorial = [];
 
-// VARIABLES
-let sites=[],equipos=[];
-let archivoSeleccionado=null;
+async function cargarDashboard() {
+    try {
+        const [respSalidas, respEntregas] = await Promise.all([fetch(URL_SALIDAS), fetch(URL_ENTREGAS)]);
+        const textoSalidas = await respSalidas.text();
+        const textoEntregas = await respEntregas.text();
 
-// CARGAR CSV SITIOS
-fetch("TU_URL_SITIOS_CSV_AQUI")
-.then(r=>r.text())
-.then(t=>{
-const rows=t.split(/\r?\n/).filter(x=>x.trim().length>0);
-const headers=rows[0].split(',');
-sites=rows.slice(1).map(r=>{
-const v=r.split(',');
-let o={};
-headers.forEach((h,i)=>o[h]=v[i]);
-return o;
-});
-});
+        procesarPendientes(textoSalidas);
+        procesarHistorial(textoSalidas);
+        procesarEntregados(textoEntregas);
 
-// CARGAR INVENTARIO
-Papa.parse("inventario_repuestos.csv",{
-download:true,
-header:true,
-delimiter:";",
-skipEmptyLines:true,
-complete:function(res){
-equipos=res.data;
-}
-});
-
-// AUTOCOMPLETE SITIOS
-const si=document.getElementById('siteSearch');
-const ss=document.getElementById('siteSug');
-
-si.addEventListener('input',()=>{
-const v=si.value.toLowerCase();
-if(v.length<2){ss.style.display='none';return;}
-const m=sites.filter(s=>
-(s.SITEID && s.SITEID.toLowerCase().includes(v))
-).slice(0,5);
-
-ss.innerHTML=m.map(s=>
-`<div class="suggestion-item" onclick="setS('${s.SITEID}')">${s.SITEID}</div>`
-).join('');
-
-ss.style.display=m.length?'block':'none';
-});
-
-function setS(id){
-si.value=id;
-document.getElementById('idSitio').value=id;
-ss.style.display='none';
+        document.getElementById('lastUpdate').innerText = "Última actualización: " + new Date().toLocaleString();
+    } catch(e){ console.error("Error al cargar datos", e); }
 }
 
-// AUTOCOMPLETE EQUIPOS
-const ei=document.getElementById('eqSearch');
-const es=document.getElementById('eqSug');
+// --------------------- PENDIENTES ---------------------
+function procesarPendientes(csv) {
+    Papa.parse(csv, { header:false, skipEmptyLines:true, complete:(results)=>{
+        const ahora = new Date();
+        const limite90 = new Date(ahora); 
+        limite90.setDate(ahora.getDate() - 90);
 
-ei.addEventListener('input',()=>{
-const v=ei.value.toLowerCase();
-if(v.length<2){es.style.display='none';return;}
-const m=equipos.filter(e=>
-e["DESCRIPCION DE EQUIPO"] &&
-e["DESCRIPCION DE EQUIPO"].toLowerCase().includes(v)
-).slice(0,5);
+        datosPendientes = results.data.filter(fila=>{
+            const fecha = parseFechaElSalvador(fila[0]);
+            return fecha >= limite90 && fila[9] === 'PENDIENTE';
+        });
 
-es.innerHTML=m.map(e=>
-`<div class="suggestion-item" onclick="setE('${e["DESCRIPCION DE EQUIPO"]}','${e["MARCA"]}')">
-${e["DESCRIPCION DE EQUIPO"]}
-</div>`
-).join('');
-
-es.style.display=m.length?'block':'none';
-});
-
-function setE(desc,marca){
-ei.value=desc;
-document.getElementById('marca').value=marca;
-es.style.display='none';
+        document.getElementById('stat-pendientes').innerText = datosPendientes.length;
+        document.getElementById('tag-pendientes').innerText = "Total: " + datosPendientes.length;
+        renderPendientes();
+    }});
 }
 
-// FOTO ANDROID OPTIMIZADA
-function activarCamara(){document.getElementById('fotoCamara').click();}
-function abrirGaleria(){document.getElementById('fotoGaleria').click();}
-
-document.getElementById('fotoCamara').addEventListener('change',manejarFoto);
-document.getElementById('fotoGaleria').addEventListener('change',manejarFoto);
-
-function manejarFoto(e){
-const file=e.target.files[0];
-if(!file)return;
-
-if(file.size>8*1024*1024){
-alert("Imagen demasiado pesada");
-return;
+function renderPendientes() {
+    const tbody = document.querySelector('#tablaPendientes tbody');
+    const sitioFilter = document.getElementById('filterSitioPendientes').value.toLowerCase();
+    const tecnicoFilter = document.getElementById('filterTecnicoPendientes').value.toLowerCase();
+    tbody.innerHTML = datosPendientes.filter(f =>
+        f[3] && f[1] &&
+        f[3].toLowerCase().includes(sitioFilter) &&
+        f[1].toLowerCase().includes(tecnicoFilter)
+    ).map(f=>`
+        <tr>
+            <td>${f[0]}</td>
+            <td>${f[3]}</td>
+            <td>${f[4]}</td>
+            <td>${f[5]}</td>
+            <td>${f[7]}</td>
+            <td>${f[1]}</td>
+        </tr>
+    `).join('');
 }
 
-const img=new Image();
-const reader=new FileReader();
-
-reader.onload=(ev)=>img.src=ev.target.result;
-
-img.onload=()=>{
-const canvas=document.createElement('canvas');
-const ctx=canvas.getContext('2d');
-
-const maxWidth=1280;
-const scale=Math.min(maxWidth/img.width,1);
-
-canvas.width=img.width*scale;
-canvas.height=img.height*scale;
-
-ctx.drawImage(img,0,0,canvas.width,canvas.height);
-
-canvas.toBlob(blob=>{
-archivoSeleccionado=new File([blob],"evidencia.jpg",{type:"image/jpeg"});
-document.getElementById('fotoInfo').innerHTML=
-"✅ Foto optimizada<br>Peso: "+
-(archivoSeleccionado.size/1024/1024).toFixed(2)+" MB";
-},"image/jpeg",0.8);
-};
-
-reader.readAsDataURL(file);
+// --------------------- ENTREGAS ---------------------
+function inicioSemanaISO(fecha) {
+    const dia = fecha.getDay() || 7;
+    const lunes = new Date(fecha);
+    lunes.setDate(fecha.getDate() - dia + 1);
+    lunes.setHours(0,0,0,0);
+    return lunes;
 }
 
-// ENVÍO
-document.getElementById('mainForm').onsubmit=async function(e){
-e.preventDefault();
+function procesarEntregados(csv) {
+    Papa.parse(csv, { header:false, skipEmptyLines:true, complete:(results)=>{
+        const hoy = new Date();
+        const inicioSemana = inicioSemanaISO(hoy);
 
-if(!archivoSeleccionado){
-alert("Debes adjuntar una foto");
-return;
+        datosEntregas = results.data.filter(fila=>{
+            const fechaEntrega = parseFechaElSalvador(fila[0]);
+            return fechaEntrega >= inicioSemana;
+        });
+
+        document.getElementById('stat-semanal').innerText = datosEntregas.length;
+        document.getElementById('tag-semanal').innerText = "Semana " + numeroSemana(new Date());
+        renderEntregas();
+    }});
 }
 
-const reader=new FileReader();
+function renderEntregas() {
+    const tbody = document.querySelector('#tablaEntregados tbody');
+    const sitioFilter = document.getElementById('filterSitioEntregas').value.toLowerCase();
+    const tecnicoFilter = document.getElementById('filterTecnicoEntregas').value.toLowerCase();
+    const semanaFilter = document.getElementById('filterSemanaEntregas').value;
 
-reader.onload=async()=>{
-const payload={
-tecnico:document.getElementById('tecnico').value,
-idSitio:document.getElementById('idSitio').value,
-descripcion:document.getElementById('eqSearch').value,
-marca:document.getElementById('marca').value,
-serie:document.getElementById('serie').value,
-fileData:reader.result.split(',')[1],
-fileName:archivoSeleccionado.name,
-mimeType:archivoSeleccionado.type
-};
+    tbody.innerHTML = datosEntregas.filter(f=>{
+        const numSemanaFila = numeroSemana(parseFechaElSalvador(f[0]));
+        return f[2] && f[1] &&
+               f[2].toLowerCase().includes(sitioFilter) &&
+               f[1].toLowerCase().includes(tecnicoFilter) &&
+               (semanaFilter === "" || numSemanaFila == semanaFilter);
+    }).map(f=>`
+        <tr>
+            <td>${f[0]}</td>
+            <td>${f[3]}</td>
+            <td>${f[2]}</td>
+            <td>${f[6]}</td>
+            <td>${f[9]}</td>
+            <td>${f[8]}</td>
+            <td>${f[1]}</td>
+        </tr>
+    `).join('');
+}
 
-await fetch("TU_URL_APPS_SCRIPT_AQUI",{
-method:"POST",
-body:new URLSearchParams(payload)
-});
+// --------------------- HISTORIAL ---------------------
+function procesarHistorial(csv) {
+    Papa.parse(csv, { header:false, skipEmptyLines:true, complete:(results)=>{
+        const hoy = new Date();
+        const limite15 = new Date(hoy);
+        limite15.setDate(hoy.getDate() - 15);
 
-alert("Registro enviado");
-location.reload();
-};
+        datosHistorial = results.data.filter(fila=>{
+            const fecha = parseFechaElSalvador(fila[0]);
+            return fecha <= limite15;
+        });
 
-reader.readAsDataURL(archivoSeleccionado);
-};
+        document.getElementById('stat-historial').innerText = datosHistorial.length;
+        document.getElementById('tag-historial').innerText = "Total: " + datosHistorial.length;
+        renderHistorial();
+    }});
+}
 
+function renderHistorial() {
+    const tbody = document.querySelector('#tablaHistorial tbody');
+    const sitioFilter = document.getElementById('filterSitioHistorial').value.toLowerCase();
+    const tecnicoFilter = document.getElementById('filterTecnicoHistorial').value.toLowerCase();
+
+    tbody.innerHTML = datosHistorial.filter(f =>
+        f[3] && f[1] &&
+        f[3].toLowerCase().includes(sitioFilter) &&
+        f[1].toLowerCase().includes(tecnicoFilter)
+    ).map(f=>`
+        <tr>
+            <td>${f[0]}</td>
+            <td>${f[3]}</td>
+            <td>${f[4]}</td>
+            <td>${f[5]}</td>
+            <td>${f[7]}</td>
+            <td>${f[1]}</td>
+        </tr>
+    `).join('');
+}
+
+// --------------------- FILTROS ---------------------
+document.getElementById('filterSitioPendientes').addEventListener('input', renderPendientes);
+document.getElementById('filterTecnicoPendientes').addEventListener('input', renderPendientes);
+document.getElementById('filterSitioEntregas').addEventListener('input', renderEntregas);
+document.getElementById('filterTecnicoEntregas').addEventListener('input', renderEntregas);
+document.getElementById('filterSemanaEntregas').addEventListener('input', renderEntregas);
+document.getElementById('filterSitioHistorial').addEventListener('input', renderHistorial);
+document.getElementById('filterTecnicoHistorial').addEventListener('input', renderHistorial);
+
+// --------------------- FECHAS ---------------------
+function parseFechaElSalvador(fechaStr) {
+    const partes = fechaStr.split(/[/ :]/);
+    return new Date(partes[2], partes[1]-1, partes[0], partes[3]||0, partes[4]||0, partes[5]||0);
+}
+
+function numeroSemana(fecha) {
+    const primerDiaAno = new Date(fecha.getFullYear(),0,1);
+    const diasTranscurridos = Math.floor((fecha - primerDiaAno)/86400000);
+    return Math.ceil((diasTranscurridos + primerDiaAno.getDay()+1)/7);
+}
+
+// --------------------- EXPORTAR IMAGEN ---------------------
+function exportTableAsImage(tablaId, nombreArchivo) {
+    const tabla = document.getElementById(tablaId);
+    const header = tabla.parentNode.querySelector('.table-header').cloneNode(true);
+    const contenedor = document.createElement('div');
+    contenedor.style.position = 'fixed';
+    contenedor.style.top = '-10000px';
+    contenedor.style.background = '#ffffff';
+    contenedor.style.padding = '20px';
+    contenedor.style.borderRadius = '16px';
+    contenedor.style.boxShadow = '0 4px 6px rgba(0,0,0,0.1)';
+    contenedor.appendChild(header);
+    contenedor.appendChild(tabla.cloneNode(true));
+    document.body.appendChild(contenedor);
+
+    html2canvas(contenedor, { scale:2 }).then(canvas=>{
+        const enlace = document.createElement('a');
+        enlace.href = canvas.toDataURL('image/png');
+        enlace.download = nombreArchivo + '.png';
+        enlace.click();
+        document.body.removeChild(contenedor);
+    }).catch(err => console.error("Error exportando imagen:", err));
+}
+
+document.getElementById('exportPendientes').addEventListener('click', ()=>exportTableAsImage('tablaPendientes','Pendientes_Gestion'));
+document.getElementById('exportEntregas').addEventListener('click', ()=>exportTableAsImage('tablaEntregados','Entregas_Realizadas'));
+document.getElementById('exportHistorial').addEventListener('click', ()=>exportTableAsImage('tablaHistorial','Historial_Salidas'));
+
+window.onload = cargarDashboard;
 </script>
-
 </body>
 </html>
 
