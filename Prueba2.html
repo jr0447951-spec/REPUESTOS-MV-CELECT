@@ -6,303 +6,295 @@
 <title>Repuestos Go! - Registro Optimizado</title>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
-
 <style>
 :root {
-    --brand:#4f46e5;
-    --brand-light:#818cf8;
-    --bg:#f8fafc;
-    --card-bg:#ffffff;
-    --text:#1e293b;
+    --brand: #4f46e5;
+    --brand-light: #818cf8;
+    --bg: #f8fafc;
+    --card-bg: #ffffff;
+    --text: #1e293b;
+    --success: #10b981;
 }
-body{
-    font-family:'Poppins',sans-serif;
-    background:radial-gradient(circle at top left,#eef2ff 0%,#f8fafc 100%);
-    margin:0;
-    min-height:100vh;
-    display:flex;
-    flex-direction:column;
+body {
+    font-family: 'Poppins', sans-serif;
+    background: radial-gradient(circle at top left, #eef2ff 0%, #f8fafc 100%);
+    color: var(--text);
+    margin:0; padding:0;
+    min-height:100vh; display:flex; flex-direction:column;
 }
-header{
-    padding:25px 20px;
-    text-align:center;
-    background:#fff;
-    border-bottom-left-radius:30px;
-    border-bottom-right-radius:30px;
+header {
+    padding:25px 20px; text-align:center;
+    background: var(--card-bg);
+    border-bottom-left-radius:30px; border-bottom-right-radius:30px;
     box-shadow:0 4px 20px rgba(0,0,0,0.05);
 }
-header h1{
-    margin:0;
-    font-size:1.4rem;
-    color:var(--brand);
-}
-.timer-pill{
-    background:var(--brand);
-    color:white;
-    padding:6px 15px;
-    border-radius:20px;
-    font-size:.8rem;
-    font-weight:600;
-    display:inline-block;
-    margin-bottom:15px;
-}
-.container{
-    width:90%;
-    max-width:450px;
-    margin:20px auto;
-    flex:1;
-}
-.card{
-    background:#fff;
-    border-radius:24px;
-    padding:25px;
-    box-shadow:0 10px 25px rgba(0,0,0,0.03);
-    margin-bottom:20px;
-}
-label{
-    display:block;
-    margin-top:15px;
-    font-size:.75rem;
-    font-weight:600;
-    color:#64748b;
-    margin-left:5px;
-}
-input{
-    width:100%;
-    padding:14px;
-    margin-top:6px;
-    border-radius:16px;
-    border:1.5px solid #e2e8f0;
-    background:#f8fafc;
-    font-size:1rem;
-    box-sizing:border-box;
-}
-.readonly{
-    background:#f1f5f9;
-    color:#94a3b8;
-    border-style:none;
-}
-.suggestions{
-    position:absolute;
-    width:100%;
-    background:#fff;
-    border-radius:16px;
-    box-shadow:0 15px 35px rgba(0,0,0,.1);
-    z-index:100;
-    display:none;
-    margin-top:5px;
-    border:1px solid #e2e8f0;
-    overflow:hidden;
-}
-.suggestion-item{
-    padding:15px;
-    border-bottom:1px solid #f1f5f9;
-    font-size:.9rem;
-    cursor:pointer;
-}
-.suggestion-item:active{
-    background:#f1f5f9;
-}
-.btn-send{
-    width:100%;
-    padding:18px;
-    border-radius:18px;
-    background:linear-gradient(135deg,var(--brand),var(--brand-light));
-    color:white;
-    border:none;
-    font-weight:600;
-    margin-top:30px;
-}
-.hidden{ display:none; }
-#previewFoto{
-    margin-top:10px;
-    width:100%;
-    border-radius:16px;
-    max-height:300px;
-    object-fit:contain;
-    display:none;
-    border:1px solid #cbd5e1;
-}
+header h1 { margin:0; font-size:1.4rem; color: var(--brand); font-weight:600; letter-spacing:-0.5px; }
+.timer-pill { background: var(--brand); color:white; padding:6px 15px; border-radius:20px; font-size:.8rem; font-weight:600; display:inline-block; margin-bottom:15px; box-shadow:0 4px 10px rgba(79,70,229,0.3);}
+.container { width:90%; max-width:450px; margin:20px auto; flex:1; }
+.card { background: var(--card-bg); border-radius:24px; padding:25px; box-shadow:0 10px 25px rgba(0,0,0,0.03); border:1px solid rgba(255,255,255,0.8); margin-bottom:20px; }
+label { display:block; margin-top:15px; font-size:.75rem; font-weight:600; color:#64748b; margin-left:5px; }
+.bodega-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-top:8px; }
+.btn-bodega { background:#f1f5f9; border:2px solid transparent; padding:12px 5px; border-radius:16px; font-size:.7rem; font-weight:600; color:#475569; cursor:pointer; transition:all .2s cubic-bezier(0.175,0.885,0.32,1.275);}
+.btn-bodega.selected { background:#fff; border-color:var(--brand); color:var(--brand); transform:scale(1.05); box-shadow:0 8px 15px rgba(79,70,229,0.15);}
+select, input { width:100%; padding:14px; margin-top:6px; border-radius:16px; border:1.5px solid #e2e8f0; background:#f8fafc; color:var(--text); font-size:1rem; outline:none; transition:.3s; box-sizing:border-box; }
+select:focus, input:focus { border-color:var(--brand-light); background:#fff; box-shadow:0 0 0 4px rgba(79,70,229,.1);}
+.readonly { background:#f1f5f9; color:#94a3b8; border-style:none; font-size:.9rem;}
+.suggestions { position:absolute; width:100%; background:#fff; border-radius:16px; box-shadow:0 15px 35px rgba(0,0,0,.1); z-index:100; display:none; margin-top:5px; border:1px solid #e2e8f0; overflow:hidden; }
+.suggestion-item { padding:15px; border-bottom:1px solid #f1f5f9; font-size:.9rem; cursor:pointer; }
+.suggestion-item:active { background:#f1f5f9;}
+.btn-send { width:100%; padding:18px; border-radius:18px; background:linear-gradient(135deg,var(--brand),var(--brand-light)); color:white; border:none; font-weight:600; font-size:1rem; margin-top:30px; box-shadow:0 10px 20px rgba(79,70,229,.2); cursor:pointer; transition:.3s;}
+.btn-send:active { transform:scale(.96);}
+.hidden { display:none; }
+#previewFoto { margin-top:10px; width:100%; border-radius:16px; max-height:300px; object-fit:contain; display:none; border:1px solid #cbd5e1;}
 </style>
 </head>
-
 <body>
 
 <header>
-<div class="timer-pill" id="reloj">00:00:00</div>
-<h1>Registro de Salida</h1>
+    <div class="timer-pill" id="reloj">00:00:00</div>
+    <h1>Registro de Salida</h1>
 </header>
 
 <div class="container">
+    <div class="card" id="consentimiento" style="text-align:center;">
+        <div style="font-size:3rem; margin-bottom:10px;">📦</div>
+        <h2 style="font-size:1.2rem; margin-bottom:10px;">¡Hola!</h2>
+        <p style="color:#64748b; font-size:.9rem; line-height:1.5;">Para registrar un repuesto necesitamos acceso para guardar tu foto de evidencia.</p>
+        <button onclick="activar()" id="btnStart" disabled class="btn-send" style="background:#94a3b8;">Cargando inventario...</button>
+        <div id="load-info">Sincronizando repuestos 2026...</div>
+    </div>
 
-<div class="card" id="consentimiento" style="text-align:center;">
-<h2>¡Hola!</h2>
-<button onclick="activar()" id="btnStart" disabled class="btn-send">Cargando inventario...</button>
-<div id="load-info">Sincronizando datos...</div>
-</div>
+    <form id="mainForm" class="hidden">
+        <div class="card">
+            <label>Nombre del Técnico</label>
+            <select id="tecnico" required>
+                <option value="">Selecciona un técnico</option>
+            </select>
 
-<form id="mainForm" class="hidden">
-<div class="card">
+            <label>¿Desde qué bodega retiras?</label>
+            <div class="bodega-grid">
+                <button type="button" class="btn-bodega" onclick="selectB(this,'SAN BENITO')">San Benito</button>
+                <button type="button" class="btn-bodega" onclick="selectB(this,'BODEGA CENTRAL')">Central</button>
+                <button type="button" class="btn-bodega" onclick="selectB(this,'TALNIQUE')">Talnique</button>
+            </div>
+            <input type="hidden" id="bodega" required>
 
-<!-- TECNICO -->
-<div style="position:relative">
-<label>Nombre del Técnico</label>
-<input type="text" id="tecnicoSearch" placeholder="Selecciona tu nombre..." autocomplete="off" required>
-<div id="tecnicoSug" class="suggestions"></div>
-</div>
-<input type="hidden" id="tecnico" required>
+            <div style="position:relative">
+                <label>Nombre del Sitio</label>
+                <input type="text" id="siteSearch" placeholder="Selecciona desde la lista..." autocomplete="off" required>
+                <div id="siteSug" class="suggestions"></div>
+            </div>
+            <input type="text" id="idSitio" class="readonly" placeholder="ID automático" readonly required>
 
-<label>Número de Serie</label>
-<input type="text" id="serie" required>
+            <div style="position:relative">
+                <label>¿Qué repuesto llevas?</label>
+                <input type="text" id="eqSearch" placeholder="Selecciona desde la lista..." autocomplete="off" required>
+                <div id="eqSug" class="suggestions"></div>
+            </div>
+            <input type="text" id="marca" class="readonly" placeholder="Marca" readonly required>
 
-<label>Foto de la pieza</label>
-<input type="file" id="foto" accept="image/*" required>
-<img id="previewFoto">
+            <label>Número de Serie</label>
+            <input type="text" id="serie" placeholder="Escanea o escribe S/N" required>
 
-<button type="submit" id="btnEnviar" class="btn-send">FINALIZAR REGISTRO</button>
+            <label>Foto de la pieza</label>
+            <input type="file" id="foto" accept="image/*" required>
+            <img id="previewFoto">
 
-</div>
-</form>
+            <button type="submit" id="btnEnviar" class="btn-send">FINALIZAR REGISTRO</button>
+        </div>
+    </form>
 </div>
 
 <script>
-let tecnicos=[];
-let tecnicoSeleccionado=null;
+const CONFIG = {
+    URL_SITIOS_CSV: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTE_5CZtD7qHGW5cWHGAjn7ALTphVm5h88lco9cySYoAe2VBW4fq8DQ7-SZY6cd_FHtNQJS3MpE88hs/pub?gid=1955381502&single=true&output=csv',
+    URL_APPS_SCRIPT: 'https://script.google.com/macros/s/AKfycbz_Wv6DikTWQuqnAd9gMrjfEoFOFa9E9YdUuY5cSkr4ICqBKOo5WPvmJrhYF5_dv5fa/exec',
+    URL_FORMS_EXTERNO: 'https://docs.google.com/forms/d/e/1FAIpQLSdeek133oAtejD-fC1LPvFPDHiej3l0tokNW9N31LdHFpS06g/viewform'
+};
 
-// reloj
+let sites = [], equipos = [];
+
+// Mostrar reloj
 setInterval(()=>{
-document.getElementById('reloj').innerText =
-new Date().toLocaleTimeString("es-SV",{timeZone:"America/El_Salvador",hour12:false});
+    document.getElementById('reloj').innerText = new Date().toLocaleTimeString("es-SV",{timeZone:"America/El_Salvador", hour12:false});
 },1000);
 
-// cargar técnicos
-window.onload=()=>{
-fetch("tecnicos.csv")
-.then(r=>r.text())
-.then(t=>{
-tecnicos=parseCSV(t);
-document.getElementById('btnStart').disabled=false;
-document.getElementById('btnStart').innerText="¡EMPEZAR!";
-});
+window.onload = ()=>{
 
-// validar si había técnico guardado
-const guardado=localStorage.getItem("tecnico");
-if(guardado){
-document.getElementById("tecnicoSearch").value=guardado;
-document.getElementById("tecnico").value=guardado;
-tecnicoSeleccionado=guardado;
-}
+    // Cargar técnicos desde CSV
+    Papa.parse("tecnicos.csv", {
+        download:true, header:false, skipEmptyLines:true,
+        complete:function(res){
+            const select = document.getElementById('tecnico');
+            res.data.forEach(row=>{
+                const name = row[0].trim();
+                const opt = document.createElement('option');
+                opt.value = name;
+                opt.textContent = name;
+                select.appendChild(opt);
+            });
+            // Seleccionar técnico guardado
+            const t = localStorage.getItem('tecnico');
+            if(t) select.value = t;
+            document.getElementById('btnStart').disabled=false;
+            document.getElementById('btnStart').style.background="var(--brand)";
+            document.getElementById('btnStart').innerText="¡EMPEZAR!";
+            document.getElementById('load-info').innerText="Inventario sincronizado";
+        }
+    });
+
+    // Cargar Sitios
+    fetch(CONFIG.URL_SITIOS_CSV).then(r=>r.text()).then(t=>{
+        sites = parseCSV(t);
+    });
+
+    // Cargar inventario de repuestos desde CSV
+    Papa.parse("inventario_repuestos.csv", {
+        download:true, header:true, delimiter:";", skipEmptyLines:true,
+        complete: function(res){ equipos=res.data; }
+    });
 };
 
-// parser simple CSV
-function parseCSV(data){
-const rows=data.split(/\r?\n/).filter(r=>r.trim());
-const headers=rows[0].split(",");
-return rows.slice(1).map(row=>{
-const values=row.split(",");
-let obj={};
-headers.forEach((h,i)=>obj[h.trim()]=values[i]?values[i].trim():"");
-return obj;
-});
+// ---------------- CSV parsing ----------------
+function parseCSV(d){
+    const r=d.split(/\r?\n/).filter(x=>x.trim().length>0);
+    const h=r[0].split(',').map(x=>x.trim().replace(/"/g,''));
+    return r.slice(1).map(row=>{
+        const v=row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+        let o={}; h.forEach((k,i)=> o[k]=v[i]?v[i].trim().replace(/"/g,''):''); return o;
+    });
 }
 
-// activar
+// ---------------- Selección de bodega ----------------
+function selectB(btn,v){
+    document.querySelectorAll('.btn-bodega').forEach(x=>x.classList.remove('selected'));
+    btn.classList.add('selected');
+    document.getElementById('bodega').value=v;
+}
+
+// ---------------- Activar formulario ----------------
 function activar(){
-document.getElementById('consentimiento').classList.add('hidden');
-document.getElementById('mainForm').classList.remove('hidden');
+    document.getElementById('consentimiento').classList.add('hidden');
+    document.getElementById('mainForm').classList.remove('hidden');
 }
 
-// autocomplete técnico
-const ts=document.getElementById('tecnicoSearch');
-const tsug=document.getElementById('tecnicoSug');
-
-ts.addEventListener('input',()=>{
-const v=ts.value.toLowerCase().trim();
-tecnicoSeleccionado=null;
-document.getElementById('tecnico').value="";
-if(v.length<2){tsug.style.display='none';return;}
-
-const match=tecnicos
-.filter(t=>t.NOMBRE && t.NOMBRE.toLowerCase().includes(v))
-.slice(0,5);
-
-tsug.innerHTML=match.map(t=>
-`<div class="suggestion-item" onclick="setTecnico('${t.NOMBRE.replace(/'/g,"")}')">${t.NOMBRE}</div>`
-).join('');
-
-tsug.style.display=match.length?'block':'none';
+// ---------------- Autocomplete Sitios ----------------
+const si = document.getElementById('siteSearch'), ss = document.getElementById('siteSug');
+si.addEventListener('input',()=>{
+    const v=si.value.toLowerCase().trim();
+    const match = sites.filter(s=>
+        (s.SITEID && s.SITEID.toString().toLowerCase()===v) ||
+        (s['NOMBRE DE SITIO'] && s['NOMBRE DE SITIO'].toLowerCase()===v)
+    );
+    if(match.length>0){
+        si.value = match[0]['NOMBRE DE SITIO'];
+        document.getElementById('idSitio').value = match[0].SITEID;
+        ss.style.display='none';
+    } else {
+        ss.style.display='none';
+    }
 });
 
-function setTecnico(nombre){
-ts.value=nombre;
-document.getElementById('tecnico').value=nombre;
-tecnicoSeleccionado=nombre;
-localStorage.setItem("tecnico",nombre);
-tsug.style.display='none';
-}
-
-// compresión imagen 1000px
-const fotoInput=document.getElementById("foto");
-const preview=document.getElementById("previewFoto");
-
-fotoInput.addEventListener("change",()=>{
-if(!fotoInput.files[0])return;
-
-const file=fotoInput.files[0];
-const reader=new FileReader();
-
-reader.onload=e=>{
-const img=new Image();
-img.onload=()=>{
-const canvas=document.createElement("canvas");
-const maxSide=1000;
-let w=img.width,h=img.height;
-
-if(w>h && w>maxSide){
-h*=maxSide/w;
-w=maxSide;
-}else if(h>=w && h>maxSide){
-w*=maxSide/h;
-h=maxSide;
-}
-
-canvas.width=w;
-canvas.height=h;
-
-canvas.getContext("2d").drawImage(img,0,0,w,h);
-const compressed=canvas.toDataURL("image/jpeg",0.75);
-
-preview.src=compressed;
-preview.style.display="block";
-fotoInput.dataset.file=compressed.split(',')[1];
-};
-
-img.src=e.target.result;
-};
-
-reader.readAsDataURL(file);
+// ---------------- Autocomplete Equipos ----------------
+const ei = document.getElementById('eqSearch'), es = document.getElementById('eqSug');
+ei.addEventListener('input',()=>{
+    const v=ei.value.toLowerCase().trim();
+    const match = equipos.filter(e=> e["DESCRIPCION DE EQUIPO"] && e["DESCRIPCION DE EQUIPO"].toLowerCase()===v);
+    if(match.length>0){
+        ei.value = match[0]["DESCRIPCION DE EQUIPO"];
+        document.getElementById('marca').value = match[0]["MARCA"];
+        es.style.display='none';
+    } else {
+        es.style.display='none';
+    }
 });
 
-// submit
-document.getElementById('mainForm').onsubmit=e=>{
-e.preventDefault();
+// ---------------- Foto + compresión ----------------
+const fotoInput = document.getElementById("foto");
+const preview = document.getElementById("previewFoto");
+fotoInput.addEventListener("change", ()=>{
+    if(fotoInput.files && fotoInput.files[0]){
+        const file = fotoInput.files[0];
+        const reader = new FileReader();
+        reader.onload = e=>{
+            const img = new Image();
+            img.onload = ()=>{
+                const canvas = document.createElement("canvas");
+                const maxSide = 1000;
+                let width = img.width, height = img.height;
+                if(width>height && width>maxSide){ height*=maxSide/width; width=maxSide;}
+                else if(height>=width && height>maxSide){ width*=maxSide/height; height=maxSide;}
+                canvas.width = width; canvas.height = height;
+                const ctx = canvas.getContext("2d");
+                ctx.drawImage(img,0,0,width,height);
+                const compressed = canvas.toDataURL("image/jpeg",0.7);
+                preview.src = compressed; preview.style.display="block";
+                fotoInput.dataset.compressed = compressed.split(',')[1];
+                fotoInput.dataset.mime = "image/jpeg";
+                fotoInput.dataset.filename = file.name.replace(/\.[^/.]+$/,".jpg");
+            };
+            img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    } else {
+        preview.style.display="none"; preview.src="";
+        delete fotoInput.dataset.compressed; delete fotoInput.dataset.mime; delete fotoInput.dataset.filename;
+    }
+});
 
-if(!tecnicoSeleccionado){
-alert("Debes seleccionar un técnico válido");
-return;
-}
+// ---------------- Envío ----------------
+document.getElementById('mainForm').onsubmit = async e=>{
+    e.preventDefault();
+    const b = document.getElementById('btnEnviar');
+    const valTecnico = document.getElementById('tecnico').value;
+    const valBodega = document.getElementById('bodega').value;
+    const valIdSitio = document.getElementById('idSitio').value;
+    const valSerie = document.getElementById('serie').value;
+    const valMarca = document.getElementById('marca').value;
+    const valNombreSitio = document.getElementById('siteSearch').value;
+    const valDescripcion = document.getElementById('eqSearch').value;
 
-if(!fotoInput.dataset.file){
-alert("Debes agregar una foto");
-return;
-}
+    if(!valBodega){ alert("Selecciona una bodega"); return;}
+    if(!fotoInput.dataset.compressed){ alert("Agrega una foto"); return;}
+    if(!valTecnico){ alert("Selecciona un técnico"); return;}
 
-alert("Registro listo ✅");
+    // Guardar técnico en localStorage
+    localStorage.setItem('tecnico', valTecnico);
+
+    b.disabled=true; b.innerText="Subiendo datos...";
+    try{
+        const p = {
+            tecnico: valTecnico,
+            bodega: valBodega,
+            idSitio: valIdSitio,
+            nombreSitio: valNombreSitio,
+            descripcion: valDescripcion,
+            marca: valMarca,
+            serie: valSerie,
+            fileData: fotoInput.dataset.compressed,
+            fileName: fotoInput.dataset.filename,
+            mimeType: fotoInput.dataset.mime
+        };
+        const r = await fetch(CONFIG.URL_APPS_SCRIPT,{method:"POST", body:new URLSearchParams(p)});
+        const res = await r.json();
+        if(res.result==="success"){
+            const urlFinal = `${CONFIG.URL_FORMS_EXTERNO}?entry.1637897291=CELECT`+
+                `&entry.795516044=${encodeURIComponent(valBodega)}`+
+                `&entry.1265319450=${encodeURIComponent(valIdSitio)}`+
+                `&entry.1509520939=${encodeURIComponent(valNombreSitio)}`+
+                `&entry.554570123=${encodeURIComponent(valMarca)}`+
+                `&entry.1914147166=${encodeURIComponent(valDescripcion)}`+
+                `&entry.1497572830=${encodeURIComponent(valSerie)}`+
+                `&entry.733439703=${encodeURIComponent(res.fileUrl)}`;
+            window.location.href = urlFinal;
+        }
+    }catch(x){ alert("Error de conexión"); b.disabled=false; b.innerText="REINTENTAR ENVÍO";}
 };
 
-// ocultar sugerencias
-document.addEventListener('click',e=>{
-if(!ts.contains(e.target)) tsug.style.display='none';
+// Ocultar sugerencias al hacer click fuera
+document.addEventListener('click', e=>{
+    if(!si.contains(e.target)) ss.style.display='none';
+    if(!ei.contains(e.target)) es.style.display='none';
 });
 </script>
 
