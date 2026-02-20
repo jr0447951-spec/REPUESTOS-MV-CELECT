@@ -6,25 +6,126 @@
 <title>Repuestos Go! - Registro Optimizado</title>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+
 <style>
-/* --- ESTILOS ORIGINALES --- */
-:root { --brand:#4f46e5; --brand-light:#818cf8; --bg:#f8fafc; --card-bg:#ffffff; --text:#1e293b; }
-body{font-family:'Poppins',sans-serif;background:radial-gradient(circle at top left,#eef2ff 0%,#f8fafc 100%);margin:0;min-height:100vh;display:flex;flex-direction:column;}
-header{padding:25px 20px;text-align:center;background:#fff;border-bottom-left-radius:30px;border-bottom-right-radius:30px;box-shadow:0 4px 20px rgba(0,0,0,0.05);}
-header h1{margin:0;font-size:1.4rem;color:var(--brand);}
-.timer-pill{background:var(--brand);color:#fff;padding:6px 15px;border-radius:20px;font-size:.8rem;font-weight:600;display:inline-block;margin-bottom:15px;}
-.container{width:90%;max-width:450px;margin:20px auto;flex:1;}
-.card{background:#fff;border-radius:24px;padding:25px;box-shadow:0 10px 25px rgba(0,0,0,0.03);margin-bottom:20px;}
-label{display:block;margin-top:15px;font-size:.75rem;font-weight:600;color:#64748b;margin-left:5px;}
-input{width:100%;padding:14px;margin-top:6px;border-radius:16px;border:1.5px solid #e2e8f0;background:#f8fafc;font-size:1rem;}
-.readonly{background:#f1f5f9;color:#94a3b8;border-style:none;}
-.suggestions{position:absolute;width:100%;background:#fff;border-radius:16px;box-shadow:0 15px 35px rgba(0,0,0,.1);z-index:100;display:none;margin-top:5px;border:1px solid #e2e8f0;overflow:hidden;}
-.suggestion-item{padding:15px;border-bottom:1px solid #f1f5f9;font-size:.9rem;cursor:pointer;}
-.btn-send{width:100%;padding:18px;border-radius:18px;background:linear-gradient(135deg,var(--brand),var(--brand-light));color:white;border:none;font-weight:600;margin-top:30px;}
-.hidden{display:none;}
-#previewFoto{margin-top:10px;width:100%;border-radius:16px;max-height:300px;object-fit:contain;display:none;border:1px solid #cbd5e1;}
+:root {
+    --brand:#4f46e5;
+    --brand-light:#818cf8;
+    --bg:#f8fafc;
+    --card-bg:#ffffff;
+    --text:#1e293b;
+}
+body{
+    font-family:'Poppins',sans-serif;
+    background:radial-gradient(circle at top left,#eef2ff 0%,#f8fafc 100%);
+    margin:0;
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+}
+header{
+    padding:25px 20px;
+    text-align:center;
+    background:#fff;
+    border-bottom-left-radius:30px;
+    border-bottom-right-radius:30px;
+    box-shadow:0 4px 20px rgba(0,0,0,0.05);
+}
+header h1{
+    margin:0;
+    font-size:1.4rem;
+    color:var(--brand);
+}
+.timer-pill{
+    background:var(--brand);
+    color:white;
+    padding:6px 15px;
+    border-radius:20px;
+    font-size:.8rem;
+    font-weight:600;
+    display:inline-block;
+    margin-bottom:15px;
+}
+.container{
+    width:90%;
+    max-width:450px;
+    margin:20px auto;
+    flex:1;
+}
+.card{
+    background:#fff;
+    border-radius:24px;
+    padding:25px;
+    box-shadow:0 10px 25px rgba(0,0,0,0.03);
+    margin-bottom:20px;
+}
+label{
+    display:block;
+    margin-top:15px;
+    font-size:.75rem;
+    font-weight:600;
+    color:#64748b;
+    margin-left:5px;
+}
+input{
+    width:100%;
+    padding:14px;
+    margin-top:6px;
+    border-radius:16px;
+    border:1.5px solid #e2e8f0;
+    background:#f8fafc;
+    font-size:1rem;
+    box-sizing:border-box;
+}
+.readonly{
+    background:#f1f5f9;
+    color:#94a3b8;
+    border-style:none;
+}
+.suggestions{
+    position:absolute;
+    width:100%;
+    background:#fff;
+    border-radius:16px;
+    box-shadow:0 15px 35px rgba(0,0,0,.1);
+    z-index:100;
+    display:none;
+    margin-top:5px;
+    border:1px solid #e2e8f0;
+    overflow:hidden;
+}
+.suggestion-item{
+    padding:15px;
+    border-bottom:1px solid #f1f5f9;
+    font-size:.9rem;
+    cursor:pointer;
+}
+.suggestion-item:active{
+    background:#f1f5f9;
+}
+.btn-send{
+    width:100%;
+    padding:18px;
+    border-radius:18px;
+    background:linear-gradient(135deg,var(--brand),var(--brand-light));
+    color:white;
+    border:none;
+    font-weight:600;
+    margin-top:30px;
+}
+.hidden{ display:none; }
+#previewFoto{
+    margin-top:10px;
+    width:100%;
+    border-radius:16px;
+    max-height:300px;
+    object-fit:contain;
+    display:none;
+    border:1px solid #cbd5e1;
+}
 </style>
 </head>
+
 <body>
 
 <header>
@@ -37,13 +138,13 @@ input{width:100%;padding:14px;margin-top:6px;border-radius:16px;border:1.5px sol
 <div class="card" id="consentimiento" style="text-align:center;">
 <h2>¡Hola!</h2>
 <button onclick="activar()" id="btnStart" disabled class="btn-send">Cargando inventario...</button>
-<div id="load-info">Sincronizando...</div>
+<div id="load-info">Sincronizando datos...</div>
 </div>
 
 <form id="mainForm" class="hidden">
 <div class="card">
 
-<!-- Técnico -->
+<!-- TECNICO -->
 <div style="position:relative">
 <label>Nombre del Técnico</label>
 <input type="text" id="tecnicoSearch" placeholder="Selecciona tu nombre..." autocomplete="off" required>
@@ -65,16 +166,14 @@ input{width:100%;padding:14px;margin-top:6px;border-radius:16px;border:1.5px sol
 </div>
 
 <script>
-const CONFIG={
-URL_APPS_SCRIPT:'TU_URL_APPS_SCRIPT',
-URL_FORMS_EXTERNO:'TU_URL_FORM'
-};
-
 let tecnicos=[];
 let tecnicoSeleccionado=null;
 
 // reloj
-setInterval(()=>{document.getElementById('reloj').innerText=new Date().toLocaleTimeString("es-SV",{timeZone:"America/El_Salvador",hour12:false});},1000);
+setInterval(()=>{
+document.getElementById('reloj').innerText =
+new Date().toLocaleTimeString("es-SV",{timeZone:"America/El_Salvador",hour12:false});
+},1000);
 
 // cargar técnicos
 window.onload=()=>{
@@ -85,15 +184,25 @@ tecnicos=parseCSV(t);
 document.getElementById('btnStart').disabled=false;
 document.getElementById('btnStart').innerText="¡EMPEZAR!";
 });
+
+// validar si había técnico guardado
+const guardado=localStorage.getItem("tecnico");
+if(guardado){
+document.getElementById("tecnicoSearch").value=guardado;
+document.getElementById("tecnico").value=guardado;
+tecnicoSeleccionado=guardado;
+}
 };
 
-// CSV parser
-function parseCSV(d){
-const r=d.split(/\r?\n/).filter(x=>x.trim().length>0);
-const h=r[0].split(',');
-return r.slice(1).map(row=>{
-const v=row.split(',');
-let o={};h.forEach((k,i)=>o[k.trim()]=v[i]?v[i].trim():'');return o;
+// parser simple CSV
+function parseCSV(data){
+const rows=data.split(/\r?\n/).filter(r=>r.trim());
+const headers=rows[0].split(",");
+return rows.slice(1).map(row=>{
+const values=row.split(",");
+let obj={};
+headers.forEach((h,i)=>obj[h.trim()]=values[i]?values[i].trim():"");
+return obj;
 });
 }
 
@@ -103,7 +212,7 @@ document.getElementById('consentimiento').classList.add('hidden');
 document.getElementById('mainForm').classList.remove('hidden');
 }
 
-// autocomplete técnicos
+// autocomplete técnico
 const ts=document.getElementById('tecnicoSearch');
 const tsug=document.getElementById('tecnicoSug');
 
@@ -112,8 +221,15 @@ const v=ts.value.toLowerCase().trim();
 tecnicoSeleccionado=null;
 document.getElementById('tecnico').value="";
 if(v.length<2){tsug.style.display='none';return;}
-const match=tecnicos.filter(t=>t.NOMBRE&&t.NOMBRE.toLowerCase().includes(v)).slice(0,5);
-tsug.innerHTML=match.map(t=>`<div class="suggestion-item" onclick="setTecnico('${t.NOMBRE}')">${t.NOMBRE}</div>`).join('');
+
+const match=tecnicos
+.filter(t=>t.NOMBRE && t.NOMBRE.toLowerCase().includes(v))
+.slice(0,5);
+
+tsug.innerHTML=match.map(t=>
+`<div class="suggestion-item" onclick="setTecnico('${t.NOMBRE.replace(/'/g,"")}')">${t.NOMBRE}</div>`
+).join('');
+
 tsug.style.display=match.length?'block':'none';
 });
 
@@ -121,7 +237,7 @@ function setTecnico(nombre){
 ts.value=nombre;
 document.getElementById('tecnico').value=nombre;
 tecnicoSeleccionado=nombre;
-localStorage.setItem('tecnico',nombre);
+localStorage.setItem("tecnico",nombre);
 tsug.style.display='none';
 }
 
@@ -131,35 +247,63 @@ const preview=document.getElementById("previewFoto");
 
 fotoInput.addEventListener("change",()=>{
 if(!fotoInput.files[0])return;
+
 const file=fotoInput.files[0];
 const reader=new FileReader();
+
 reader.onload=e=>{
 const img=new Image();
 img.onload=()=>{
 const canvas=document.createElement("canvas");
 const maxSide=1000;
 let w=img.width,h=img.height;
-if(w>h&&w>maxSide){h*=maxSide/w;w=maxSide;}
-else if(h>=w&&h>maxSide){w*=maxSide/h;h=maxSide;}
-canvas.width=w;canvas.height=h;
+
+if(w>h && w>maxSide){
+h*=maxSide/w;
+w=maxSide;
+}else if(h>=w && h>maxSide){
+w*=maxSide/h;
+h=maxSide;
+}
+
+canvas.width=w;
+canvas.height=h;
+
 canvas.getContext("2d").drawImage(img,0,0,w,h);
 const compressed=canvas.toDataURL("image/jpeg",0.75);
+
 preview.src=compressed;
 preview.style.display="block";
 fotoInput.dataset.file=compressed.split(',')[1];
 };
+
 img.src=e.target.result;
 };
+
 reader.readAsDataURL(file);
 });
 
 // submit
-document.getElementById('mainForm').onsubmit=async e=>{
+document.getElementById('mainForm').onsubmit=e=>{
 e.preventDefault();
-if(!tecnicoSeleccionado){alert("Selecciona un técnico válido");return;}
-if(!fotoInput.dataset.file){alert("Agrega una foto");return;}
+
+if(!tecnicoSeleccionado){
+alert("Debes seleccionar un técnico válido");
+return;
+}
+
+if(!fotoInput.dataset.file){
+alert("Debes agregar una foto");
+return;
+}
+
 alert("Registro listo ✅");
 };
+
+// ocultar sugerencias
+document.addEventListener('click',e=>{
+if(!ts.contains(e.target)) tsug.style.display='none';
+});
 </script>
 
 </body>
