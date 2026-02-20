@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Repuestos Go! - Network Ops</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+<style>
+/* === TU MISMO DISEÑO (sin cambios visuales) === */
+:root { --brand:#4f46e5; --brand-light:#818cf8; --bg:#f8fafc; --card-bg:#fff; --text:#1e293b; }
+body{font-family:'Poppins',sans-serif;background:radial-gradient(circle at top left,#eef2ff 0%,#f8fafc 100%);margin:0;min-height:100vh;display:flex;flex-direction:column;}
+header{padding:25px 20px;text-align:center;background:#fff;border-bottom-left-radius:30px;border-bottom-right-radius:30px;box-shadow:0 4px 20px rgba(0,0,0,.05);}
+header h1{margin:0;font-size:1.4rem;color:var(--brand);}
+.container{width:90%;max-width:450px;margin:20px auto;flex:1;}
+.card{background:#fff;border-radius:24px;padding:25px;box-shadow:0 10px 25px rgba(0,0,0,.03);}
+label{display:block;margin-top:15px;font-size:.75rem;font-weight:600;color:#64748b;margin-left:5px;}
+input{width:100%;padding:14px;margin-top:6px;border-radius:16px;border:1.5px solid #e2e8f0;background:#f8fafc;font-size:1rem;box-sizing:border-box;}
+input:focus{border-color:var(--brand-light);background:#fff;}
+.readonly{background:#f1f5f9;color:#94a3b8;border-style:none;}
+.bodega-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:8px;}
+.btn-bodega{background:#f1f5f9;border:2px solid transparent;padding:12px 5px;border-radius:16px;font-size:.7rem;font-weight:600;cursor:pointer;}
+.btn-bodega.selected{background:#fff;border-color:var(--brand);color:var(--brand);transform:scale(1.05);}
+.suggestions{position:absolute;width:100%;background:#fff;border-radius:16px;box-shadow:0 15px 35px rgba(0,0,0,.1);z-index:100;display:none;margin-top:5px;border:1px solid #e2e8f0;overflow:hidden;}
+.suggestion-item{padding:15px;border-bottom:1px solid #f1f5f9;font-size:.9rem;cursor:pointer;}
+.btn-send{width:100%;padding:18px;border-radius:18px;background:linear-gradient(135deg,var(--brand),var(--brand-light));color:#fff;border:none;font-weight:600;font-size:1rem;margin-top:30px;cursor:pointer;}
+.hidden{display:none;}
+</style>
+</head>
+<body>
+
+<header>
+<h1>Registro de Salida</h1>
+</header>
+
+<div class="container">
+
+<form id="mainForm">
+<div class="card">
+
+<label>Nombre del Técnico</label>
+<input type="text" id="tecnico" required>
+
+<label>¿Desde qué bodega retiras?</label>
+<div class="bodega-grid">
+<button type="button" class="btn-bodega" onclick="selectB(this,'SAN BENITO')">San Benito</button>
+<button type="button" class="btn-bodega" onclick="selectB(this,'BODEGA CENTRAL')">Central</button>
+<button type="button" class="btn-bodega" onclick="selectB(this,'TALNIQUE')">Talnique</button>
+</div>
+<input type="hidden" id="bodega" required>
+
+<div style="position:relative">
+<label>Nombre del Sitio</label>
+<input type="text" id="siteSearch" autocomplete="off" required>
+<div id="siteSug" class="suggestions"></div>
+</div>
+<input type="text" id="idSitio" class="readonly" readonly required>
+
+<div style="position:relative">
+<label>¿Qué repuesto llevas?</label>
+<input type="text" id="eqSearch" autocomplete="off" required>
+<div id="eqSug" class="suggestions"></div>
+</div>
+<input type="text" id="marca" class="readonly" readonly required>
+
+<label>Número de Serie</label>
+<input type="text" id="serie" required>
+
+<label>Foto</label>
+<input type="file" id="foto" accept="image/*" required>
+
+<button type="submit" class="btn-send">FINALIZAR REGISTRO</button>
+
+</div>
+</form>
+
+</div>
+
+<script>
+const CONFIG={
+URL_SITIOS_CSV:'https://docs.google.com/spreadsheets/d/e/2PACX-1vTE_5CZtD7qHGW5cWHGAjn7ALTphVm5h88lco9cySYoAe2VBW4fq8DQ7-SZY6cd_FHtNQJS3MpE88hs/pub?gid=1955381502&single=true&output=csv'
+};
+
+let sites=[],equipos=[];
+let sitioSeleccionado=null;
+let equipoSeleccionado=null;
+
+window.onload=()=>{
+fetch(CONFIG.URL_SITIOS_CSV).then(r=>r.text()).then(t=>{sites=parseCSV(t);});
+Papa.parse("inventario_repuestos.csv",{download:true,header:true,delimiter:";",complete:r=>{equipos=r.data;}});
+};
+
+function parseCSV(d){
+const r=d.split(/\r?\n/).filter(x=>x.trim());
+const h=r[0].split(',').map(x=>x.trim().replace(/"/g,''));
+return r.slice(1).map(row=>{
+const v=row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+let o={};h.forEach((k,i)=>o[k]=v[i]?v[i].trim().replace(/"/g,''):'');
+return o;
+});
+}
+
+function selectB(btn,v){
+document.querySelectorAll('.btn-bodega').forEach(x=>x.classList.remove('selected'));
+btn.classList.add('selected');
+document.getElementById('bodega').value=v;
+}
+
+/* ====== SITIOS SOLO DESDE CSV ====== */
+const si=document.getElementById('siteSearch'),ss=document.getElementById('siteSug');
+
+si.addEventListener('input',()=>{
+sitioSeleccionado=null;
+const v=si.value.toLowerCase().trim();
+if(v.length<2){ss.style.display='none';return;}
+const m=sites.filter(s=>
+(s.SITEID && s.SITEID.toString().toLowerCase().includes(v))||
+(s['NOMBRE DE SITIO'] && s['NOMBRE DE SITIO'].toLowerCase().includes(v))
+).slice(0,5);
+ss.innerHTML=m.map(s=>`<div class="suggestion-item" onclick="setS('${s.SITEID}','${s['NOMBRE DE SITIO'].replace(/'/g,"")}')">
+<strong>${s.SITEID}</strong><br><small>${s['NOMBRE DE SITIO']}</small></div>`).join('');
+ss.style.display=m.length?'block':'none';
+});
+
+function setS(i,n){
+si.value=n;
+document.getElementById('idSitio').value=i;
+sitioSeleccionado={id:i,nombre:n};
+ss.style.display='none';
+}
+
+si.addEventListener('blur',()=>{
+if(!sitioSeleccionado||si.value!==sitioSeleccionado.nombre){
+si.value='';
+document.getElementById('idSitio').value='';
+sitioSeleccionado=null;
+}
+});
+
+/* ====== EQUIPOS SOLO DESDE CSV ====== */
+const ei=document.getElementById('eqSearch'),es=document.getElementById('eqSug');
+
+ei.addEventListener('input',()=>{
+equipoSeleccionado=null;
+const v=ei.value.toLowerCase().trim();
+if(v.length<2){es.style.display='none';return;}
+const m=equipos.filter(e=>
+e["DESCRIPCION DE EQUIPO"] &&
+e["DESCRIPCION DE EQUIPO"].toLowerCase().includes(v)
+).slice(0,6);
+es.innerHTML=m.map(e=>`<div class="suggestion-item" onclick="setE('${e["DESCRIPCION DE EQUIPO"].replace(/'/g,"")}','${e["MARCA"]}')">
+<strong>${e["DESCRIPCION DE EQUIPO"]}</strong><br><small>${e["MARCA"]}</small></div>`).join('');
+es.style.display=m.length?'block':'none';
+});
+
+function setE(d,m){
+ei.value=d;
+document.getElementById('marca').value=m;
+equipoSeleccionado={descripcion:d,marca:m};
+es.style.display='none';
+}
+
+ei.addEventListener('blur',()=>{
+if(!equipoSeleccionado||ei.value!==equipoSeleccionado.descripcion){
+ei.value='';
+document.getElementById('marca').value='';
+equipoSeleccionado=null;
+}
+});
+
+/* ====== VALIDACIÓN FINAL ====== */
+document.getElementById('mainForm').onsubmit=(e)=>{
+e.preventDefault();
+
+if(!document.getElementById('bodega').value){
+alert("Selecciona una bodega");
+return;
+}
+
+if(!sitioSeleccionado){
+alert("Selecciona un sitio válido de la lista");
+return;
+}
+
+if(!equipoSeleccionado){
+alert("Selecciona un repuesto válido del inventario");
+return;
+}
+
+alert("Validación correcta ✅ Solo datos del CSV permitidos.");
+};
+</script>
+</body>
+</html>
