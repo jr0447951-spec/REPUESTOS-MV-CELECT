@@ -36,11 +36,11 @@ label { display:block; margin-top:15px; font-size:.75rem; font-weight:600; color
 .bodega-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-top:8px; }
 .btn-bodega { background:#f1f5f9; border:2px solid transparent; padding:12px 5px; border-radius:16px; font-size:.7rem; font-weight:600; color:#475569; cursor:pointer; transition:all .2s cubic-bezier(0.175,0.885,0.32,1.275);}
 .btn-bodega.selected { background:#fff; border-color:var(--brand); color:var(--brand); transform:scale(1.05); box-shadow:0 8px 15px rgba(79,70,229,0.15);}
-select, input { width:100%; padding:14px; margin-top:6px; border-radius:16px; border:1.5px solid #e2e8f0; background:#f8fafc; color:var(--text); font-size:1rem; outline:none; transition:.3s; box-sizing:border-box; }
-select:focus, input:focus { border-color:var(--brand-light); background:#fff; box-shadow:0 0 0 4px rgba(79,70,229,.1);}
+input { width:100%; padding:14px; margin-top:6px; border-radius:16px; border:1.5px solid #e2e8f0; background:#f8fafc; color:var(--text); font-size:1rem; outline:none; transition:.3s; box-sizing:border-box; }
+input:focus { border-color:var(--brand-light); background:#fff; box-shadow:0 0 0 4px rgba(79,70,229,.1);}
 .readonly { background:#f1f5f9; color:#94a3b8; border-style:none; font-size:.9rem;}
-.suggestions { position:absolute; width:100%; background:#fff; border-radius:16px; box-shadow:0 15px 35px rgba(0,0,0,.1); z-index:100; display:none; margin-top:5px; border:1px solid #e2e8f0; overflow:hidden; }
-.suggestion-item { padding:15px; border-bottom:1px solid #f1f5f9; font-size:.9rem; cursor:pointer; }
+.suggestions { position:absolute; width:100%; background:#fff; border-radius:16px; box-shadow:0 15px 35px rgba(0,0,0,.1); z-index:100; display:none; margin-top:5px; border:1px solid #e2e8f0; overflow:hidden; max-height:200px; overflow-y:auto;}
+.suggestion-item { padding:10px 15px; border-bottom:1px solid #f1f5f9; font-size:.9rem; cursor:pointer; }
 .suggestion-item:active { background:#f1f5f9;}
 .btn-send { width:100%; padding:18px; border-radius:18px; background:linear-gradient(135deg,var(--brand),var(--brand-light)); color:white; border:none; font-weight:600; font-size:1rem; margin-top:30px; box-shadow:0 10px 20px rgba(79,70,229,.2); cursor:pointer; transition:.3s;}
 .btn-send:active { transform:scale(.96);}
@@ -67,9 +67,8 @@ select:focus, input:focus { border-color:var(--brand-light); background:#fff; bo
     <form id="mainForm" class="hidden">
         <div class="card">
             <label>Nombre del Técnico</label>
-            <select id="tecnico" required>
-                <option value="">Selecciona un técnico</option>
-            </select>
+            <input type="text" id="tecnico" placeholder="Nombre + Apellido" required autocomplete="off">
+            <div id="tecnicoSug" class="suggestions"></div>
 
             <label>¿Desde qué bodega retiras?</label>
             <div class="bodega-grid">
@@ -108,39 +107,27 @@ select:focus, input:focus { border-color:var(--brand-light); background:#fff; bo
 <script>
 const CONFIG = {
     URL_SITIOS_CSV: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTE_5CZtD7qHGW5cWHGAjn7ALTphVm5h88lco9cySYoAe2VBW4fq8DQ7-SZY6cd_FHtNQJS3MpE88hs/pub?gid=1955381502&single=true&output=csv',
+    URL_TECNICOS_CSV: 'tecnicos.csv', // <-- tu CSV local con nombre y apellido
     URL_APPS_SCRIPT: 'https://script.google.com/macros/s/AKfycbz_Wv6DikTWQuqnAd9gMrjfEoFOFa9E9YdUuY5cSkr4ICqBKOo5WPvmJrhYF5_dv5fa/exec',
     URL_FORMS_EXTERNO: 'https://docs.google.com/forms/d/e/1FAIpQLSdeek133oAtejD-fC1LPvFPDHiej3l0tokNW9N31LdHFpS06g/viewform'
 };
 
-let sites = [], equipos = [];
+let sites=[], equipos=[], tecnicos=[];
 
-// Mostrar reloj
-setInterval(()=>{
-    document.getElementById('reloj').innerText = new Date().toLocaleTimeString("es-SV",{timeZone:"America/El_Salvador", hour12:false});
+// Reloj
+setInterval(()=>{ 
+    document.getElementById('reloj').innerText = new Date().toLocaleTimeString("es-SV",{timeZone:"America/El_Salvador", hour12:false}); 
 },1000);
 
 window.onload = ()=>{
 
-    // Cargar técnicos desde CSV
-    Papa.parse("tecnicos.csv", {
-        download:true, header:false, skipEmptyLines:true,
-        complete:function(res){
-            const select = document.getElementById('tecnico');
-            res.data.forEach(row=>{
-                const name = row[0].trim();
-                const opt = document.createElement('option');
-                opt.value = name;
-                opt.textContent = name;
-                select.appendChild(opt);
-            });
-            // Seleccionar técnico guardado
-            const t = localStorage.getItem('tecnico');
-            if(t) select.value = t;
-            document.getElementById('btnStart').disabled=false;
-            document.getElementById('btnStart').style.background="var(--brand)";
-            document.getElementById('btnStart').innerText="¡EMPEZAR!";
-            document.getElementById('load-info').innerText="Inventario sincronizado";
-        }
+    // Cargar técnicos
+    fetch(CONFIG.URL_TECNICOS_CSV).then(r=>r.text()).then(t=>{
+        tecnicos = t.split(/\r?\n/).filter(x=>x.trim()!=='').map(x=>({nombre:x.trim()}));
+        document.getElementById('btnStart').disabled=false;
+        document.getElementById('btnStart').style.background="var(--brand)";
+        document.getElementById('btnStart').innerText="¡EMPEZAR!";
+        document.getElementById('load-info').innerText="Inventario sincronizado";
     });
 
     // Cargar Sitios
@@ -148,14 +135,14 @@ window.onload = ()=>{
         sites = parseCSV(t);
     });
 
-    // Cargar inventario de repuestos desde CSV
+    // Cargar inventario de repuestos
     Papa.parse("inventario_repuestos.csv", {
         download:true, header:true, delimiter:";", skipEmptyLines:true,
         complete: function(res){ equipos=res.data; }
     });
 };
 
-// ---------------- CSV parsing ----------------
+// ---------------- CSV Parsing ----------------
 function parseCSV(d){
     const r=d.split(/\r?\n/).filter(x=>x.trim().length>0);
     const h=r[0].split(',').map(x=>x.trim().replace(/"/g,''));
@@ -165,7 +152,7 @@ function parseCSV(d){
     });
 }
 
-// ---------------- Selección de bodega ----------------
+// ---------------- Bodega ----------------
 function selectB(btn,v){
     document.querySelectorAll('.btn-bodega').forEach(x=>x.classList.remove('selected'));
     btn.classList.add('selected');
@@ -178,36 +165,41 @@ function activar(){
     document.getElementById('mainForm').classList.remove('hidden');
 }
 
-// ---------------- Autocomplete Sitios ----------------
-const si = document.getElementById('siteSearch'), ss = document.getElementById('siteSug');
-si.addEventListener('input',()=>{
-    const v=si.value.toLowerCase().trim();
-    const match = sites.filter(s=>
-        (s.SITEID && s.SITEID.toString().toLowerCase()===v) ||
-        (s['NOMBRE DE SITIO'] && s['NOMBRE DE SITIO'].toLowerCase()===v)
-    );
-    if(match.length>0){
-        si.value = match[0]['NOMBRE DE SITIO'];
-        document.getElementById('idSitio').value = match[0].SITEID;
-        ss.style.display='none';
-    } else {
-        ss.style.display='none';
-    }
-});
+// ---------------- Autocomplete genérico ----------------
+function setupAutocomplete(inputEl, suggestionsEl, items, displayKey, valueKey){
+    inputEl.addEventListener('input', ()=>{
+        const val = inputEl.value.toLowerCase().trim();
+        suggestionsEl.innerHTML='';
+        if(!val){ suggestionsEl.style.display='none'; return; }
 
-// ---------------- Autocomplete Equipos ----------------
-const ei = document.getElementById('eqSearch'), es = document.getElementById('eqSug');
-ei.addEventListener('input',()=>{
-    const v=ei.value.toLowerCase().trim();
-    const match = equipos.filter(e=> e["DESCRIPCION DE EQUIPO"] && e["DESCRIPCION DE EQUIPO"].toLowerCase()===v);
-    if(match.length>0){
-        ei.value = match[0]["DESCRIPCION DE EQUIPO"];
-        document.getElementById('marca').value = match[0]["MARCA"];
-        es.style.display='none';
-    } else {
-        es.style.display='none';
-    }
-});
+        const matches = items.filter(i=> i[displayKey].toLowerCase().includes(val));
+        if(matches.length===0){ suggestionsEl.style.display='none'; return; }
+
+        matches.forEach(item=>{
+            const div = document.createElement('div');
+            div.className='suggestion-item';
+            div.textContent=item[displayKey];
+            div.addEventListener('click', ()=>{
+                inputEl.value = item[displayKey];
+                if(valueKey) document.getElementById(valueKey).value = item[valueKey]||'';
+                suggestionsEl.style.display='none';
+            });
+            suggestionsEl.appendChild(div);
+        });
+        suggestionsEl.style.display='block';
+    });
+
+    document.addEventListener('click', e=>{
+        if(!inputEl.contains(e.target) && !suggestionsEl.contains(e.target)){
+            suggestionsEl.style.display='none';
+        }
+    });
+}
+
+// --- Configurar autocompletado ---
+setupAutocomplete(document.getElementById('tecnico'), document.getElementById('tecnicoSug'), tecnicos, 'nombre', null);
+setupAutocomplete(document.getElementById('siteSearch'), document.getElementById('siteSug'), sites, 'NOMBRE DE SITIO', 'SITEID');
+setupAutocomplete(document.getElementById('eqSearch'), document.getElementById('eqSug'), equipos, 'DESCRIPCION DE EQUIPO', 'marca');
 
 // ---------------- Foto + compresión ----------------
 const fotoInput = document.getElementById("foto");
@@ -221,10 +213,10 @@ fotoInput.addEventListener("change", ()=>{
             img.onload = ()=>{
                 const canvas = document.createElement("canvas");
                 const maxSide = 1000;
-                let width = img.width, height = img.height;
+                let width=img.width, height=img.height;
                 if(width>height && width>maxSide){ height*=maxSide/width; width=maxSide;}
                 else if(height>=width && height>maxSide){ width*=maxSide/height; height=maxSide;}
-                canvas.width = width; canvas.height = height;
+                canvas.width=width; canvas.height=height;
                 const ctx = canvas.getContext("2d");
                 ctx.drawImage(img,0,0,width,height);
                 const compressed = canvas.toDataURL("image/jpeg",0.7);
@@ -256,9 +248,7 @@ document.getElementById('mainForm').onsubmit = async e=>{
 
     if(!valBodega){ alert("Selecciona una bodega"); return;}
     if(!fotoInput.dataset.compressed){ alert("Agrega una foto"); return;}
-    if(!valTecnico){ alert("Selecciona un técnico"); return;}
 
-    // Guardar técnico en localStorage
     localStorage.setItem('tecnico', valTecnico);
 
     b.disabled=true; b.innerText="Subiendo datos...";
@@ -290,13 +280,6 @@ document.getElementById('mainForm').onsubmit = async e=>{
         }
     }catch(x){ alert("Error de conexión"); b.disabled=false; b.innerText="REINTENTAR ENVÍO";}
 };
-
-// Ocultar sugerencias al hacer click fuera
-document.addEventListener('click', e=>{
-    if(!si.contains(e.target)) ss.style.display='none';
-    if(!ei.contains(e.target)) es.style.display='none';
-});
 </script>
-
 </body>
 </html>
