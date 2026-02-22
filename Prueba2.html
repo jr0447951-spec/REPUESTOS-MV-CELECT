@@ -40,26 +40,25 @@
         td { padding: 15px; border-bottom: 1px solid #f1f5f9; }
 
         /* Indicators */
-        .indicator { font-size: 1.2rem; text-align: center; }
-        .days-tag { padding: 2px 8px; border-radius: 6px; font-weight: 600; font-size: 0.75rem; }
-        .text-danger { color: var(--danger); background: #fee2e2; }
-        .text-warning { color: var(--warning); background: #fef3c7; }
-        .text-success { color: var(--success); background: #dcfce7; }
-        .badge-status { padding: 4px 8px; border-radius: 6px; font-size: 0.7rem; font-weight: 600; }
+        .days-tag { padding: 4px 10px; border-radius: 8px; font-weight: 600; font-size: 0.8rem; display: inline-block; min-width: 60px; text-align: center; }
+        .text-danger { color: #b91c1c; background: #fee2e2; border: 1px solid #fecaca; }
+        .text-warning { color: #92400e; background: #fef3c7; border: 1px solid #fde68a; }
+        .text-success { color: #15803d; background: #dcfce7; border: 1px solid #bbf7d0; }
 
         /* Buttons & Filters */
         .filter-row { display:flex; gap:12px; flex-wrap:wrap; align-items: center; }
-        .filter-row input { padding:8px 12px; border-radius:12px; border:1.5px solid #e2e8f0; font-size:0.85rem; outline: none; }
-        .export-btn { padding:8px 15px; border:none; border-radius:12px; background: #334155; color:white; cursor:pointer; font-size:0.8rem; font-weight: 600; transition: 0.3s; }
-        .export-btn:hover { background: var(--brand); }
+        .filter-row input { padding: 8px 12px; border-radius: 12px; border: 1.5px solid #e2e8f0; font-size: 0.85rem; outline: none; transition: 0.3s; }
+        .filter-row input:focus { border-color: var(--brand); }
+        .export-btn { padding: 8px 15px; border: none; border-radius: 12px; background: #334155; color: white; cursor: pointer; font-size: 0.8rem; font-weight: 600; transition: 0.3s; }
+        .export-btn:hover { background: var(--brand); transform: translateY(-1px); }
 
         @media print {
             .header-dash, .stats-row, .tab-container, .filter-row, footer, .export-btn { display: none !important; }
             .tab-content { display: block !important; }
             #tab-dashboard { display: none !important; }
             .table-container { box-shadow: none; border: 1px solid #eee; }
-            table { font-size: 7pt; }
-            #tab-historial::before { content: "REPORTE DE TRAZABILIDAD Y GESTIÓN - HISTORIAL"; display: block; text-align: center; font-weight: bold; font-size: 14pt; margin-bottom: 20px; }
+            table { font-size: 8pt; }
+            #tab-historial::before { content: "REPORTE DE GESTIÓN MENSUAL"; display: block; text-align: center; font-weight: bold; font-size: 14pt; margin-bottom: 20px; }
         }
     </style>
 </head>
@@ -67,8 +66,8 @@
 
 <div class="header-dash">
     <div>
-        <h1 style="margin:0; font-size: 1.6rem;">CONTROL <span style="color:var(--brand)">GESTIÓN</span></h1>
-        <div id="lastUpdate" style="font-size: 0.75rem; color: #94a3b8;">Cargando...</div>
+        <h1 style="margin:0; font-size: 1.6rem;">CONTROL <span style="color:var(--brand)">OPERATIVO</span></h1>
+        <div id="lastUpdate" style="font-size: 0.75rem; color: #94a3b8;">Cargando datos...</div>
     </div>
     <nav class="tab-container">
         <button class="tab-btn active" onclick="openTab('dashboard')">📊 Dashboard</button>
@@ -81,21 +80,52 @@
         <div class="card-stat"><h3>Pendientes</h3><div class="value" id="stat-pendientes">0</div></div>
         <div class="card-stat" style="border-left-color: var(--warning);"><h3>Alerta (>7d)</h3><div class="value" id="stat-alerta">0</div></div>
         <div class="card-stat" style="border-left-color: var(--danger);"><h3>Crítico (>14d)</h3><div class="value" id="stat-critico">0</div></div>
-        <div class="card-stat" style="border-left-color: var(--success);"><h3>Eficiencia</h3><div class="value" id="stat-eficiencia">0%</div></div>
+        <div class="card-stat" style="border-left-color: var(--success);"><h3>Entregas/Sem</h3><div class="value" id="stat-entregas-kpi">0</div></div>
     </div>
 
     <div class="table-container">
         <div class="table-header">
             <h2>📋 Salidas Pendientes <span id="count-pendientes" class="badge-count">0</span></h2>
             <div class="filter-row">
-                <input type="text" id="fSitioP" placeholder="Sitio...">
-                <input type="text" id="fTecP" placeholder="Técnico...">
-                <button class="export-btn" onclick="exportCSV('tablaPendientes', 'Pendientes')">📊 CSV</button>
+                <input type="text" id="fSitioP" placeholder="Filtrar Sitio...">
+                <input type="text" id="fTecP" placeholder="Filtrar Técnico...">
+                <button class="export-btn" onclick="exportCSV('tablaPendientes', 'Pendientes_Antiguedad')">📊 Exportar CSV</button>
             </div>
         </div>
         <table id="tablaPendientes">
             <thead>
-                <tr><th>Status</th><th>Antigüedad</th><th>Fecha</th><th>Sitio</th><th>Equipo</th><th>Serie</th><th>Técnico</th></tr>
+                <tr>
+                    <th>Antigüedad</th>
+                    <th>Fecha Salida</th>
+                    <th>ID Sitio</th>
+                    <th>Equipo</th>
+                    <th>Serie</th>
+                    <th>Técnico</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <div class="table-container">
+        <div class="table-header">
+            <h2>✅ Entregas Realizadas (Esta Semana) <span id="count-entregas" class="badge-count" style="background:var(--success)">0</span></h2>
+            <div class="filter-row">
+                <input type="text" id="fSitioE" placeholder="Buscar sitio...">
+                <button class="export-btn" onclick="exportCSV('tablaEntregados', 'Entregas_Semana')">📊 Exportar CSV</button>
+            </div>
+        </div>
+        <table id="tablaEntregados">
+            <thead>
+                <tr>
+                    <th>Fecha Entrega</th>
+                    <th>ID Sitio</th>
+                    <th>Nombre Sitio</th>
+                    <th>Equipo</th>
+                    <th>Serie</th>
+                    <th>Bodega</th>
+                    <th>Técnico</th>
+                </tr>
             </thead>
             <tbody></tbody>
         </table>
@@ -107,22 +137,30 @@
         <input type="month" id="filterMes">
         <button class="export-btn" onclick="renderHistorial()">🔍 Consultar</button>
         <div style="margin-left:auto; display:flex; gap:10px">
-            <button class="export-btn" onclick="exportCSV('tablaHistorial', 'Historial')" style="background:#166534">📊 Excel</button>
+            <button class="export-btn" onclick="exportCSV('tablaHistorial', 'Historial_Mensual')" style="background:#166534">📊 Excel</button>
             <button class="export-btn" onclick="window.print()" style="background:#b91c1c">📄 PDF</button>
         </div>
     </div>
     <div class="table-container">
-        <div class="table-header"><h2>📜 Historial Mensual <span id="count-historial" class="badge-count">0</span></h2></div>
+        <div class="table-header"><h2>📜 Historial del Periodo <span id="count-historial" class="badge-count">0</span></h2></div>
         <table id="tablaHistorial">
             <thead>
-                <tr><th>Fecha</th><th>ID Sitio</th><th>Equipo</th><th>Serie</th><th>Técnico</th><th>Estado</th><th>Comentario</th></tr>
+                <tr>
+                    <th>Fecha</th>
+                    <th>ID Sitio</th>
+                    <th>Equipo</th>
+                    <th>Serie</th>
+                    <th>Técnico</th>
+                    <th>Estado</th>
+                    <th>Comentario</th>
+                </tr>
             </thead>
             <tbody></tbody>
         </table>
     </div>
 </div>
 
-<footer><strong>NETWORK OPERATIONS</strong> | 2026</footer>
+<footer><strong>NETWORK OPERATIONS</strong> | Gestión de Repuestos 2026</footer>
 
 <script>
 const URL_S = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQBNrpLKc_GPFT6Ik9Yr4s1qo8zaOOqrDgTc_9DGeMd20rNTsEtLktTCoeDcRrts6kvgne86KZDfKQS/pub?gid=0&single=true&output=csv';
@@ -131,23 +169,26 @@ const URL_E = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQBNrpLKc_GPFT6Ik
 let rawData = { pendientes: [], entregas: [], historial: [] };
 
 async function init() {
-    const [resS, resE] = await Promise.all([fetch(URL_S), fetch(URL_E)]);
-    const sTxt = await resS.text();
-    const eTxt = await resE.text();
-    
-    Papa.parse(sTxt, { complete: (r) => {
-        rawData.historial = r.data;
-        rawData.pendientes = r.data.filter(f => f[9] === 'PENDIENTE');
-        document.getElementById('filterMes').value = new Date().toISOString().substring(0, 7);
-        renderPendientes();
-    }});
-    
-    Papa.parse(eTxt, { complete: (r) => {
-        const lun = getLunes();
-        rawData.entregas = r.data.filter(f => parseFecha(f[0]) >= lun);
-        actualizarKpis();
-    }});
-    document.getElementById('lastUpdate').innerText = "Sincronizado: " + new Date().toLocaleTimeString();
+    try {
+        const [resS, resE] = await Promise.all([fetch(URL_S), fetch(URL_E)]);
+        const sTxt = await resS.text();
+        const eTxt = await resE.text();
+        
+        Papa.parse(sTxt, { complete: (r) => {
+            rawData.historial = r.data;
+            rawData.pendientes = r.data.filter(f => f[9] === 'PENDIENTE');
+            document.getElementById('filterMes').value = new Date().toISOString().substring(0, 7);
+            renderPendientes();
+        }});
+        
+        Papa.parse(eTxt, { complete: (r) => {
+            const lunes = getLunes();
+            rawData.entregas = r.data.filter(f => parseFecha(f[0]) >= lunes);
+            renderEntregas();
+            actualizarKpis();
+        }});
+        document.getElementById('lastUpdate').innerText = "Sincronizado: " + new Date().toLocaleTimeString();
+    } catch(e) { console.error(e); }
 }
 
 function parseFecha(s) { 
@@ -159,7 +200,8 @@ function parseFecha(s) {
 function getLunes() {
     const d = new Date(); d.setHours(0,0,0,0);
     const day = d.getDay();
-    return new Date(d.setDate(d.getDate() - day + (day == 0 ? -6 : 1)));
+    const diff = d.getDate() - day + (day == 0 ? -6 : 1);
+    return new Date(d.setDate(diff));
 }
 
 function openTab(name) {
@@ -176,20 +218,21 @@ function renderPendientes() {
     const t = document.getElementById('fTecP').value.toLowerCase();
     const ahora = new Date();
 
-    let filt = rawData.pendientes.filter(f => (f[3].toLowerCase().includes(s) || f[4].toLowerCase().includes(s)) && f[1].toLowerCase().includes(t));
-    
-    // ORDENAR POR ANTIGÜEDAD (Los más viejos primero)
+    let filt = rawData.pendientes.filter(f => 
+        (f[3].toLowerCase().includes(s) || (f[4] && f[4].toLowerCase().includes(s))) && 
+        f[1].toLowerCase().includes(t)
+    );
+
+    // ORDENAR POR MÁS ANTIGUO PRIMERO
     filt.sort((a, b) => parseFecha(a[0]) - parseFecha(b[0]));
 
     document.getElementById('count-pendientes').innerText = filt.length;
-
     tbody.innerHTML = filt.map(f => {
         const dias = Math.floor((ahora - parseFecha(f[0])) / 86400000);
-        let mark = "🟢", cls = "text-success";
-        if(dias > 14) { mark="🔴"; cls="text-danger"; } else if(dias > 7) { mark="🟡"; cls="text-warning"; }
+        let cls = "text-success";
+        if(dias > 14) cls = "text-danger"; else if(dias > 7) cls = "text-warning";
         
         return `<tr>
-            <td class="indicator">${mark}</td>
             <td><span class="days-tag ${cls}">${dias} días</span></td>
             <td>${f[0]}</td>
             <td><strong>${f[3]}</strong></td>
@@ -200,6 +243,17 @@ function renderPendientes() {
     }).join('');
 }
 
+function renderEntregas() {
+    const tbody = document.querySelector('#tablaEntregados tbody');
+    const s = document.getElementById('fSitioE').value.toLowerCase();
+    const filt = rawData.entregas.filter(f => 
+        f[3].toLowerCase().includes(s) || (f[2] && f[2].toLowerCase().includes(s))
+    );
+    
+    document.getElementById('count-entregas').innerText = filt.length;
+    tbody.innerHTML = filt.map(f => `<tr><td>${f[0]}</td><td><strong>${f[3]}</strong></td><td>${f[2]}</td><td>${f[6]}</td><td><code>${f[9]}</code></td><td>${f[8]}</td><td>${f[1]}</td></tr>`).join('');
+}
+
 function renderHistorial() {
     const tbody = document.querySelector('#tablaHistorial tbody');
     const mes = document.getElementById('filterMes').value;
@@ -208,7 +262,7 @@ function renderHistorial() {
         return d && (d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, '0')) === mes;
     });
     document.getElementById('count-historial').innerText = filt.length;
-    tbody.innerHTML = filt.map(f => `<tr><td>${f[0]}</td><td>${f[3]}</td><td>${f[5]}</td><td>${f[7]}</td><td>${f[1]}</td><td><span class="badge-status ${f[9]==='PENDIENTE'?'text-danger':'text-success'}">${f[9]}</span></td><td style="font-size:0.7rem">${f[10]||""}</td></tr>`).join('');
+    tbody.innerHTML = filt.map(f => `<tr><td>${f[0]}</td><td>${f[3]}</td><td>${f[5]}</td><td>${f[7]}</td><td>${f[1]}</td><td><span class="badge-status ${f[9]==='PENDIENTE'?'text-danger':'text-success'}">${f[9]}</span></td><td>${f[10]||""}</td></tr>`).join('');
 }
 
 function actualizarKpis() {
@@ -221,26 +275,23 @@ function actualizarKpis() {
     document.getElementById('stat-pendientes').innerText = rawData.pendientes.length;
     document.getElementById('stat-alerta').innerText = a;
     document.getElementById('stat-critico').innerText = c;
-    const total = rawData.pendientes.length + rawData.entregas.length;
-    document.getElementById('stat-eficiencia').innerText = total > 0 ? Math.round((rawData.entregas.length/total)*100)+"%" : "0%";
+    document.getElementById('stat-entregas-kpi').innerText = rawData.entregas.length;
 }
 
 function exportCSV(tableId, name) {
     const rows = Array.from(document.getElementById(tableId).querySelectorAll("tr"));
-    let csv = "\uFEFF";
-    
+    let csv = "\uFEFF"; // Para que Excel reconozca eñes y tildes
     rows.forEach((row, i) => {
         let cols = Array.from(row.querySelectorAll("th, td")).map(c => `"${c.innerText.trim()}"`);
-        // Inyectar comentario en columna K para Pendientes
+        // Inyectar comentario supervisor en columna K para Pendientes
         if(tableId === 'tablaPendientes' && i > 0) {
-            const serie = row.querySelectorAll("td")[5].innerText;
+            const serie = row.querySelectorAll("td")[4].innerText;
             const reg = rawData.pendientes.find(r => r[7] === serie);
             while(cols.length < 10) cols.push("");
             cols[10] = `"${(reg && reg[10] ? reg[10] : "").replace(/"/g, '""')}"`;
         }
         csv += cols.join(";") + "\n";
     });
-
     const link = document.createElement("a");
     link.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
     link.download = `${name}_${new Date().toISOString().slice(0,10)}.csv`;
@@ -249,6 +300,7 @@ function exportCSV(tableId, name) {
 
 document.getElementById('fSitioP').oninput = renderPendientes;
 document.getElementById('fTecP').oninput = renderPendientes;
+document.getElementById('fSitioE').oninput = renderEntregas;
 window.onload = init;
 </script>
 </body>
