@@ -8,52 +8,58 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>
-:root { --brand: #4f46e5; --bg: #f8fafc; --text: #1e293b; --danger: #ef4444; --success: #10b981; --warning: #f59e0b; }
+:root { --brand: #4f46e5; --bg: #f8fafc; --text: #1e293b; --danger: #ef4444; --success: #10b981; --warning: #f59e0b; --dark: #334155; }
 body { font-family: 'Poppins', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; }
 
-.header-dash { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
-.stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 30px; }
-.card-stat { background: white; padding: 18px; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border-left: 5px solid var(--brand); transition: 0.3s; }
-.card-stat h3 { margin: 0; font-size: 0.75rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; }
-.card-stat .value { font-size: 1.6rem; font-weight: 600; color: var(--text); margin: 5px 0; }
-
-/* Pestañas */
+/* Navegación y Header */
+.header-dash { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; flex-wrap: wrap; gap: 20px; }
 .tab-container { display: flex; gap: 8px; background: #e2e8f0; padding: 5px; border-radius: 12px; }
-.tab-btn { padding: 8px 16px; border: none; border-radius: 8px; cursor: pointer; background: transparent; font-weight: 600; font-family: inherit; color: #64748b; transition: 0.3s; }
-.tab-btn.active { background: white; color: var(--brand); shadow: 0 2px 4px rgba(0,0,0,0.1); }
+.tab-btn { padding: 8px 18px; border: none; border-radius: 8px; cursor: pointer; background: transparent; font-weight: 600; font-family: inherit; color: #64748b; transition: 0.3s; }
+.tab-btn.active { background: white; color: var(--brand); box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
 
+/* Cartas de Trazabilidad */
+.stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 30px; }
+.card-stat { background: white; padding: 20px; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border-left: 5px solid var(--brand); }
+.card-stat h3 { margin: 0; font-size: 0.75rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; }
+.card-stat .value { font-size: 1.8rem; font-weight: 600; margin: 5px 0; }
+
+/* Tablas y Contenedores */
 .table-container { background: white; border-radius: 20px; padding: 20px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); margin-bottom: 30px; overflow-x: auto; }
-.table-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 2px solid #f1f5f9; padding-bottom: 10px; }
-.table-header h2 { font-size: 1.1rem; margin: 0; }
+.table-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 2px solid #f1f5f9; padding-bottom: 10px; flex-wrap: wrap; gap: 10px; }
+.table-header h2 { font-size: 1.1rem; margin: 0; display: flex; align-items: center; gap: 8px; }
 
 table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
 th { text-align: left; padding: 12px; background: #f8fafc; color: #64748b; font-weight: 600; }
 td { padding: 12px; border-bottom: 1px solid #f1f5f9; }
 
+/* Filtros y Botones */
+.filter-group { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 15px; background: #f1f5f9; padding: 12px; border-radius: 12px; }
+.filter-group input { padding: 8px 12px; border-radius: 8px; border: 1px solid #cbd5e1; outline: none; font-size: 0.85rem; min-width: 180px; }
+button { padding: 8px 16px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-family: inherit; font-size: 0.85rem; transition: 0.2s; display: flex; align-items: center; gap: 6px; }
+.btn-filter { background: var(--dark); color: white; }
+.btn-filter:hover { background: #1e293b; }
+.btn-clear { background: #e2e8f0; color: #475569; }
+.btn-export { background: var(--brand); color: white; }
+
 .badge { padding: 4px 8px; border-radius: 12px; font-size: 0.7rem; font-weight: 600; }
 .badge-pending { background: #fee2e2; color: #991b1b; }
 .badge-success { background: #dcfce7; color: #166534; }
-.badge-warning { background: #fef3c7; color: #92400e; }
 
-.filter-row { display:flex; gap:12px; margin-bottom:15px; flex-wrap:wrap; align-items: center; }
-.filter-row input, .filter-row select { padding:7px 10px; border-radius:8px; border:1px solid #cbd5e1; font-size:0.85rem; outline: none; }
-button.export-btn { padding:7px 12px; border:none; border-radius:8px; background:var(--brand); color:white; cursor:pointer; font-size:0.85rem; font-weight: 600; }
+footer { text-align:center; padding:20px 0; font-size:0.8rem; color:#64748b; border-top:1px solid #e2e8f0; }
 
-footer { text-align:center; padding:20px 0; font-size:0.8rem; color:#64748b; border-top:1px solid #e2e8f0; margin-top: 20px; }
-
-@media print { .tab-container, .filter-row, .export-btn, #lastUpdate { display: none !important; } }
+@media print { .tab-container, .filter-group, button, #lastUpdate { display: none !important; } }
 </style>
 </head>
 <body>
 
 <div class="header-dash">
     <div>
-        <h1 style="margin:0; font-size: 1.5rem;">CONTROL DE REPUESTOS</h1>
-        <div id="lastUpdate" style="font-size: 0.75rem; color: #64748b;">Actualizando datos...</div>
+        <h1 style="margin:0; font-size: 1.6rem;">CONTROL DE REPUESTOS</h1>
+        <div id="lastUpdate" style="font-size: 0.75rem; color: #64748b;">Iniciando sistema...</div>
     </div>
     <nav class="tab-container">
         <button class="tab-btn active" onclick="openTab('dashboard')">📊 Dashboard</button>
-        <button class="tab-btn" onclick="openTab('historial')">📜 Historial</button>
+        <button class="tab-btn" onclick="openTab('historial')">📜 Historial Mensual</button>
     </nav>
 </div>
 
@@ -61,7 +67,7 @@ footer { text-align:center; padding:20px 0; font-size:0.8rem; color:#64748b; bor
     
     <div class="stats-row">
         <div class="card-stat">
-            <h3>Pendientes</h3>
+            <h3>Total Pendientes</h3>
             <div class="value" id="stat-pendientes">0</div>
         </div>
         <div class="card-stat" style="border-left-color: var(--warning);">
@@ -73,7 +79,7 @@ footer { text-align:center; padding:20px 0; font-size:0.8rem; color:#64748b; bor
             <div class="value" id="stat-critico">0</div>
         </div>
         <div class="card-stat" style="border-left-color: var(--success);">
-            <h3>Eficiencia Trazabilidad</h3>
+            <h3>Eficiencia de Retorno</h3>
             <div class="value" id="stat-eficiencia">0%</div>
             <div style="width: 100%; background: #e2e8f0; height: 6px; border-radius: 3px; margin-top: 8px;">
                 <div id="bar-eficiencia" style="width: 0%; background: var(--success); height: 100%; border-radius: 3px; transition: 1s ease;"></div>
@@ -83,13 +89,17 @@ footer { text-align:center; padding:20px 0; font-size:0.8rem; color:#64748b; bor
 
     <div class="table-container">
         <div class="table-header">
-            <h2>📋 Pendientes de Gestión/Entrega</h2>
-            <div class="filter-row" style="margin-bottom:0">
-                <input type="text" id="filterSitioPendientes" placeholder="Sitio...">
-                <input type="text" id="filterTecnicoPendientes" placeholder="Técnico...">
-                <button class="export-btn" id="exportPendientes">📸 Imagen</button>
-            </div>
+            <h2>📋 Salidas Pendientes de Entrega</h2>
+            <button class="btn-export" onclick="exportTableAsImage('tablaPendientes', 'Pendientes')">📸 Capturar Tabla</button>
         </div>
+        
+        <div class="filter-group">
+            <input type="text" id="fSitioP" placeholder="ID o Nombre de Sitio">
+            <input type="text" id="fTecP" placeholder="Nombre del Técnico">
+            <button class="btn-filter" onclick="renderPendientes()">🔍 Filtrar</button>
+            <button class="btn-clear" onclick="clearFilters('P')">🔄 Limpiar</button>
+        </div>
+
         <table id="tablaPendientes">
             <thead>
                 <tr>
@@ -107,20 +117,24 @@ footer { text-align:center; padding:20px 0; font-size:0.8rem; color:#64748b; bor
 
     <div class="table-container">
         <div class="table-header">
-            <h2>✅ Entregas de la Semana</h2>
-            <div class="filter-row" style="margin-bottom:0">
-                <input type="text" id="filterSitioEntregas" placeholder="Sitio...">
-                <input type="number" id="filterSemanaEntregas" placeholder="Semana">
-                <button class="export-btn" id="exportEntregas">📸 Imagen</button>
-            </div>
+            <h2>✅ Entregas Realizadas (Semana Actual)</h2>
+            <button class="btn-export" onclick="exportTableAsImage('tablaEntregados', 'Entregas_Semana')">📸 Capturar Tabla</button>
         </div>
+
+        <div class="filter-group">
+            <input type="text" id="fSitioE" placeholder="Sitio...">
+            <input type="number" id="fSemE" placeholder="N° de Semana">
+            <button class="btn-filter" onclick="renderEntregas()">🔍 Filtrar</button>
+            <button class="btn-clear" onclick="clearFilters('E')">🔄 Limpiar</button>
+        </div>
+
         <table id="tablaEntregados">
             <thead>
                 <tr>
                     <th>Fecha Entrega</th>
                     <th>ID Sitio</th>
                     <th>Sitio</th>
-                    <th>Nombre Equipo</th>
+                    <th>Equipo</th>
                     <th>Serie</th>
                     <th>Bodega</th>
                     <th>Técnico</th>
@@ -132,27 +146,31 @@ footer { text-align:center; padding:20px 0; font-size:0.8rem; color:#64748b; bor
 </div>
 
 <div id="tab-historial" class="tab-content" style="display:none;">
-    <div class="filter-row" style="background: white; padding: 15px; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); margin-bottom: 20px;">
-        <label style="font-weight:600; font-size:0.85rem">Filtrar por Mes:</label>
-        <input type="month" id="filterMesHistorial">
-        <button class="export-btn" onclick="renderHistorial()">🔍 Consultar</button>
-        <div style="margin-left: auto; display: flex; gap: 8px;">
-            <button class="export-btn" onclick="exportarHistorialExcel()" style="background: #166534;">📊 Excel</button>
-            <button class="export-btn" onclick="window.print()" style="background: #991b1b;">📄 PDF</button>
-        </div>
-    </div>
-
     <div class="table-container">
+        <div class="table-header">
+            <h2>📜 Historial General de Movimientos</h2>
+            <div style="display: flex; gap: 8px;">
+                <button onclick="exportarHistorialExcel()" style="background: #166534; color: white;">📊 Excel</button>
+                <button onclick="window.print()" style="background: #991b1b; color: white;">📄 PDF</button>
+            </div>
+        </div>
+
+        <div class="filter-group">
+            <label style="font-weight:600;">Seleccionar Mes:</label>
+            <input type="month" id="fMesH">
+            <button class="btn-filter" onclick="renderHistorial()">🔍 Ver Historial</button>
+        </div>
+
         <table id="tablaHistorial">
             <thead>
                 <tr>
                     <th>Fecha</th>
                     <th>ID Sitio</th>
-                    <th>Nombre Sitio</th>
+                    <th>Sitio</th>
                     <th>Equipo</th>
                     <th>Serie</th>
                     <th>Técnico</th>
-                    <th>Estado</th>
+                    <th>Estado Final</th>
                 </tr>
             </thead>
             <tbody></tbody>
@@ -161,159 +179,118 @@ footer { text-align:center; padding:20px 0; font-size:0.8rem; color:#64748b; bor
 </div>
 
 <footer>
-    Dashboard desarrollado por <strong>Operaciones Paracentrales</strong> | &copy; 2026
+    Dashboard de Trazabilidad | <strong>Operaciones Paracentrales</strong> | &copy; 2026
 </footer>
 
 <script>
 const URL_SALIDAS = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQBNrpLKc_GPFT6Ik9Yr4s1qo8zaOOqrDgTc_9DGeMd20rNTsEtLktTCoeDcRrts6kvgne86KZDfKQS/pub?gid=0&single=true&output=csv';
 const URL_ENTREGAS = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQBNrpLKc_GPFT6Ik9Yr4s1qo8zaOOqrDgTc_9DGeMd20rNTsEtLktTCoeDcRrts6kvgne86KZDfKQS/pub?gid=887165919&single=true&output=csv';
 
-let datosPendientes = [], datosEntregas = [], todasLasSalidas = [];
+let datosP = [], datosE = [], todasSalidas = [];
 
-async function cargarDashboard() {
+async function cargarDatos() {
     try {
-        const [respSalidas, respEntregas] = await Promise.all([fetch(URL_SALIDAS), fetch(URL_ENTREGAS)]);
-        const textoSalidas = await respSalidas.text();
-        const textoEntregas = await respEntregas.text();
+        const [rSal, rEnt] = await Promise.all([fetch(URL_SALIDAS), fetch(URL_ENTREGAS)]);
+        const tSal = await rSal.text();
+        const tEnt = await rEnt.text();
         
-        Papa.parse(textoSalidas, { header:false, complete:(results)=>{
-            todasLasSalidas = results.data;
-            procesarPendientes(results.data);
+        Papa.parse(tSal, { header:false, complete:(res)=>{
+            todasSalidas = res.data;
             const hoy = new Date();
-            document.getElementById('filterMesHistorial').value = hoy.toISOString().substring(0, 7);
+            const limite = new Date(); limite.setDate(hoy.getDate() - 90);
+            datosP = res.data.filter(f => parseFecha(f[0]) >= limite && f[9] === 'PENDIENTE');
+            document.getElementById('fMesH').value = hoy.toISOString().substring(0, 7);
+            renderPendientes();
+            actualizarKpis();
         }});
-        
-        procesarEntregados(textoEntregas);
-        document.getElementById('lastUpdate').innerText = "Última actualización: " + new Date().toLocaleString();
-    } catch(e){ console.error("Error cargando datos", e); }
+
+        Papa.parse(tEnt, { header:false, complete:(res)=>{
+            const hoy = new Date();
+            const lunes = new Date(hoy); lunes.setDate(hoy.getDate() - (hoy.getDay() || 7) + 1); lunes.setHours(0,0,0,0);
+            datosE = res.data.filter(f => parseFecha(f[0]) >= lunes);
+            renderEntregas();
+            actualizarKpis();
+        }});
+
+        document.getElementById('lastUpdate').innerText = "Sincronizado: " + new Date().toLocaleString();
+    } catch(e) { console.error(e); }
 }
 
-function openTab(tabName) {
-    document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
-    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-    document.getElementById('tab-' + tabName).style.display = 'block';
-    event.currentTarget.classList.add('active');
-    if(tabName === 'historial') renderHistorial();
-}
-
-function procesarPendientes(dataRows) {
-    const ahora = new Date();
-    const limite90 = new Date(ahora); 
-    limite90.setDate(ahora.getDate() - 90);
-    
-    datosPendientes = dataRows.filter(fila=>{
-        const fecha = parseFechaElSalvador(fila[0]);
-        return fecha >= limite90 && fila[9] === 'PENDIENTE';
-    });
-    
-    renderPendientes();
-    actualizarTrazabilidad();
-}
-
-function actualizarTrazabilidad() {
+function actualizarKpis() {
     const ahora = new Date();
     let alerta = 0, critico = 0;
-
-    datosPendientes.forEach(f => {
-        const fechaSalida = parseFechaElSalvador(f[0]);
-        const diff = Math.floor((ahora - fechaSalida) / 86400000);
-        if (diff > 15) critico++;
-        else if (diff > 7) alerta++;
+    datosP.forEach(f => {
+        const d = Math.floor((ahora - parseFecha(f[0])) / 86400000);
+        if(d > 15) critico++; else if(d > 7) alerta++;
     });
-
-    document.getElementById('stat-pendientes').innerText = datosPendientes.length;
+    document.getElementById('stat-pendientes').innerText = datosP.length;
     document.getElementById('stat-alerta').innerText = alerta;
     document.getElementById('stat-critico').innerText = critico;
-
-    // Simulación de eficiencia (Entregados vs Total)
-    const total = datosPendientes.length + datosEntregas.length;
-    const porc = total > 0 ? Math.round((datosEntregas.length / total) * 100) : 0;
-    document.getElementById('stat-eficiencia').innerText = porc + "%";
-    document.getElementById('bar-eficiencia').style.width = porc + "%";
+    const total = datosP.length + datosE.length;
+    const ef = total > 0 ? Math.round((datosE.length / total) * 100) : 0;
+    document.getElementById('stat-eficiencia').innerText = ef + "%";
+    document.getElementById('bar-eficiencia').style.width = ef + "%";
 }
 
 function renderPendientes() {
-    const tbody = document.querySelector('#tablaPendientes tbody');
-    const sitio = document.getElementById('filterSitioPendientes').value.toLowerCase();
-    const tecnico = document.getElementById('filterTecnicoPendientes').value.toLowerCase();
-    
-    tbody.innerHTML = datosPendientes.filter(f => 
-        f[3].toLowerCase().includes(sitio) && f[1].toLowerCase().includes(tecnico)
+    const s = document.getElementById('fSitioP').value.toLowerCase();
+    const t = document.getElementById('fTecP').value.toLowerCase();
+    document.querySelector('#tablaPendientes tbody').innerHTML = datosP.filter(f => 
+        (f[3].toLowerCase().includes(s) || f[4].toLowerCase().includes(s)) && f[1].toLowerCase().includes(t)
     ).map(f => `<tr><td>${f[0]}</td><td>${f[3]}</td><td>${f[4]}</td><td>${f[5]}</td><td>${f[7]}</td><td>${f[1]}</td></tr>`).join('');
 }
 
-function procesarEntregados(csv) {
-    Papa.parse(csv, { header:false, complete:(results)=>{
-        const hoy = new Date();
-        const inicioSemana = inicioSemanaISO(hoy);
-        datosEntregas = results.data.filter(f => parseFechaElSalvador(f[0]) >= inicioSemana);
-        renderEntregas();
-        actualizarTrazabilidad();
-    }});
-}
-
 function renderEntregas() {
-    const tbody = document.querySelector('#tablaEntregados tbody');
-    const sitio = document.getElementById('filterSitioEntregas').value.toLowerCase();
-    const semana = document.getElementById('filterSemanaEntregas').value;
-    
-    tbody.innerHTML = datosEntregas.filter(f => {
-        const numSem = numeroSemana(parseFechaElSalvador(f[0]));
-        return f[2].toLowerCase().includes(sitio) && (semana === "" || numSem == semana);
+    const s = document.getElementById('fSitioE').value.toLowerCase();
+    const sem = document.getElementById('fSemE').value;
+    document.querySelector('#tablaEntregados tbody').innerHTML = datosE.filter(f => {
+        return f[2].toLowerCase().includes(s) && (sem === "" || getSemana(parseFecha(f[0])) == sem);
     }).map(f => `<tr><td>${f[0]}</td><td>${f[3]}</td><td>${f[2]}</td><td>${f[6]}</td><td>${f[9]}</td><td>${f[8]}</td><td>${f[1]}</td></tr>`).join('');
 }
 
 function renderHistorial() {
-    const tbody = document.querySelector('#tablaHistorial tbody');
-    const mesSel = document.getElementById('filterMesHistorial').value;
-    const filtrados = todasLasSalidas.filter(f => {
-        const fecha = parseFechaElSalvador(f[0]);
-        return fecha && (fecha.getFullYear() + "-" + String(fecha.getMonth() + 1).padStart(2, '0')) === mesSel;
+    const mes = document.getElementById('fMesH').value;
+    document.querySelector('#tablaHistorial tbody').innerHTML = todasSalidas.filter(f => {
+        const d = parseFecha(f[0]);
+        return d && (d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, '0')) === mes;
+    }).map(f => `<tr><td>${f[0]}</td><td>${f[3]}</td><td>${f[4]}</td><td>${f[5]}</td><td>${f[7]}</td><td>${f[1]}</td><td><span class="badge ${f[9]==='PENDIENTE'?'badge-pending':'badge-success'}">${f[9]}</span></td></tr>`).join('');
+}
+
+function clearFilters(tipo) {
+    if(tipo === 'P') { document.getElementById('fSitioP').value = ""; document.getElementById('fTecP').value = ""; renderPendientes(); }
+    else { document.getElementById('fSitioE').value = ""; document.getElementById('fSemE').value = ""; renderEntregas(); }
+}
+
+function openTab(name) {
+    document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none');
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('tab-' + name).style.display = 'block';
+    event.currentTarget.classList.add('active');
+    if(name === 'historial') renderHistorial();
+}
+
+function parseFecha(str) { if(!str) return null; const p = str.split(/[/ :]/); return new Date(p[2], p[1]-1, p[0], p[3]||0, p[4]||0); }
+
+function getSemana(d) { const p = new Date(d.getFullYear(),0,1); return Math.ceil((((d-p)/86400000)+p.getDay()+1)/7); }
+
+function exportTableAsImage(id, n) {
+    html2canvas(document.getElementById(id).closest('.table-container'), { scale:2 }).then(canvas => {
+        const a = document.createElement('a'); a.href = canvas.toDataURL(); a.download = n + '.png'; a.click();
     });
-    tbody.innerHTML = filtrados.map(f => `<tr><td>${f[0]}</td><td>${f[3]}</td><td>${f[4]}</td><td>${f[5]}</td><td>${f[7]}</td><td>${f[1]}</td><td><span class="badge ${f[9] === 'PENDIENTE' ? 'badge-pending' : 'badge-success'}">${f[9]}</span></td></tr>`).join('');
 }
 
 function exportarHistorialExcel() {
-    let csv = "\uFEFFFecha;ID Sitio;Nombre Sitio;Equipo;Serie;Tecnico;Estado\n";
-    Array.from(document.querySelectorAll("#tablaHistorial tbody tr")).forEach(tr => {
+    let csv = "\uFEFFFecha;ID Sitio;Sitio;Equipo;Serie;Tecnico;Estado\n";
+    document.querySelectorAll("#tablaHistorial tbody tr").forEach(tr => {
         csv += Array.from(tr.querySelectorAll("td")).map(td => td.innerText).join(";") + "\n";
     });
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
-    link.download = `Historial_${document.getElementById('filterMesHistorial').value}.csv`;
-    link.click();
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
+    a.download = `Historial_${document.getElementById('fMesH').value}.csv`;
+    a.click();
 }
 
-// Auxiliares
-function parseFechaElSalvador(s) { 
-    if(!s) return null; 
-    const p = s.split(/[/ :]/); 
-    return new Date(p[2], p[1]-1, p[0], p[3]||0, p[4]||0); 
-}
-function inicioSemanaISO(d) { 
-    const l = new Date(d); 
-    l.setDate(d.getDate() - (d.getDay() || 7) + 1); 
-    l.setHours(0,0,0,0); 
-    return l; 
-}
-function numeroSemana(d) { 
-    const p = new Date(d.getFullYear(),0,1); 
-    return Math.ceil((((d-p)/86400000)+p.getDay()+1)/7); 
-}
-function exportTableAsImage(id, n) {
-    html2canvas(document.getElementById(id).closest('.table-container'), { scale:2 }).then(c => {
-        const a = document.createElement('a'); a.href = c.toDataURL(); a.download = n+'.png'; a.click();
-    });
-}
-
-document.getElementById('filterSitioPendientes').addEventListener('input', renderPendientes);
-document.getElementById('filterTecnicoPendientes').addEventListener('input', renderPendientes);
-document.getElementById('filterSitioEntregas').addEventListener('input', renderEntregas);
-document.getElementById('filterSemanaEntregas').addEventListener('input', renderEntregas);
-document.getElementById('exportPendientes').addEventListener('click', () => exportTableAsImage('tablaPendientes', 'Pendientes'));
-document.getElementById('exportEntregas').addEventListener('click', () => exportTableAsImage('tablaEntregados', 'Entregas'));
-
-window.onload = cargarDashboard;
+window.onload = cargarDatos;
 </script>
 </body>
 </html>
