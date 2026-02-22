@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Repuestos Go! - Pro v2026</title>
+    <title>Repuestos Go! - Network Ops 2026</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
     <style>
@@ -15,26 +15,24 @@
         .card { background: var(--card-bg); border-radius: 24px; padding: 25px; box-shadow: 0 10px 25px rgba(0,0,0,0.03); border: 1px solid rgba(255,255,255,0.8); margin-bottom: 20px; }
         label { display: block; margin-top: 15px; font-size: 0.75rem; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; }
         
-        /* Inputs y Autocompletado */
         input { width: 100%; padding: 14px; margin-top: 6px; border-radius: 16px; border: 1.5px solid #e2e8f0; background: #f8fafc; font-size: 1rem; outline: none; box-sizing: border-box; transition: 0.3s; }
         input:focus { border-color: var(--brand-light); background: #fff; }
         input.invalid { border-color: var(--error); background: #fff1f2; }
         .readonly { background: #f1f5f9; color: #94a3b8; border-style: none; cursor: not-allowed; }
         
         .suggestions { position: absolute; width: 100%; background: #fff; border-radius: 16px; box-shadow: 0 15px 35px rgba(0,0,0,0.1); z-index: 100; display: none; margin-top: 5px; border: 1px solid #e2e8f0; max-height: 180px; overflow-y: auto; }
-        .suggestion-item { padding: 15px; border-bottom: 1px solid #f1f5f9; font-size: 0.9rem; cursor: pointer; }
-        
-        /* Zona de Foto */
-        .photo-box { border: 2px dashed #cbd5e1; border-radius: 18px; padding: 30px 20px; text-align: center; background: #f8fafc; cursor: pointer; margin-top: 10px; transition: 0.3s; }
-        .photo-box:active { background: #f1f5f9; transform: scale(0.98); }
+        .suggestion-item { padding: 15px; border-bottom: 1px solid #f1f5f9; font-size: 0.85rem; cursor: pointer; line-height: 1.4; }
+        .suggestion-item strong { color: var(--brand); }
+
+        .photo-box { border: 2px dashed #cbd5e1; border-radius: 18px; padding: 25px; text-align: center; background: #f8fafc; cursor: pointer; margin-top: 10px; }
         #previewFoto { width: 100%; border-radius: 14px; display: none; margin-top: 10px; border: 1px solid #e2e8f0; }
         
-        /* Bodegas */
         .bodega-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 8px; }
         .btn-bodega { background: #f1f5f9; border: 2px solid transparent; padding: 12px 5px; border-radius: 14px; font-size: 0.65rem; font-weight: 600; color: #475569; cursor: pointer; }
         .btn-bodega.selected { background: #fff; border-color: var(--brand); color: var(--brand); box-shadow: 0 5px 15px rgba(79, 70, 229, 0.1); }
 
-        .btn-send { width: 100%; padding: 18px; border-radius: 18px; background: linear-gradient(135deg, var(--brand), var(--brand-light)); color: white; border: none; font-weight: 600; font-size: 1rem; margin-top: 30px; cursor: pointer; box-shadow: 0 10px 20px rgba(79, 70, 229, 0.2); }
+        .btn-send { width: 100%; padding: 18px; border-radius: 18px; background: linear-gradient(135deg, var(--brand), var(--brand-light)); color: white; border: none; font-weight: 600; font-size: 1rem; margin-top: 30px; cursor: pointer; }
+        .btn-send:disabled { background: #cbd5e1; cursor: not-allowed; }
         .hidden { display: none; }
     </style>
 </head>
@@ -47,17 +45,17 @@
 
 <div class="container">
     <div class="card" id="consentimiento" style="text-align: center;">
-        <div style="font-size: 3rem; margin-bottom: 10px;">🛡️</div>
-        <h2>Sistema de Trazabilidad</h2>
-        <p style="color: #64748b; font-size: 0.9rem;">Cargando bases de datos de técnicos y sitios...</p>
-        <button onclick="activarForm()" id="btnStart" disabled class="btn-send" style="background: #94a3b8;">Sincronizando...</button>
+        <div style="font-size: 3rem; margin-bottom: 10px;">📦</div>
+        <h2>Sincronizando Sistema</h2>
+        <p id="status-text" style="color: #64748b; font-size: 0.9rem;">Cargando base de repuestos...</p>
+        <button onclick="activarForm()" id="btnStart" disabled class="btn-send" style="background: #94a3b8;">Cargando...</button>
     </div>
 
     <form id="mainForm" class="hidden">
         <div class="card">
             <div style="position:relative">
                 <label>👤 Técnico Responsable</label>
-                <input type="text" id="tecnico" placeholder="Tu nombre..." autocomplete="off" required>
+                <input type="text" id="tecnico" placeholder="Escribe tu nombre..." autocomplete="off" required>
                 <div id="tecSug" class="suggestions"></div>
             </div>
 
@@ -78,25 +76,26 @@
 
             <div style="position:relative">
                 <label>📦 Repuesto / Equipo</label>
-                <input type="text" id="eqSearch" placeholder="Buscar repuesto..." autocomplete="off" required>
+                <input type="text" id="eqSearch" placeholder="Escribe descripción..." autocomplete="off" required>
                 <div id="eqSug" class="suggestions"></div>
             </div>
-            <input type="text" id="marca" class="readonly" placeholder="Marca" readonly required>
+            <input type="text" id="marca" class="readonly" placeholder="Marca detectada" readonly required>
 
             <label>🔢 Número de Serie</label>
-            <input type="text" id="serie" placeholder="Ingrese S/N" required>
+            <input type="text" id="serie" placeholder="S/N de la pieza" required>
 
-            <label>📷 Evidencia (Cámara o Galería)</label>
+            <label>📷 Evidencia Fotográfica</label>
             <div class="photo-box" onclick="document.getElementById('foto').click()">
                 <div id="instrucciones-foto">
-                    <div style="font-size: 2rem;">📸</div>
-                    <p style="font-size: 0.8rem; color: #64748b; margin-top: 5px;">Capturar o adjuntar evidencia</p>
+                    <div style="font-size: 2rem;">📷</div>
+                    <p style="font-size: 0.8rem; color: #64748b; margin-top: 5px;">Toca para capturar o adjuntar</p>
+                    <small style="color: #94a3b8;">(Se aplicará marca de agua y compresión HD)</small>
                 </div>
                 <img id="previewFoto">
             </div>
             <input type="file" id="foto" accept="image/*" class="hidden" required>
 
-            <button type="submit" id="btnEnviar" class="btn-send">FINALIZAR Y ENVIAR</button>
+            <button type="submit" id="btnEnviar" class="btn-send">FINALIZAR REGISTRO</button>
         </div>
     </form>
 </div>
@@ -105,6 +104,7 @@
     const CONFIG = {
         URL_SITIOS: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTE_5CZtD7qHGW5cWHGAjn7ALTphVm5h88lco9cySYoAe2VBW4fq8DQ7-SZY6cd_FHtNQJS3MpE88hs/pub?gid=1955381502&single=true&output=csv',
         URL_TECNICOS: 'tecnicos.csv',
+        URL_REPUESTOS: 'inventario_repuestos.csv',
         URL_SCRIPT: 'https://script.google.com/macros/s/AKfycbz_Wv6DikTWQuqnAd9gMrjfEoFOFa9E9YdUuY5cSkr4ICqBKOo5WPvmJrhYF5_dv5fa/exec',
         URL_FORM: 'https://docs.google.com/forms/d/e/1FAIpQLSdeek133oAtejD-fC1LPvFPDHiej3l0tokNW9N31LdHFpS06g/viewform'
     };
@@ -112,72 +112,49 @@
     let data_tecnicos = [], data_sitios = [], data_equipos = [];
     let validacion = { tecnico: false, sitio: false, equipo: false };
 
-    // Reloj
     setInterval(() => { document.getElementById('reloj').innerText = new Date().toLocaleTimeString("es-SV", {hour12:false}); }, 1000);
 
     window.onload = async () => {
+        // 1. Cargar Técnicos
         try {
-            // Cargar Técnicos
-            const resTec = await fetch(CONFIG.URL_TECNICOS);
-            const txtTec = await resTec.text();
-            data_tecnicos = txtTec.split(/\r?\n/).filter(l => l.trim()).map(n => ({nombre: n.trim()}));
-
-            // Cargar Sitios
-            const resSit = await fetch(CONFIG.URL_SITIOS);
-            const txtSit = await resSit.text();
-            data_sitios = parseCSV(txtSit);
-
-            // Cargar Repuestos con autodetección de delimitador
-Papa.parse("inventario_repuestos.csv", {
-    download: true,
-    header: true,
-    skipEmptyLines: true,
-    // Eliminamos el delimitador fijo para que PapaParse lo detecte solo
-    complete: (res) => {
-        if (res.data && res.data.length > 0) {
-            data_equipos = res.data;
-            console.log("✅ Equipos cargados:", data_equipos.length);
-            
-            // Verificación de columnas (Importante para que coincidan con tu CSV)
-            const primeraFila = data_equipos[0];
-            console.log("Columnas detectadas:", Object.keys(primeraFila));
-
-            // Configurar autocompletado con nombres de columna exactos
-            setupStrict(
-                document.getElementById('eqSearch'), 
-                document.getElementById('eqSug'), 
-                data_equipos, 
-                'DESCRIPCION DE EQUIPO', // Asegúrate que en tu CSV diga exactamente así
-                'marca', 
-                'equipo', 
-                'MARCA' // Asegúrate que en tu CSV diga exactamente así
-            );
-
-            verificarCargaBoton();
-        } else {
-            console.error("❌ El archivo de repuestos está vacío o mal formado");
-        }
-    },
-    error: (err) => {
-        console.error("❌ Error al cargar inventario_repuestos.csv:", err);
-    }
-});
-
-function verificarCargaBoton() {
-    // Solo activamos si hay datos en las listas críticas
-    if (data_equipos.length > 0 && data_sitios.length > 0) {
-        const b = document.getElementById('btnStart');
-        b.disabled = false;
-        b.style.background = "var(--brand)";
-        b.innerText = "¡EMPEZAR!";
-    }
-}            });
-
+            const resT = await fetch(CONFIG.URL_TECNICOS);
+            const txtT = await resT.text();
+            data_tecnicos = txtT.split(/\r?\n/).filter(l => l.trim()).map(n => ({nombre: n.trim()}));
             setupStrict(document.getElementById('tecnico'), document.getElementById('tecSug'), data_tecnicos, 'nombre', null, 'tecnico');
-            setupStrict(document.getElementById('siteSearch'), document.getElementById('siteSug'), data_sitios, 'NOMBRE DE SITIO', 'idSitio', 'sitio', 'SITEID');
-            setupStrict(document.getElementById('eqSearch'), document.getElementById('eqSug'), data_equipos, 'DESCRIPCION DE EQUIPO', 'marca', 'equipo', 'MARCA');
+        } catch(e) { console.error("Error técnicos"); }
 
-        } catch (e) { alert("Error cargando bases de datos"); }
+        // 2. Cargar Sitios
+        try {
+            const resS = await fetch(CONFIG.URL_SITIOS);
+            const txtS = await resS.text();
+            data_sitios = parseCSV(txtS);
+            setupStrict(document.getElementById('siteSearch'), document.getElementById('siteSug'), data_sitios, 'NOMBRE DE SITIO', 'idSitio', 'sitio', 'SITEID');
+        } catch(e) { console.error("Error sitios"); }
+
+        // 3. Cargar Repuestos (Con detección de errores)
+        Papa.parse(CONFIG.URL_REPUESTOS, {
+            download: true,
+            header: true,
+            skipEmptyLines: true,
+            complete: (res) => {
+                data_equipos = res.data;
+                console.log("Datos equipos:", data_equipos[0]); // Debug
+                
+                // Mapeo flexible por si las columnas cambian ligeramente
+                setupStrict(
+                    document.getElementById('eqSearch'), 
+                    document.getElementById('eqSug'), 
+                    data_equipos, 
+                    'DESCRIPCION DE EQUIPO', 
+                    'marca', 
+                    'equipo', 
+                    'MARCA'
+                );
+                
+                checkReady();
+            },
+            error: () => { document.getElementById('status-text').innerText = "⚠️ Error cargando inventario_repuestos.csv"; }
+        });
     };
 
     function parseCSV(d) {
@@ -196,9 +173,15 @@ function verificarCargaBoton() {
             input.classList.add('invalid');
             const v = input.value.toLowerCase().trim();
             box.innerHTML = '';
-            if (!v) { box.style.display = 'none'; return; }
-            const m = items.filter(i => i[key].toLowerCase().includes(v)).slice(0, 6);
-            m.forEach(item => {
+            
+            if (v.length < 1) { box.style.display = 'none'; return; }
+
+            const matches = items.filter(i => {
+                const text = (i[key] || "").toString().toLowerCase();
+                return text.includes(v);
+            }).slice(0, 8);
+
+            matches.forEach(item => {
                 const d = document.createElement('div');
                 d.className = 'suggestion-item';
                 d.innerHTML = `<strong>${item[key]}</strong>${item[extraKey] ? '<br><small>'+item[extraKey]+'</small>' : ''}`;
@@ -211,12 +194,29 @@ function verificarCargaBoton() {
                 };
                 box.appendChild(d);
             });
-            box.style.display = m.length ? 'block' : 'none';
+            box.style.display = matches.length ? 'block' : 'none';
         });
-        input.addEventListener('blur', () => setTimeout(() => {
-            if (!validacion[valKey]) { input.value = ''; if(linkedId) document.getElementById(linkedId).value = ''; input.classList.remove('invalid'); }
-            box.style.display = 'none';
-        }, 250));
+
+        input.addEventListener('blur', () => {
+            setTimeout(() => {
+                if (!validacion[valKey]) {
+                    input.value = '';
+                    if (linkedId) document.getElementById(linkedId).value = '';
+                    input.classList.remove('invalid');
+                }
+                box.style.display = 'none';
+            }, 300);
+        });
+    }
+
+    function checkReady() {
+        if(data_equipos.length > 0) {
+            const b = document.getElementById('btnStart');
+            b.disabled = false;
+            b.style.background = "var(--brand)";
+            b.innerText = "¡EMPEZAR REGISTRO!";
+            document.getElementById('status-text').innerText = "Sistemas Sincronizados";
+        }
     }
 
     function setBodega(btn, v) {
@@ -230,14 +230,15 @@ function verificarCargaBoton() {
         document.getElementById('mainForm').classList.remove('hidden');
     }
 
-    // --- PROCESAMIENTO RECOMENDADO DE IMAGEN ---
+    // --- PROCESAMIENTO HD + MARCA DE AGUA ---
     const fotoIn = document.getElementById('foto');
     fotoIn.addEventListener('change', function() {
         if (this.files && this.files[0]) {
             if (!validacion.tecnico || !validacion.sitio) {
-                alert("Selecciona Técnico y Sitio antes de la foto");
+                alert("⚠️ Selecciona Técnico y Sitio antes de la foto.");
                 this.value = ''; return;
             }
+            
             const reader = new FileReader();
             reader.onload = (e) => {
                 const img = new Image();
@@ -245,7 +246,7 @@ function verificarCargaBoton() {
                     const canvas = document.createElement('canvas');
                     const ctx = canvas.getContext('2d');
                     
-                    // 1. Redimensionamiento a 1600px (Calidad recomendada)
+                    // Configuración HD Recomendada (1600px)
                     const MAX = 1600;
                     let w = img.width, h = img.height;
                     if (w > h && w > MAX) { h *= MAX / w; w = MAX; }
@@ -256,15 +257,15 @@ function verificarCargaBoton() {
                     ctx.imageSmoothingQuality = 'high';
                     ctx.drawImage(img, 0, 0, w, h);
 
-                    // 2. Marca de Agua
-                    const txt = `${new Date().toLocaleString()} | ${document.getElementById('tecnico').value} | SITIO: ${document.getElementById('idSitio').value}`;
+                    // Marca de Agua Profesional
+                    const txt = `${new Date().toLocaleString()} | Téc: ${document.getElementById('tecnico').value} | Sitio: ${document.getElementById('idSitio').value}`;
                     ctx.fillStyle = "rgba(0,0,0,0.6)";
-                    ctx.fillRect(0, h - 60, w, 60);
+                    ctx.fillRect(0, h - 70, w, 70);
                     ctx.fillStyle = "white";
-                    ctx.font = "bold 22px Poppins, Arial";
-                    ctx.fillText(txt, 25, h - 25);
+                    ctx.font = "bold 24px Poppins, Arial";
+                    ctx.fillText(txt, 30, h - 30);
 
-                    // 3. Compresión a 0.8 (Punto dulce de calidad/peso)
+                    // Compresión Calidad 0.8
                     const data = canvas.toDataURL("image/jpeg", 0.8);
                     document.getElementById('previewFoto').src = data;
                     document.getElementById('previewFoto').style.display = 'block';
@@ -279,8 +280,12 @@ function verificarCargaBoton() {
 
     document.getElementById('mainForm').onsubmit = async (e) => {
         e.preventDefault();
+        if(!validacion.tecnico || !validacion.sitio || !validacion.equipo) {
+            alert("⚠️ Por favor selecciona elementos válidos de las listas."); return;
+        }
+
         const b = document.getElementById('btnEnviar');
-        const params = {
+        const p = {
             tecnico: document.getElementById('tecnico').value,
             bodega: document.getElementById('bodega').value,
             idSitio: document.getElementById('idSitio').value,
@@ -293,16 +298,16 @@ function verificarCargaBoton() {
             mimeType: "image/jpeg"
         };
 
-        if(!params.bodega || !params.fileData) { alert("Falta bodega o foto"); return; }
+        if(!p.bodega || !p.fileData) { alert("⚠️ Falta bodega o fotografía."); return; }
         b.disabled = true; b.innerText = "Registrando...";
 
         try {
-            const res = await fetch(CONFIG.URL_SCRIPT, { method: 'POST', body: new URLSearchParams(params) });
+            const res = await fetch(CONFIG.URL_SCRIPT, { method: 'POST', body: new URLSearchParams(p) });
             const json = await res.json();
             if(json.result === "success") {
-                window.location.href = `${CONFIG.URL_FORM}?entry.1637897291=CELECT&entry.795516044=${encodeURIComponent(params.bodega)}&entry.1265319450=${params.idSitio}&entry.1509520939=${encodeURIComponent(params.nombreSitio)}&entry.554570123=${encodeURIComponent(params.marca)}&entry.1914147166=${encodeURIComponent(params.descripcion)}&entry.1497572830=${encodeURIComponent(params.serie)}&entry.733439703=${encodeURIComponent(json.fileUrl)}`;
+                window.location.href = `${CONFIG.URL_FORM}?entry.1637897291=CELECT&entry.795516044=${encodeURIComponent(p.bodega)}&entry.1265319450=${p.idSitio}&entry.1509520939=${encodeURIComponent(p.nombreSitio)}&entry.554570123=${encodeURIComponent(p.marca)}&entry.1914147166=${encodeURIComponent(p.descripcion)}&entry.1497572830=${encodeURIComponent(p.serie)}&entry.733439703=${encodeURIComponent(json.fileUrl)}`;
             }
-        } catch (err) { alert("Error de red"); b.disabled = false; b.innerText = "REINTENTAR"; }
+        } catch (err) { alert("Error de conexión"); b.disabled = false; b.innerText = "REINTENTAR"; }
     };
 </script>
 </body>
