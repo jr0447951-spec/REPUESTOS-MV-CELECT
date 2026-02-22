@@ -3,20 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Network Ops - Control de Gestión 2026</title>
+    <title>Dashboard Control Gestión - Network Ops 2026</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
     <style>
         :root { 
-            --brand: #4f46e5; --brand-light: #818cf8; --bg: #f8fafc; 
-            --text: #1e293b; --danger: #ef4444; --success: #10b981; --warning: #f59e0b; 
+            --brand: #4f46e5; --bg: #f8fafc; --text: #1e293b; 
+            --danger: #ef4444; --success: #10b981; --warning: #f59e0b; 
         }
         
         body { font-family: 'Poppins', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; }
 
+        /* Layout & Cards */
         .header-dash { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
         .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 30px; }
-        
         .card-stat { 
             background: white; padding: 20px; border-radius: 20px; 
             box-shadow: 0 4px 15px rgba(0,0,0,0.05); border-left: 6px solid var(--brand); 
@@ -24,47 +24,51 @@
         .card-stat h3 { margin: 0; font-size: 0.7rem; color: #64748b; text-transform: uppercase; letter-spacing: 1px; }
         .card-stat .value { font-size: 1.8rem; font-weight: 600; color: var(--text); margin: 5px 0; }
 
-        .badge-count {
-            background: var(--brand); color: white; padding: 2px 10px;
-            border-radius: 10px; font-size: 0.8rem; vertical-align: middle; margin-left: 8px;
-        }
-
+        /* UI Elements */
+        .badge-count { background: var(--brand); color: white; padding: 2px 10px; border-radius: 10px; font-size: 0.8rem; vertical-align: middle; margin-left: 8px; }
         .tab-container { display: flex; gap: 8px; background: #e2e8f0; padding: 6px; border-radius: 14px; }
-        .tab-btn { 
-            padding: 10px 20px; border: none; border-radius: 10px; 
-            cursor: pointer; background: transparent; font-weight: 600; font-family: inherit; color: #64748b; 
-        }
+        .tab-btn { padding: 10px 20px; border: none; border-radius: 10px; cursor: pointer; background: transparent; font-weight: 600; color: #64748b; transition: 0.3s; }
         .tab-btn.active { background: white; color: var(--brand); box-shadow: 0 4px 10px rgba(0,0,0,0.08); }
 
-        .table-container { 
-            background: white; border-radius: 24px; padding: 25px; 
-            box-shadow: 0 10px 25px rgba(0,0,0,0.03); margin-bottom: 30px; overflow-x: auto; 
-        }
+        /* Tables */
+        .table-container { background: white; border-radius: 24px; padding: 25px; box-shadow: 0 10px 25px rgba(0,0,0,0.03); margin-bottom: 30px; overflow-x: auto; }
         .table-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid #f1f5f9; }
         .table-header h2 { font-size: 1.1rem; margin: 0; color: var(--brand); }
-
+        
         table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
         th { text-align: left; padding: 15px; background: #f8fafc; color: #64748b; font-weight: 600; text-transform: uppercase; font-size: 0.7rem; }
         td { padding: 15px; border-bottom: 1px solid #f1f5f9; }
 
-        .filter-row { display:flex; gap:12px; margin-bottom:15px; flex-wrap:wrap; align-items: center; }
-        .filter-row input { padding:8px 12px; border-radius:12px; border:1.5px solid #e2e8f0; font-size:0.85rem; outline: none; }
+        /* Indicators */
+        .indicator { font-size: 1.2rem; text-align: center; }
+        .days-tag { padding: 2px 8px; border-radius: 6px; font-weight: 600; font-size: 0.75rem; }
+        .text-danger { color: var(--danger); background: #fee2e2; }
+        .text-warning { color: var(--warning); background: #fef3c7; }
+        .text-success { color: var(--success); background: #dcfce7; }
+        .badge-status { padding: 4px 8px; border-radius: 6px; font-size: 0.7rem; font-weight: 600; }
 
-        .export-btn { 
-            padding:8px 15px; border:none; border-radius:12px; background: #334155; 
-            color:white; cursor:pointer; font-size:0.8rem; font-weight: 600; transition: 0.3s;
-        }
+        /* Buttons & Filters */
+        .filter-row { display:flex; gap:12px; flex-wrap:wrap; align-items: center; }
+        .filter-row input { padding:8px 12px; border-radius:12px; border:1.5px solid #e2e8f0; font-size:0.85rem; outline: none; }
+        .export-btn { padding:8px 15px; border:none; border-radius:12px; background: #334155; color:white; cursor:pointer; font-size:0.8rem; font-weight: 600; transition: 0.3s; }
         .export-btn:hover { background: var(--brand); }
 
-        footer { text-align:center; padding:30px 0; font-size:0.8rem; color:#64748b; border-top:1px solid #e2e8f0; margin-top: 40px; }
+        @media print {
+            .header-dash, .stats-row, .tab-container, .filter-row, footer, .export-btn { display: none !important; }
+            .tab-content { display: block !important; }
+            #tab-dashboard { display: none !important; }
+            .table-container { box-shadow: none; border: 1px solid #eee; }
+            table { font-size: 7pt; }
+            #tab-historial::before { content: "REPORTE DE TRAZABILIDAD Y GESTIÓN - HISTORIAL"; display: block; text-align: center; font-weight: bold; font-size: 14pt; margin-bottom: 20px; }
+        }
     </style>
 </head>
 <body>
 
 <div class="header-dash">
     <div>
-        <h1 style="margin:0; font-size: 1.6rem;">DASHBOARD <span style="color:var(--brand)">CONTROL GESTIÓN</span></h1>
-        <div id="lastUpdate" style="font-size: 0.75rem; color: #94a3b8;">Sincronizando...</div>
+        <h1 style="margin:0; font-size: 1.6rem;">CONTROL <span style="color:var(--brand)">GESTIÓN</span></h1>
+        <div id="lastUpdate" style="font-size: 0.75rem; color: #94a3b8;">Cargando...</div>
     </div>
     <nav class="tab-container">
         <button class="tab-btn active" onclick="openTab('dashboard')">📊 Dashboard</button>
@@ -75,39 +79,23 @@
 <div id="tab-dashboard" class="tab-content">
     <div class="stats-row">
         <div class="card-stat"><h3>Pendientes</h3><div class="value" id="stat-pendientes">0</div></div>
-        <div class="card-stat" style="border-left-color: var(--warning);"><h3>Alertas</h3><div class="value" id="stat-alerta">0</div></div>
-        <div class="card-stat" style="border-left-color: var(--danger);"><h3>Críticos</h3><div class="value" id="stat-critico">0</div></div>
+        <div class="card-stat" style="border-left-color: var(--warning);"><h3>Alerta (>7d)</h3><div class="value" id="stat-alerta">0</div></div>
+        <div class="card-stat" style="border-left-color: var(--danger);"><h3>Crítico (>14d)</h3><div class="value" id="stat-critico">0</div></div>
         <div class="card-stat" style="border-left-color: var(--success);"><h3>Eficiencia</h3><div class="value" id="stat-eficiencia">0%</div></div>
     </div>
 
     <div class="table-container">
         <div class="table-header">
             <h2>📋 Salidas Pendientes <span id="count-pendientes" class="badge-count">0</span></h2>
-            <div class="filter-row" style="margin-bottom:0">
-                <input type="text" id="filterSitioPendientes" placeholder="Sitio...">
-                <input type="text" id="filterTecnicoPendientes" placeholder="Técnico...">
-                <button class="export-btn" onclick="exportTableToCSV('tablaPendientes', 'Pendientes_Ops')">📊 Exportar CSV</button>
+            <div class="filter-row">
+                <input type="text" id="fSitioP" placeholder="Sitio...">
+                <input type="text" id="fTecP" placeholder="Técnico...">
+                <button class="export-btn" onclick="exportCSV('tablaPendientes', 'Pendientes')">📊 CSV</button>
             </div>
         </div>
         <table id="tablaPendientes">
             <thead>
-                <tr><th>Salida</th><th>ID Sitio</th><th>Nombre Sitio</th><th>Equipo</th><th>Serie</th><th>Técnico</th></tr>
-            </thead>
-            <tbody></tbody>
-        </table>
-    </div>
-
-    <div class="table-container">
-        <div class="table-header">
-            <h2>✅ Entregas Semana <span id="count-entregas" class="badge-count" style="background:var(--success)">0</span></h2>
-            <div class="filter-row" style="margin-bottom:0">
-                <input type="text" id="filterSitioEntregas" placeholder="Filtrar Sitio...">
-                <button class="export-btn" onclick="exportTableToCSV('tablaEntregados', 'Entregas_Semana')">📊 Exportar CSV</button>
-            </div>
-        </div>
-        <table id="tablaEntregados">
-            <thead>
-                <tr><th>Entrega</th><th>ID Sitio</th><th>Nombre Sitio</th><th>Equipo</th><th>Serie</th><th>Bodega</th><th>Técnico</th></tr>
+                <tr><th>Status</th><th>Antigüedad</th><th>Fecha</th><th>Sitio</th><th>Equipo</th><th>Serie</th><th>Técnico</th></tr>
             </thead>
             <tbody></tbody>
         </table>
@@ -115,64 +103,63 @@
 </div>
 
 <div id="tab-historial" class="tab-content" style="display:none;">
-    <div class="filter-row" style="background:white; padding:20px; border-radius:20px; margin-bottom:20px;">
-        <input type="month" id="filterMesHistorial">
+    <div class="filter-row" style="background:white; padding:20px; border-radius:20px; margin-bottom:20px; box-shadow: 0 4px 10px rgba(0,0,0,0.05)">
+        <input type="month" id="filterMes">
         <button class="export-btn" onclick="renderHistorial()">🔍 Consultar</button>
+        <div style="margin-left:auto; display:flex; gap:10px">
+            <button class="export-btn" onclick="exportCSV('tablaHistorial', 'Historial')" style="background:#166534">📊 Excel</button>
+            <button class="export-btn" onclick="window.print()" style="background:#b91c1c">📄 PDF</button>
+        </div>
     </div>
     <div class="table-container">
         <div class="table-header"><h2>📜 Historial Mensual <span id="count-historial" class="badge-count">0</span></h2></div>
         <table id="tablaHistorial">
             <thead>
-                <tr><th>Fecha</th><th>ID Sitio</th><th>Nombre Sitio</th><th>Equipo</th><th>Serie</th><th>Técnico</th><th>Estado</th></tr>
+                <tr><th>Fecha</th><th>ID Sitio</th><th>Equipo</th><th>Serie</th><th>Técnico</th><th>Estado</th><th>Comentario</th></tr>
             </thead>
             <tbody></tbody>
         </table>
     </div>
 </div>
 
-<footer><strong>OPERACIONES PARACENTRALES</strong> | &copy; 2026</footer>
+<footer><strong>NETWORK OPERATIONS</strong> | 2026</footer>
 
 <script>
-const URL_SALIDAS = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQBNrpLKc_GPFT6Ik9Yr4s1qo8zaOOqrDgTc_9DGeMd20rNTsEtLktTCoeDcRrts6kvgne86KZDfKQS/pub?gid=0&single=true&output=csv';
-const URL_ENTREGAS = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQBNrpLKc_GPFT6Ik9Yr4s1qo8zaOOqrDgTc_9DGeMd20rNTsEtLktTCoeDcRrts6kvgne86KZDfKQS/pub?gid=887165919&single=true&output=csv';
+const URL_S = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQBNrpLKc_GPFT6Ik9Yr4s1qo8zaOOqrDgTc_9DGeMd20rNTsEtLktTCoeDcRrts6kvgne86KZDfKQS/pub?gid=0&single=true&output=csv';
+const URL_E = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQBNrpLKc_GPFT6Ik9Yr4s1qo8zaOOqrDgTc_9DGeMd20rNTsEtLktTCoeDcRrts6kvgne86KZDfKQS/pub?gid=887165919&single=true&output=csv';
 
 let rawData = { pendientes: [], entregas: [], historial: [] };
 
-async function cargarDashboard() {
-    try {
-        const [resS, resE] = await Promise.all([fetch(URL_SALIDAS), fetch(URL_ENTREGAS)]);
-        const textS = await resS.text();
-        const textE = await resE.text();
-        
-        Papa.parse(textS, { header:false, skipEmptyLines: true, complete: (res) => {
-            rawData.historial = res.data;
-            const hoy = new Date();
-            const limite = new Date(); limite.setDate(hoy.getDate() - 90);
-            rawData.pendientes = res.data.filter(f => parseFechaSV(f[0]) >= limite && f[9] === 'PENDIENTE');
-            document.getElementById('filterMesHistorial').value = hoy.toISOString().substring(0, 7);
-            renderPendientes();
-        }});
-        
-        Papa.parse(textE, { header:false, skipEmptyLines: true, complete: (res) => {
-            const lunes = getLunes();
-            rawData.entregas = res.data.filter(f => parseFechaSV(f[0]) >= lunes);
-            renderEntregas();
-            actualizarKpis();
-        }});
-        document.getElementById('lastUpdate').innerText = "Actualizado: " + new Date().toLocaleTimeString();
-    } catch(e) { console.error(e); }
+async function init() {
+    const [resS, resE] = await Promise.all([fetch(URL_S), fetch(URL_E)]);
+    const sTxt = await resS.text();
+    const eTxt = await resE.text();
+    
+    Papa.parse(sTxt, { complete: (r) => {
+        rawData.historial = r.data;
+        rawData.pendientes = r.data.filter(f => f[9] === 'PENDIENTE');
+        document.getElementById('filterMes').value = new Date().toISOString().substring(0, 7);
+        renderPendientes();
+    }});
+    
+    Papa.parse(eTxt, { complete: (r) => {
+        const lun = getLunes();
+        rawData.entregas = r.data.filter(f => parseFecha(f[0]) >= lun);
+        actualizarKpis();
+    }});
+    document.getElementById('lastUpdate').innerText = "Sincronizado: " + new Date().toLocaleTimeString();
 }
 
-function parseFechaSV(s) { 
+function parseFecha(s) { 
     if(!s) return null; 
     const p = s.split(/[/ :]/); 
-    return new Date(p[2], p[1]-1, p[0], p[3]||0, p[4]||0); 
+    return new Date(p[2], p[1]-1, p[0]); 
 }
 
 function getLunes() {
     const d = new Date(); d.setHours(0,0,0,0);
-    const day = d.getDay(), diff = d.getDate() - day + (day == 0 ? -6 : 1);
-    return new Date(d.setDate(diff));
+    const day = d.getDay();
+    return new Date(d.setDate(d.getDate() - day + (day == 0 ? -6 : 1)));
 }
 
 function openTab(name) {
@@ -180,86 +167,89 @@ function openTab(name) {
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
     document.getElementById('tab-' + name).style.display = 'block';
     event.currentTarget.classList.add('active');
+    if(name === 'historial') renderHistorial();
 }
 
 function renderPendientes() {
     const tbody = document.querySelector('#tablaPendientes tbody');
-    const s = document.getElementById('filterSitioPendientes').value.toLowerCase();
-    const t = document.getElementById('filterTecnicoPendientes').value.toLowerCase();
-    const filt = rawData.pendientes.filter(f => (f[3].toLowerCase().includes(s) || f[4].toLowerCase().includes(s)) && f[1].toLowerCase().includes(t));
-    document.getElementById('count-pendientes').innerText = filt.length;
-    tbody.innerHTML = filt.map(f => `<tr><td>${f[0]}</td><td><strong>${f[3]}</strong></td><td>${f[4]}</td><td>${f[5]}</td><td><code>${f[7]}</code></td><td>${f[1]}</td></tr>`).join('');
-}
+    const s = document.getElementById('fSitioP').value.toLowerCase();
+    const t = document.getElementById('fTecP').value.toLowerCase();
+    const ahora = new Date();
 
-function renderEntregas() {
-    const tbody = document.querySelector('#tablaEntregados tbody');
-    const s = document.getElementById('filterSitioEntregas').value.toLowerCase();
-    const filt = rawData.entregas.filter(f => f[3].toLowerCase().includes(s) || f[2].toLowerCase().includes(s));
-    document.getElementById('count-entregas').innerText = filt.length;
-    tbody.innerHTML = filt.map(f => `<tr><td>${f[0]}</td><td><strong>${f[3]}</strong></td><td>${f[2]}</td><td>${f[6]}</td><td><code>${f[9]}</code></td><td>${f[8]}</td><td>${f[1]}</td></tr>`).join('');
+    let filt = rawData.pendientes.filter(f => (f[3].toLowerCase().includes(s) || f[4].toLowerCase().includes(s)) && f[1].toLowerCase().includes(t));
+    
+    // ORDENAR POR ANTIGÜEDAD (Los más viejos primero)
+    filt.sort((a, b) => parseFecha(a[0]) - parseFecha(b[0]));
+
+    document.getElementById('count-pendientes').innerText = filt.length;
+
+    tbody.innerHTML = filt.map(f => {
+        const dias = Math.floor((ahora - parseFecha(f[0])) / 86400000);
+        let mark = "🟢", cls = "text-success";
+        if(dias > 14) { mark="🔴"; cls="text-danger"; } else if(dias > 7) { mark="🟡"; cls="text-warning"; }
+        
+        return `<tr>
+            <td class="indicator">${mark}</td>
+            <td><span class="days-tag ${cls}">${dias} días</span></td>
+            <td>${f[0]}</td>
+            <td><strong>${f[3]}</strong></td>
+            <td>${f[5]}</td>
+            <td><code>${f[7]}</code></td>
+            <td>${f[1]}</td>
+        </tr>`;
+    }).join('');
 }
 
 function renderHistorial() {
     const tbody = document.querySelector('#tablaHistorial tbody');
-    const mes = document.getElementById('filterMesHistorial').value;
+    const mes = document.getElementById('filterMes').value;
     const filt = rawData.historial.filter(f => {
-        const d = parseFechaSV(f[0]);
+        const d = parseFecha(f[0]);
         return d && (d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, '0')) === mes;
     });
     document.getElementById('count-historial').innerText = filt.length;
-    tbody.innerHTML = filt.map(f => `<tr><td>${f[0]}</td><td>${f[3]}</td><td>${f[4]}</td><td>${f[5]}</td><td>${f[7]}</td><td>${f[1]}</td><td>${f[9]}</td></tr>`).join('');
+    tbody.innerHTML = filt.map(f => `<tr><td>${f[0]}</td><td>${f[3]}</td><td>${f[5]}</td><td>${f[7]}</td><td>${f[1]}</td><td><span class="badge-status ${f[9]==='PENDIENTE'?'text-danger':'text-success'}">${f[9]}</span></td><td style="font-size:0.7rem">${f[10]||""}</td></tr>`).join('');
 }
 
 function actualizarKpis() {
     const ahora = new Date();
-    let alerta = 0, critico = 0;
+    let a=0, c=0;
     rawData.pendientes.forEach(f => {
-        const dias = Math.floor((ahora - parseFechaSV(f[0])) / 86400000);
-        if (dias > 14) critico++; else if (dias > 7) alerta++;
+        const d = Math.floor((ahora - parseFecha(f[0])) / 86400000);
+        if(d > 14) c++; else if(d > 7) a++;
     });
     document.getElementById('stat-pendientes').innerText = rawData.pendientes.length;
-    document.getElementById('stat-alerta').innerText = alerta;
-    document.getElementById('stat-critico').innerText = critico;
+    document.getElementById('stat-alerta').innerText = a;
+    document.getElementById('stat-critico').innerText = c;
     const total = rawData.pendientes.length + rawData.entregas.length;
     document.getElementById('stat-eficiencia').innerText = total > 0 ? Math.round((rawData.entregas.length/total)*100)+"%" : "0%";
 }
 
-function exportTableToCSV(tableId, filename) {
-    const table = document.getElementById(tableId);
-    const rows = Array.from(table.querySelectorAll("tr"));
-    let csvContent = "\uFEFF"; // BOM para Excel
+function exportCSV(tableId, name) {
+    const rows = Array.from(document.getElementById(tableId).querySelectorAll("tr"));
+    let csv = "\uFEFF";
     
-    // Encabezados
-    let headerArr = Array.from(rows[0].querySelectorAll("th")).map(th => th.innerText);
-    if(tableId === 'tablaPendientes') {
-        while(headerArr.length < 10) headerArr.push("");
-        headerArr[10] = "COMENTARIO SUPERVISOR";
-    }
-    csvContent += headerArr.map(h => `"${h}"`).join(";") + "\n";
-
-    // Filas de datos
-    rows.slice(1).forEach(row => {
-        let cols = Array.from(row.querySelectorAll("td")).map(td => `"${td.innerText.replace(/"/g, '""')}"`);
-        if(tableId === 'tablaPendientes') {
-            const serie = row.querySelectorAll("td")[4].innerText;
-            const orig = rawData.pendientes.find(r => r[7] === serie);
-            const comentario = orig && orig[10] ? orig[10] : "";
+    rows.forEach((row, i) => {
+        let cols = Array.from(row.querySelectorAll("th, td")).map(c => `"${c.innerText.trim()}"`);
+        // Inyectar comentario en columna K para Pendientes
+        if(tableId === 'tablaPendientes' && i > 0) {
+            const serie = row.querySelectorAll("td")[5].innerText;
+            const reg = rawData.pendientes.find(r => r[7] === serie);
             while(cols.length < 10) cols.push("");
-            cols[10] = `"${comentario.replace(/"/g, '""')}"`;
+            cols[10] = `"${(reg && reg[10] ? reg[10] : "").replace(/"/g, '""')}"`;
         }
-        csvContent += cols.join(";") + "\n";
+        csv += cols.join(";") + "\n";
     });
 
     const link = document.createElement("a");
-    link.href = URL.createObjectURL(new Blob([csvContent], { type: 'text/csv;charset=utf-8;' }));
-    link.download = `${filename}_${new Date().toISOString().slice(0,10)}.csv`;
+    link.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
+    link.download = `${name}_${new Date().toISOString().slice(0,10)}.csv`;
     link.click();
 }
 
-document.getElementById('filterSitioPendientes').oninput = renderPendientes;
-document.getElementById('filterTecnicoPendientes').oninput = renderPendientes;
-document.getElementById('filterSitioEntregas').oninput = renderEntregas;
-window.onload = cargarDashboard;
+document.getElementById('fSitioP').oninput = renderPendientes;
+document.getElementById('fTecP').oninput = renderPendientes;
+window.onload = init;
 </script>
 </body>
 </html>
