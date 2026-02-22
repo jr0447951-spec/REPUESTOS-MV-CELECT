@@ -316,9 +316,10 @@ function procesarPendientes(csv){
 Papa.parse(csv,{header:false,complete:(res)=>{
 const ahora=new Date();
 const limite=new Date();limite.setDate(ahora.getDate()-90);
-datosPendientes=res.data.filter(f=>{
-const fecha=parseFecha(f[0]);
-return fecha>=limite&&f[9]==='PENDIENTE';
+datosPendientes = res.data.filter(f=>{
+    const fecha = parseFecha(f[0]);
+    return fecha && fecha >= limite && f[9] === 'PENDIENTE';
+});
 });
 document.getElementById('stat-pendientes').innerText=datosPendientes.length;
 renderPendientes();
@@ -415,9 +416,10 @@ sel.value=actual;
 function filtrarPorMes(){
 const mes=parseInt(document.getElementById('selectorMes').value);
 const anio=parseInt(document.getElementById('selectorAnio').value);
-datosFiltradosMes=datosHistorial.filter(f=>{
-const fecha=parseFecha(f[0]);
-return fecha.getMonth()===mes&&fecha.getFullYear()===anio;
+datosFiltradosMes = datosHistorial.filter(f=>{
+    const fecha = parseFecha(f[0]);
+    return fecha && fecha.getMonth() === mes && fecha.getFullYear() === anio;
+});
 });
 document.getElementById('tituloHistorial').innerText="📜 Historial - "+(mes+1)+"/"+anio;
 document.getElementById('totalRegistrosMes').innerText="Total registros: "+datosFiltradosMes.length;
@@ -488,9 +490,16 @@ document.body.removeChild(box);
 /* === UTILS === */
 
 function parseFecha(str){
-if(!str)return new Date(0);
-const p=str.split(/[/ :]/);
-return new Date(p[2],p[1]-1,p[0],p[3]||0,p[4]||0,p[5]||0);
+    if(!str || typeof str !== "string") return null;
+
+    const p = str.split(/[/ :]/);
+    if(p.length < 3) return null;
+
+    const fecha = new Date(p[2], p[1]-1, p[0], p[3]||0, p[4]||0, p[5]||0);
+
+    if(isNaN(fecha.getTime())) return null;
+
+    return fecha;
 }
 
 function numeroSemana(fecha){
