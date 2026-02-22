@@ -127,15 +127,51 @@
             const txtSit = await resSit.text();
             data_sitios = parseCSV(txtSit);
 
-            // Cargar Equipos
-            Papa.parse("inventario_repuestos.csv", {
-                download: true, header: true, delimiter: ";", skipEmptyLines: true,
-                complete: (res) => {
-                    data_equipos = res.data;
-                    const b = document.getElementById('btnStart');
-                    b.disabled = false; b.style.background = "var(--brand)"; b.innerText = "¡EMPEZAR!";
-                }
-            });
+            // Cargar Repuestos con autodetección de delimitador
+Papa.parse("inventario_repuestos.csv", {
+    download: true,
+    header: true,
+    skipEmptyLines: true,
+    // Eliminamos el delimitador fijo para que PapaParse lo detecte solo
+    complete: (res) => {
+        if (res.data && res.data.length > 0) {
+            data_equipos = res.data;
+            console.log("✅ Equipos cargados:", data_equipos.length);
+            
+            // Verificación de columnas (Importante para que coincidan con tu CSV)
+            const primeraFila = data_equipos[0];
+            console.log("Columnas detectadas:", Object.keys(primeraFila));
+
+            // Configurar autocompletado con nombres de columna exactos
+            setupStrict(
+                document.getElementById('eqSearch'), 
+                document.getElementById('eqSug'), 
+                data_equipos, 
+                'DESCRIPCION DE EQUIPO', // Asegúrate que en tu CSV diga exactamente así
+                'marca', 
+                'equipo', 
+                'MARCA' // Asegúrate que en tu CSV diga exactamente así
+            );
+
+            verificarCargaBoton();
+        } else {
+            console.error("❌ El archivo de repuestos está vacío o mal formado");
+        }
+    },
+    error: (err) => {
+        console.error("❌ Error al cargar inventario_repuestos.csv:", err);
+    }
+});
+
+function verificarCargaBoton() {
+    // Solo activamos si hay datos en las listas críticas
+    if (data_equipos.length > 0 && data_sitios.length > 0) {
+        const b = document.getElementById('btnStart');
+        b.disabled = false;
+        b.style.background = "var(--brand)";
+        b.innerText = "¡EMPEZAR!";
+    }
+}            });
 
             setupStrict(document.getElementById('tecnico'), document.getElementById('tecSug'), data_tecnicos, 'nombre', null, 'tecnico');
             setupStrict(document.getElementById('siteSearch'), document.getElementById('siteSug'), data_sitios, 'NOMBRE DE SITIO', 'idSitio', 'sitio', 'SITEID');
