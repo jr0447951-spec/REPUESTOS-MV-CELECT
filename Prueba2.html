@@ -2,404 +2,264 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Entrega Repuestos - Network Ops v2026</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Network Ops - Control de Gestión 2026</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
     <style>
-        :root {
-            --brand: #4f46e5;
-            --brand-light: #818cf8;
-            --bg: #f8fafc;
-            --card-bg: #ffffff;
-            --text: #1e293b;
-            --error: #ef4444;
-            --success: #10b981;
+        :root { 
+            --brand: #4f46e5; --brand-light: #818cf8; --bg: #f8fafc; 
+            --text: #1e293b; --danger: #ef4444; --success: #10b981; --warning: #f59e0b; 
         }
-
-        body {
-            font-family: 'Poppins', sans-serif;
-            background: radial-gradient(circle at top left, #eef2ff 0%, #f8fafc 100%);
-            color: var(--text);
-            margin: 0; padding: 0;
-            min-height: 100vh;
-        }
-
-        header {
-            padding: 25px 20px;
-            text-align: center;
-            background: var(--card-bg);
-            border-bottom-left-radius: 30px;
-            border-bottom-right-radius: 30px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.05);
-        }
-
-        header h1 { margin: 0; font-size: 1.4rem; color: var(--brand); font-weight: 600; }
-
-        .container { width: 90%; max-width: 450px; margin: 20px auto; }
-
-        .timer-pill {
-            background: var(--brand); color: white;
-            padding: 6px 15px; border-radius: 20px;
-            font-size: 0.8rem; font-weight: 600;
-            display: inline-block; margin-bottom: 15px;
-        }
-
-        .card {
-            background: var(--card-bg);
-            border-radius: 24px;
-            padding: 25px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.03);
-            border: 1px solid rgba(255,255,255,0.8);
-            margin-bottom: 20px;
-        }
-
-        label { display: block; margin-top: 15px; font-size: 0.75rem; font-weight: 600; color: #64748b; margin-left: 5px; text-transform: uppercase; }
-
-        input, select, textarea {
-            width: 100%; padding: 14px; margin-top: 6px;
-            border-radius: 16px; border: 1.5px solid #e2e8f0;
-            background: #f8fafc; font-size: 1rem; outline: none; box-sizing: border-box;
-        }
-
-        input:focus { border-color: var(--brand-light); background: #fff; }
-        input.invalid { border-color: var(--error); background: #fff1f2; }
         
-        .readonly { background: #f1f5f9; color: #94a3b8; border-style: none; }
+        body { font-family: 'Poppins', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; }
 
-        .opt-grid, .bodega-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 8px; }
-        .bodega-grid { grid-template-columns: repeat(3, 1fr); }
+        .header-dash { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 30px; }
+        
+        .card-stat { 
+            background: white; padding: 20px; border-radius: 20px; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05); border-left: 6px solid var(--brand); 
+        }
+        .card-stat h3 { margin: 0; font-size: 0.7rem; color: #64748b; text-transform: uppercase; letter-spacing: 1px; }
+        .card-stat .value { font-size: 1.8rem; font-weight: 600; color: var(--text); margin: 5px 0; }
 
-        .btn-opt {
-            background: #f1f5f9; border: 2px solid transparent;
-            padding: 12px 5px; border-radius: 16px;
-            font-size: 0.7rem; font-weight: 600; color: #475569;
-            cursor: pointer; transition: 0.2s;
+        .badge-count {
+            background: var(--brand); color: white; padding: 2px 10px;
+            border-radius: 10px; font-size: 0.8rem; vertical-align: middle; margin-left: 8px;
         }
 
-        .btn-opt.selected { background: #fff; border-color: var(--brand); color: var(--brand); box-shadow: 0 5px 15px rgba(79, 70, 229, 0.1); }
-
-        .suggestions {
-            position: absolute; width: 100%; background: #fff;
-            border-radius: 16px; box-shadow: 0 15px 35px rgba(0,0,0,0.1);
-            z-index: 100; display: none; margin-top: 5px;
-            border: 1px solid #e2e8f0; max-height: 200px; overflow-y: auto;
+        .tab-container { display: flex; gap: 8px; background: #e2e8f0; padding: 6px; border-radius: 14px; }
+        .tab-btn { 
+            padding: 10px 20px; border: none; border-radius: 10px; 
+            cursor: pointer; background: transparent; font-weight: 600; font-family: inherit; color: #64748b; 
         }
-        .suggestion-item { padding: 15px; border-bottom: 1px solid #f1f5f9; font-size: 0.85rem; cursor: pointer; }
+        .tab-btn.active { background: white; color: var(--brand); box-shadow: 0 4px 10px rgba(0,0,0,0.08); }
 
-        /* Estilo para el área de Foto */
-        .photo-box {
-            border: 2px dashed #cbd5e1; border-radius: 18px; padding: 25px;
-            text-align: center; background: #f8fafc; cursor: pointer; margin-top: 10px;
+        .table-container { 
+            background: white; border-radius: 24px; padding: 25px; 
+            box-shadow: 0 10px 25px rgba(0,0,0,0.03); margin-bottom: 30px; overflow-x: auto; 
         }
-        #previewFoto { width: 100%; border-radius: 14px; display: none; margin-top: 10px; border: 1px solid #e2e8f0; }
+        .table-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid #f1f5f9; }
+        .table-header h2 { font-size: 1.1rem; margin: 0; color: var(--brand); }
 
-        .btn-send {
-            width: 100%; padding: 18px; border-radius: 18px;
-            background: linear-gradient(135deg, var(--brand), var(--brand-light));
-            color: white; border: none; font-weight: 600; font-size: 1rem;
-            margin-top: 30px; cursor: pointer;
+        table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+        th { text-align: left; padding: 15px; background: #f8fafc; color: #64748b; font-weight: 600; text-transform: uppercase; font-size: 0.7rem; }
+        td { padding: 15px; border-bottom: 1px solid #f1f5f9; }
+
+        .filter-row { display:flex; gap:12px; margin-bottom:15px; flex-wrap:wrap; align-items: center; }
+        .filter-row input { padding:8px 12px; border-radius:12px; border:1.5px solid #e2e8f0; font-size:0.85rem; outline: none; }
+
+        .export-btn { 
+            padding:8px 15px; border:none; border-radius:12px; background: #334155; 
+            color:white; cursor:pointer; font-size:0.8rem; font-weight: 600; transition: 0.3s;
         }
-        .btn-send:disabled { background: #cbd5e1; }
+        .export-btn:hover { background: var(--brand); }
 
-        .hidden { display: none !important; }
-
-        #box_ref { background: #fef2f2; padding: 15px; border-radius: 18px; margin-bottom: 15px; border: 1.5px dashed #fecaca; }
+        footer { text-align:center; padding:30px 0; font-size:0.8rem; color:#64748b; border-top:1px solid #e2e8f0; margin-top: 40px; }
     </style>
 </head>
 <body>
 
-<header>
-    <div class="timer-pill" id="reloj">00:00:00</div>
-    <h1>Registro de Entrega</h1>
-</header>
-
-<div class="container">
-    <form id="entregaForm">
-        <div class="card">
-            <div style="position:relative">
-                <label>👤 Técnico Responsable</label>
-                <input type="text" id="tecnico_nombre" placeholder="Nombre completo..." autocomplete="off" required>
-                <div id="tecSug" class="suggestions"></div>
-            </div>
-            
-            <div style="position:relative">
-                <label>📡 Nombre del Sitio</label>
-                <input type="text" id="siteSearch" placeholder="Buscar sitio..." autocomplete="off" required>
-                <div id="siteSug" class="suggestions"></div>
-            </div>
-            <input type="text" id="sitio_id" class="readonly" placeholder="ID automático" readonly required>
-        </div>
-
-        <div class="card">
-            <label>⚙️ ¿En qué estado entregas?</label>
-            <div class="opt-grid">
-                <button type="button" class="btn-opt" onclick="selectOpt(this, 'DAÑADO', 'estado')">DAÑADO</button>
-                <button type="button" class="btn-opt" onclick="selectOpt(this, 'NO UTILIZADO', 'estado')">NO UTILIZADO</button>
-                <button type="button" class="btn-opt" onclick="selectOpt(this, 'USADO', 'estado')">USADO</button>
-                <button type="button" class="btn-opt" onclick="selectOpt(this, 'POR REPARACIÓN', 'estado')">REPARACIÓN</button>
-            </div>
-            <input type="hidden" id="equipo_estado" required>
-        </div>
-
-        <div class="card">
-            <div id="box_ref" class="hidden">
-                <label style="color: #b91c1c; margin-top: 0;">📦 Referencia de Salida (Pendientes)</label>
-                <select id="ref_salida_desc" onchange="llenarDesdeSalida()" style="background: white;"></select>
-            </div>
-
-            <div style="position:relative">
-                <label>🛠️ Descripción del Repuesto</label>
-                <input type="text" id="eqSearch" placeholder="Buscar repuesto..." autocomplete="off" required>
-                <div id="eqSug" class="suggestions"></div>
-            </div>
-            <input type="text" id="marca" class="readonly" placeholder="Marca" readonly required>
-
-            <label>🔢 Número de Serie</label>
-            <input type="text" id="serie" placeholder="S/N Físico" required>
-
-            <label>📷 Evidencia Fotográfica</label>
-            <div class="photo-box" onclick="document.getElementById('foto').click()">
-                <div id="upload-prompt">
-                    <div style="font-size: 2rem;">📸</div>
-                    <p style="font-size: 0.8rem; color: #64748b;">Tomar foto o elegir de galería</p>
-                </div>
-                <img id="previewFoto">
-            </div>
-            <input type="file" id="foto" accept="image/*" class="hidden" required>
-        </div>
-
-        <div class="card">
-            <label>🏢 ¿A qué bodega ingresa?</label>
-            <div class="bodega-grid">
-                <button type="button" class="btn-opt" onclick="selectOpt(this, 'SAN BENITO', 'bodega')">San Benito</button>
-                <button type="button" class="btn-opt" onclick="selectOpt(this, 'CENTRAL', 'bodega')">Central</button>
-                <button type="button" class="btn-opt" onclick="selectOpt(this, 'TALNIQUE', 'bodega')">Talnique</button>
-            </div>
-            <input type="hidden" id="bodega" required>
-
-            <label>📝 Comentarios</label>
-            <textarea id="comentarios" rows="2" placeholder="Notas adicionales..."></textarea>
-
-            <button type="submit" id="btnEnviar" class="btn-send">FINALIZAR ENTREGA</button>
-        </div>
-    </form>
+<div class="header-dash">
+    <div>
+        <h1 style="margin:0; font-size: 1.6rem;">DASHBOARD <span style="color:var(--brand)">CONTROL GESTIÓN</span></h1>
+        <div id="lastUpdate" style="font-size: 0.75rem; color: #94a3b8;">Sincronizando...</div>
+    </div>
+    <nav class="tab-container">
+        <button class="tab-btn active" onclick="openTab('dashboard')">📊 Dashboard</button>
+        <button class="tab-btn" onclick="openTab('historial')">📜 Historial</button>
+    </nav>
 </div>
 
+<div id="tab-dashboard" class="tab-content">
+    <div class="stats-row">
+        <div class="card-stat"><h3>Pendientes</h3><div class="value" id="stat-pendientes">0</div></div>
+        <div class="card-stat" style="border-left-color: var(--warning);"><h3>Alertas</h3><div class="value" id="stat-alerta">0</div></div>
+        <div class="card-stat" style="border-left-color: var(--danger);"><h3>Críticos</h3><div class="value" id="stat-critico">0</div></div>
+        <div class="card-stat" style="border-left-color: var(--success);"><h3>Eficiencia</h3><div class="value" id="stat-eficiencia">0%</div></div>
+    </div>
+
+    <div class="table-container">
+        <div class="table-header">
+            <h2>📋 Salidas Pendientes <span id="count-pendientes" class="badge-count">0</span></h2>
+            <div class="filter-row" style="margin-bottom:0">
+                <input type="text" id="filterSitioPendientes" placeholder="Sitio...">
+                <input type="text" id="filterTecnicoPendientes" placeholder="Técnico...">
+                <button class="export-btn" onclick="exportTableToCSV('tablaPendientes', 'Pendientes_Ops')">📊 Exportar CSV</button>
+            </div>
+        </div>
+        <table id="tablaPendientes">
+            <thead>
+                <tr><th>Salida</th><th>ID Sitio</th><th>Nombre Sitio</th><th>Equipo</th><th>Serie</th><th>Técnico</th></tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <div class="table-container">
+        <div class="table-header">
+            <h2>✅ Entregas Semana <span id="count-entregas" class="badge-count" style="background:var(--success)">0</span></h2>
+            <div class="filter-row" style="margin-bottom:0">
+                <input type="text" id="filterSitioEntregas" placeholder="Filtrar Sitio...">
+                <button class="export-btn" onclick="exportTableToCSV('tablaEntregados', 'Entregas_Semana')">📊 Exportar CSV</button>
+            </div>
+        </div>
+        <table id="tablaEntregados">
+            <thead>
+                <tr><th>Entrega</th><th>ID Sitio</th><th>Nombre Sitio</th><th>Equipo</th><th>Serie</th><th>Bodega</th><th>Técnico</th></tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+</div>
+
+<div id="tab-historial" class="tab-content" style="display:none;">
+    <div class="filter-row" style="background:white; padding:20px; border-radius:20px; margin-bottom:20px;">
+        <input type="month" id="filterMesHistorial">
+        <button class="export-btn" onclick="renderHistorial()">🔍 Consultar</button>
+    </div>
+    <div class="table-container">
+        <div class="table-header"><h2>📜 Historial Mensual <span id="count-historial" class="badge-count">0</span></h2></div>
+        <table id="tablaHistorial">
+            <thead>
+                <tr><th>Fecha</th><th>ID Sitio</th><th>Nombre Sitio</th><th>Equipo</th><th>Serie</th><th>Técnico</th><th>Estado</th></tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+</div>
+
+<footer><strong>OPERACIONES PARACENTRALES</strong> | &copy; 2026</footer>
+
 <script>
-    const CONFIG = {
-        URL_SITIOS: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTE_5CZtD7qHGW5cWHGAjn7ALTphVm5h88lco9cySYoAe2VBW4fq8DQ7-SZY6cd_FHtNQJS3MpE88hs/pub?gid=1955381502&single=true&output=csv',
-        URL_PENDIENTES: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQBNrpLKc_GPFT6Ik9Yr4s1qo8zaOOqrDgTc_9DGeMd20rNTsEtLktTCoeDcRrts6kvgne86KZDfKQS/pub?output=csv',
-        URL_TECNICOS: 'tecnicos.csv',
-        URL_REPUESTOS: 'inventario_repuestos.csv',
-        URL_APPS_SCRIPT: 'https://script.google.com/macros/s/AKfycbxJyDENWy4Zmwye7tcREXVGdAur50ggJ-QQTeexEeEoWN2VseEp3EeMUQRaRTMQzJik/exec'
-    };
+const URL_SALIDAS = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQBNrpLKc_GPFT6Ik9Yr4s1qo8zaOOqrDgTc_9DGeMd20rNTsEtLktTCoeDcRrts6kvgne86KZDfKQS/pub?gid=0&single=true&output=csv';
+const URL_ENTREGAS = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQBNrpLKc_GPFT6Ik9Yr4s1qo8zaOOqrDgTc_9DGeMd20rNTsEtLktTCoeDcRrts6kvgne86KZDfKQS/pub?gid=887165919&single=true&output=csv';
 
-    let data = { sites: [], pendientes: [], equipos: [], tecnicos: [] };
-    let validacion = { tecnico: false, sitio: false, equipo: false };
+let rawData = { pendientes: [], entregas: [], historial: [] };
 
-    setInterval(() => {
-        document.getElementById('reloj').innerText = new Date().toLocaleTimeString("es-SV", { hour12: false });
-    }, 1000);
+async function cargarDashboard() {
+    try {
+        const [resS, resE] = await Promise.all([fetch(URL_SALIDAS), fetch(URL_ENTREGAS)]);
+        const textS = await resS.text();
+        const textE = await resE.text();
+        
+        Papa.parse(textS, { header:false, skipEmptyLines: true, complete: (res) => {
+            rawData.historial = res.data;
+            const hoy = new Date();
+            const limite = new Date(); limite.setDate(hoy.getDate() - 90);
+            rawData.pendientes = res.data.filter(f => parseFechaSV(f[0]) >= limite && f[9] === 'PENDIENTE');
+            document.getElementById('filterMesHistorial').value = hoy.toISOString().substring(0, 7);
+            renderPendientes();
+        }});
+        
+        Papa.parse(textE, { header:false, skipEmptyLines: true, complete: (res) => {
+            const lunes = getLunes();
+            rawData.entregas = res.data.filter(f => parseFechaSV(f[0]) >= lunes);
+            renderEntregas();
+            actualizarKpis();
+        }});
+        document.getElementById('lastUpdate').innerText = "Actualizado: " + new Date().toLocaleTimeString();
+    } catch(e) { console.error(e); }
+}
 
-    window.onload = async () => {
-        try {
-            // Carga de bases de datos
-            const [rS, rP, rT] = await Promise.all([
-                fetch(CONFIG.URL_SITIOS), fetch(CONFIG.URL_PENDIENTES), fetch(CONFIG.URL_TECNICOS)
-            ]);
-            data.sites = parseCSV(await rS.text());
-            data.pendientes = (await rP.text()).split("\n").map(l => l.split(",").map(c => c.replace(/"/g,"").trim()));
-            data.tecnicos = (await rT.text()).split(/\r?\n/).filter(l => l.trim()).map(n => ({nombre: n.trim()}));
+function parseFechaSV(s) { 
+    if(!s) return null; 
+    const p = s.split(/[/ :]/); 
+    return new Date(p[2], p[1]-1, p[0], p[3]||0, p[4]||0); 
+}
 
-            Papa.parse(CONFIG.URL_REPUESTOS, {
-                download: true, header: true, skipEmptyLines: true,
-                complete: (res) => { 
-                    data.equipos = res.data; 
-                    initAutocompletes();
-                }
-            });
-        } catch (e) { console.error("Error inicializando datos", e); }
-    };
+function getLunes() {
+    const d = new Date(); d.setHours(0,0,0,0);
+    const day = d.getDay(), diff = d.getDate() - day + (day == 0 ? -6 : 1);
+    return new Date(d.setDate(diff));
+}
 
-    function parseCSV(d) {
-        const rows = d.split(/\r?\n/).filter(x => x.trim());
-        const headers = rows[0].split(',').map(x => x.trim().replace(/"/g,''));
-        return rows.slice(1).map(row => {
-            const values = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
-            let obj = {}; headers.forEach((h, i) => obj[h] = values[i] ? values[i].trim().replace(/"/g,'') : '');
-            return obj;
-        });
+function openTab(name) {
+    document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('tab-' + name).style.display = 'block';
+    event.currentTarget.classList.add('active');
+}
+
+function renderPendientes() {
+    const tbody = document.querySelector('#tablaPendientes tbody');
+    const s = document.getElementById('filterSitioPendientes').value.toLowerCase();
+    const t = document.getElementById('filterTecnicoPendientes').value.toLowerCase();
+    const filt = rawData.pendientes.filter(f => (f[3].toLowerCase().includes(s) || f[4].toLowerCase().includes(s)) && f[1].toLowerCase().includes(t));
+    document.getElementById('count-pendientes').innerText = filt.length;
+    tbody.innerHTML = filt.map(f => `<tr><td>${f[0]}</td><td><strong>${f[3]}</strong></td><td>${f[4]}</td><td>${f[5]}</td><td><code>${f[7]}</code></td><td>${f[1]}</td></tr>`).join('');
+}
+
+function renderEntregas() {
+    const tbody = document.querySelector('#tablaEntregados tbody');
+    const s = document.getElementById('filterSitioEntregas').value.toLowerCase();
+    const filt = rawData.entregas.filter(f => f[3].toLowerCase().includes(s) || f[2].toLowerCase().includes(s));
+    document.getElementById('count-entregas').innerText = filt.length;
+    tbody.innerHTML = filt.map(f => `<tr><td>${f[0]}</td><td><strong>${f[3]}</strong></td><td>${f[2]}</td><td>${f[6]}</td><td><code>${f[9]}</code></td><td>${f[8]}</td><td>${f[1]}</td></tr>`).join('');
+}
+
+function renderHistorial() {
+    const tbody = document.querySelector('#tablaHistorial tbody');
+    const mes = document.getElementById('filterMesHistorial').value;
+    const filt = rawData.historial.filter(f => {
+        const d = parseFechaSV(f[0]);
+        return d && (d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, '0')) === mes;
+    });
+    document.getElementById('count-historial').innerText = filt.length;
+    tbody.innerHTML = filt.map(f => `<tr><td>${f[0]}</td><td>${f[3]}</td><td>${f[4]}</td><td>${f[5]}</td><td>${f[7]}</td><td>${f[1]}</td><td>${f[9]}</td></tr>`).join('');
+}
+
+function actualizarKpis() {
+    const ahora = new Date();
+    let alerta = 0, critico = 0;
+    rawData.pendientes.forEach(f => {
+        const dias = Math.floor((ahora - parseFechaSV(f[0])) / 86400000);
+        if (dias > 14) critico++; else if (dias > 7) alerta++;
+    });
+    document.getElementById('stat-pendientes').innerText = rawData.pendientes.length;
+    document.getElementById('stat-alerta').innerText = alerta;
+    document.getElementById('stat-critico').innerText = critico;
+    const total = rawData.pendientes.length + rawData.entregas.length;
+    document.getElementById('stat-eficiencia').innerText = total > 0 ? Math.round((rawData.entregas.length/total)*100)+"%" : "0%";
+}
+
+function exportTableToCSV(tableId, filename) {
+    const table = document.getElementById(tableId);
+    const rows = Array.from(table.querySelectorAll("tr"));
+    let csvContent = "\uFEFF"; // BOM para Excel
+    
+    // Encabezados
+    let headerArr = Array.from(rows[0].querySelectorAll("th")).map(th => th.innerText);
+    if(tableId === 'tablaPendientes') {
+        while(headerArr.length < 10) headerArr.push("");
+        headerArr[10] = "COMENTARIO SUPERVISOR";
     }
+    csvContent += headerArr.map(h => `"${h}"`).join(";") + "\n";
 
-    function initAutocompletes() {
-        setupStrict(document.getElementById('tecnico_nombre'), document.getElementById('tecSug'), data.tecnicos, 'nombre', null, 'tecnico');
-        setupStrict(document.getElementById('siteSearch'), document.getElementById('siteSug'), data.sites, 'NOMBRE DE SITIO', 'sitio_id', 'sitio', 'SITEID');
-        setupStrict(document.getElementById('eqSearch'), document.getElementById('eqSug'), data.equipos, 'DESCRIPCION DE EQUIPO', 'marca', 'equipo', 'MARCA');
-    }
-
-    function setupStrict(input, box, items, key, linkedId, valKey, extraKey) {
-        input.addEventListener('input', () => {
-            validacion[valKey] = false;
-            input.classList.add('invalid');
-            const v = input.value.toLowerCase().trim();
-            box.innerHTML = '';
-            if (v.length < 1) { box.style.display = 'none'; return; }
-
-            const matches = items.filter(i => (i[key] || "").toString().toLowerCase().includes(v) || (extraKey && (i[extraKey] || "").toString().toLowerCase().includes(v))).slice(0, 6);
-
-            matches.forEach(item => {
-                const d = document.createElement('div');
-                d.className = 'suggestion-item';
-                d.innerHTML = `<strong>${item[key]}</strong>${extraKey ? '<br><small>'+item[extraKey]+'</small>' : ''}`;
-                d.onclick = () => {
-                    input.value = item[key];
-                    if (linkedId) document.getElementById(linkedId).value = item[extraKey] || '';
-                    validacion[valKey] = true;
-                    input.classList.remove('invalid');
-                    box.style.display = 'none';
-                    if(valKey === 'sitio') cargarPendientes();
-                };
-                box.appendChild(d);
-            });
-            box.style.display = matches.length ? 'block' : 'none';
-        });
-
-        input.addEventListener('blur', () => {
-            setTimeout(() => {
-                if (!validacion[valKey]) { input.value = ''; if(linkedId) document.getElementById(linkedId).value = ''; input.classList.remove('invalid'); }
-                box.style.display = 'none';
-            }, 300);
-        });
-    }
-
-    function selectOpt(btn, val, grupo) {
-        const parent = btn.parentElement;
-        parent.querySelectorAll('.btn-opt').forEach(x => x.classList.remove('selected'));
-        btn.classList.add('selected');
-
-        if(grupo === 'estado') {
-            document.getElementById('equipo_estado').value = val;
-            const boxRef = document.getElementById('box_ref');
-            if(val === 'DAÑADO' || val === 'NO UTILIZADO') {
-                boxRef.classList.remove('hidden');
-                cargarPendientes();
-            } else { boxRef.classList.add('hidden'); }
-        } else { document.getElementById('bodega').value = val; }
-    }
-
-    function cargarPendientes() {
-        const id = document.getElementById('sitio_id').value;
-        const sel = document.getElementById('ref_salida_desc');
-        if(!id) return;
-        const lista = data.pendientes.filter(f => f[3] === id && f[9] === 'PENDIENTE');
-        sel.innerHTML = lista.length > 0 ? '<option value="">Seleccione equipo de salida...</option>' : '<option value="">No hay salidas pendientes</option>';
-        lista.forEach(f => {
-            let o = document.createElement('option');
-            o.value = f[5]; o.innerText = f[5]; sel.appendChild(o);
-        });
-    }
-
-    function llenarDesdeSalida() {
-        const ref = document.getElementById('ref_salida_desc').value;
-        const f = data.pendientes.find(l => l[5]===ref && l[9]==='PENDIENTE');
-        if(f) { 
-            document.getElementById('eqSearch').value = f[5]; 
-            document.getElementById('marca').value = f[6];
-            validacion.equipo = true;
-            document.getElementById('eqSearch').classList.remove('invalid');
+    // Filas de datos
+    rows.slice(1).forEach(row => {
+        let cols = Array.from(row.querySelectorAll("td")).map(td => `"${td.innerText.replace(/"/g, '""')}"`);
+        if(tableId === 'tablaPendientes') {
+            const serie = row.querySelectorAll("td")[4].innerText;
+            const orig = rawData.pendientes.find(r => r[7] === serie);
+            const comentario = orig && orig[10] ? orig[10] : "";
+            while(cols.length < 10) cols.push("");
+            cols[10] = `"${comentario.replace(/"/g, '""')}"`;
         }
-    }
-
-    // --- PROCESAMIENTO HD + MARCA DE AGUA ---
-    const fotoIn = document.getElementById('foto');
-    fotoIn.addEventListener('change', function() {
-        if (this.files && this.files[0]) {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                const img = new Image();
-                img.onload = () => {
-                    const canvas = document.createElement('canvas');
-                    const ctx = canvas.getContext('2d');
-                    const MAX = 1600;
-                    let w = img.width, h = img.height;
-                    if (w > h && w > MAX) { h *= MAX / w; w = MAX; }
-                    else if (h >= w && h > MAX) { w *= MAX / h; h = MAX; }
-                    
-                    canvas.width = w; canvas.height = h;
-                    ctx.imageSmoothingQuality = 'high';
-                    ctx.drawImage(img, 0, 0, w, h);
-
-                    const txt = `${new Date().toLocaleString()} | Téc: ${document.getElementById('tecnico_nombre').value} | Sitio: ${document.getElementById('sitio_id').value}`;
-                    ctx.fillStyle = "rgba(0,0,0,0.6)";
-                    ctx.fillRect(0, h - 60, w, 60);
-                    ctx.fillStyle = "white";
-                    ctx.font = "bold 22px Poppins, Arial";
-                    ctx.fillText(txt, 25, h - 25);
-
-                    const finalData = canvas.toDataURL("image/jpeg", 0.8);
-                    document.getElementById('previewFoto').src = finalData;
-                    document.getElementById('previewFoto').style.display = 'block';
-                    document.getElementById('upload-prompt').classList.add('hidden');
-                    fotoIn.dataset.blob = finalData.split(',')[1];
-                };
-                img.src = e.target.result;
-            };
-            reader.readAsDataURL(this.files[0]);
-        }
+        csvContent += cols.join(";") + "\n";
     });
 
-    document.getElementById('entregaForm').onsubmit = async (e) => {
-        e.preventDefault();
-        if(!validacion.tecnico || !validacion.sitio || !validacion.equipo) {
-            alert("⚠️ Selecciona valores válidos de las listas."); return;
-        }
-        if(!document.getElementById('bodega').value || !document.getElementById('equipo_estado').value || !fotoIn.dataset.blob) {
-            alert("⚠️ Falta estado, bodega o foto."); return;
-        }
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(new Blob([csvContent], { type: 'text/csv;charset=utf-8;' }));
+    link.download = `${filename}_${new Date().toISOString().slice(0,10)}.csv`;
+    link.click();
+}
 
-        const b = document.getElementById('btnEnviar');
-        b.disabled = true; b.innerText = "REGISTRANDO...";
-
-        const formData = {
-            action: "entregar",
-            tecnico_nombre: document.getElementById('tecnico_nombre').value,
-            nombreSitio: document.getElementById('siteSearch').value,
-            sitio_id: document.getElementById('sitio_id').value,
-            equipo_estado: document.getElementById('equipo_estado').value,
-            ref_salida_desc: document.getElementById('ref_salida_desc').value,
-            equipo_desc: document.getElementById('eqSearch').value,
-            equipo_marca: document.getElementById('marca').value,
-            bodega_destino: document.getElementById('bodega').value,
-            equipo_serie: document.getElementById('serie').value,
-            comentarios: document.getElementById('comentarios').value,
-            fileData: fotoIn.dataset.blob,
-            fileName: `ENT_${document.getElementById('sitio_id').value}_${Date.now()}.jpg`,
-            mimeType: "image/jpeg"
-        };
-
-        try {
-            await fetch(CONFIG.URL_APPS_SCRIPT, { method: 'POST', body: new URLSearchParams(formData), mode: 'no-cors' });
-            
-            const fechaHoy = new Date().toISOString().split('T')[0];
-            const urlGoogleForm = `https://docs.google.com/forms/d/e/1FAIpQLSfz-IGCT2vdfUplh2MipdjgBLcspDE_TWChhrWn1wBaVMnWOQ/viewform?` +
-                `entry.997804380=${fechaHoy}` + 
-                `&entry.821288735=${encodeURIComponent(formData.sitio_id)}` +
-                `&entry.1024047478=${encodeURIComponent(formData.nombreSitio)}` +
-                `&entry.808319871=${encodeURIComponent(formData.equipo_marca)}` +
-                `&entry.735015225=${encodeURIComponent(formData.equipo_desc)}` +
-                `&entry.1183702054=${encodeURIComponent(formData.equipo_serie)}` +
-                `&entry.1370238515=${encodeURIComponent(formData.equipo_estado)}` +
-                `&entry.1372699954=${encodeURIComponent(formData.bodega_destino)}` +
-                `&entry.908256573=CELECT`;
-
-            alert("✅ Registro exitoso.");
-            window.location.href = urlGoogleForm;
-        } catch(err) {
-            alert("Error de conexión");
-            b.disabled = false; b.innerText = "REINTENTAR";
-        }
-    };
+document.getElementById('filterSitioPendientes').oninput = renderPendientes;
+document.getElementById('filterTecnicoPendientes').oninput = renderPendientes;
+document.getElementById('filterSitioEntregas').oninput = renderEntregas;
+window.onload = cargarDashboard;
 </script>
 </body>
 </html>
