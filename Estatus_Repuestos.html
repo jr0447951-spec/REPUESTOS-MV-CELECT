@@ -93,7 +93,7 @@
         </div>
         <table id="tablaPendientes">
             <thead>
-                <tr><th>Antigüedad</th><th>Fecha Salida</th><th>ID Sitio</th><th>Equipo</th><th>Serie</th><th>Técnico</th></tr>
+                <tr><th>Antigüedad</th><th>Fecha Salida</th><th>ID Sitio</th><th>Nombre Sitio</th><th>Equipo</th><th>Serie</th><th>Técnico</th></tr>
             </thead>
             <tbody></tbody>
         </table>
@@ -221,7 +221,15 @@ function renderPendientes() {
         const dias = Math.floor((ahora - parseFecha(f[0])) / 86400000);
         let cls = "text-success";
         if(dias > 14) cls = "text-danger"; else if(dias > 7) cls = "text-warning";
-        return `<tr><td><span class="days-tag ${cls}">${dias} días</span></td><td>${f[0]}</td><td><strong>${f[3]}</strong></td><td>${f[5]}</td><td><code>${f[7]}</code></td><td>${f[1]}</td></tr>`;
+       return `<tr>
+<td><span class="days-tag ${cls}">${dias} días</span></td>
+<td>${f[0]}</td>
+<td><strong>${f[3]}</strong></td>
+<td>${f[4]}</td> <!-- NOMBRE DE SITIO -->
+<td>${f[5]}</td>
+<td><code>${f[7]}</code></td>
+<td>${f[1]}</td>
+</tr>`;
     }).join('');
 }
 
