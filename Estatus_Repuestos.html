@@ -147,7 +147,16 @@
     <div class="table-container">
         <table id="tablaHistorial">
             <thead>
-                <tr><th>Fecha</th><th>ID Sitio</th><th>Equipo</th><th>Serie</th><th>Técnico</th><th>Estado</th><th>Comentario</th></tr>
+                <tr>
+    <th>Fecha</th>
+    <th>ID Sitio</th>
+    <th>Nombre Sitio</th> <!-- NUEVO -->
+    <th>Equipo</th>
+    <th>Serie</th>
+    <th>Técnico</th>
+    <th>Estado</th>
+    <th>Comentario</th>
+</tr>
             </thead>
             <tbody></tbody>
         </table>
@@ -272,7 +281,18 @@ function renderHistorial() {
         const d = parseFecha(f[0]);
         return d && (d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, '0')) === mes;
     });
-    tbody.innerHTML = filt.map(f => `<tr><td>${f[0]}</td><td>${f[3]}</td><td>${f[5]}</td><td>${f[7]}</td><td>${f[1]}</td><td>${f[9]}</td><td>${f[10]||""}</td></tr>`).join('');
+   tbody.innerHTML = filt.map(f => `
+<tr>
+<td>${f[0]}</td>
+<td>${f[3]}</td>
+<td>${f[4]}</td> <!-- NOMBRE DE SITIO -->
+<td>${f[5]}</td>
+<td>${f[7]}</td>
+<td>${f[1]}</td>
+<td>${f[9]}</td>
+<td>${f[10]||""}</td>
+</tr>
+`).join('');
 }
 
 function actualizarKpis() {
