@@ -265,7 +265,10 @@
     document.getElementById('mainForm').onsubmit = async (e) => {
         e.preventDefault();
         if(!validacion.tecnico || !validacion.sitio || !validacion.equipo) { alert("⚠️ Selección inválida."); return; }
-        if(!fotos_base64.foto1 || !fotos_base64.foto2 || !fotos_base64.foto3) { alert("⚠️ Las 3 fotos son obligatorias."); return; }
+        if(!fotos_base64.foto1) { 
+    alert("⚠️ La primera foto (F1) es obligatoria."); 
+    return; 
+}
 
         const b = document.getElementById('btnEnviar');
         b.disabled = true; b.innerText = "Registrando...";
