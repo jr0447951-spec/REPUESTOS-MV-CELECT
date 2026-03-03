@@ -267,11 +267,26 @@
         try {
             const res = await fetch(CONFIG.URL_SCRIPT, { method: 'POST', body: new URLSearchParams(p) });
             const json = await res.json();
+            
             if(json.result === "success") {
-                alert("✅ Registro guardado con éxito.");
-                location.reload();
+                // REDIRECCIÓN CON ENTRIES ORIGINALES
+                const urlFinal = `${CONFIG.URL_FORM}?` + 
+                    `entry.1637897291=CELECT` + 
+                    `&entry.795516044=${encodeURIComponent(p.bodega)}` + 
+                    `&entry.1265319450=${encodeURIComponent(p.idSitio)}` + 
+                    `&entry.1509520939=${encodeURIComponent(p.nombreSitio)}` + 
+                    `&entry.554570123=${encodeURIComponent(p.marca)}` + 
+                    `&entry.1914147166=${encodeURIComponent(p.descripcion)}` + 
+                    `&entry.1497572830=${encodeURIComponent(p.serie)}` +
+                    `&entry.122146950=${encodeURIComponent(p.comentarios)}`; // Entry de comentarios
+
+                window.location.href = urlFinal;
             }
-        } catch (err) { alert("Error de conexión"); b.disabled = false; b.innerText = "REINTENTAR"; }
+        } catch (err) { 
+            alert("Error de conexión"); 
+            b.disabled = false; 
+            b.innerText = "REINTENTAR"; 
+        }
     };
 </script>
 </body>
