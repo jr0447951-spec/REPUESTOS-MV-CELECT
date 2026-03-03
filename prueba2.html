@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Repuestos Go! - Network Ops 2026</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+    <style>
+        :root { --brand: #4f46e5; --brand-light: #818cf8; --bg: #f8fafc; --card-bg: #ffffff; --text: #1e293b; --error: #ef4444; }
+        body { font-family: 'Poppins', sans-serif; background: radial-gradient(circle at top left, #eef2ff 0%, #f8fafc 100%); color: var(--text); margin: 0; min-height: 100vh; }
+        header { padding: 25px 20px; text-align: center; background: var(--card-bg); border-bottom-left-radius: 30px; border-bottom-right-radius: 30px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
+        header h1 { margin: 0; font-size: 1.4rem; color: var(--brand); font-weight: 600; }
+        .container { width: 90%; max-width: 450px; margin: 20px auto; }
+        .card { background: var(--card-bg); border-radius: 24px; padding: 25px; box-shadow: 0 10px 25px rgba(0,0,0,0.03); border: 1px solid rgba(255,255,255,0.8); margin-bottom: 20px; }
+        label { display: block; margin-top: 15px; font-size: 0.75rem; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; }
+
+        input, textarea { width: 100%; padding: 14px; margin-top: 6px; border-radius: 16px; border: 1.5px solid #e2e8f0; background: #f8fafc; font-size: 1rem; outline: none; box-sizing: border-box; transition: 0.3s; font-family: 'Poppins', sans-serif; }
+        input:focus, textarea:focus { border-color: var(--brand-light); background: #fff; }
+        input.invalid { border-color: var(--error); background: #fff1f2; }
+        .readonly { background: #f1f5f9; color: #94a3b8; border-style: none; cursor: not-allowed; }
+
+        .suggestions { position: absolute; width: 100%; background: #fff; border-radius: 16px; box-shadow: 0 15px 35px rgba(0,0,0,0.1); z-index: 100; display: none; margin-top: 5px; border: 1px solid #e2e8f0; max-height: 250px; overflow-y: auto; }
+        .suggestion-item { padding: 15px; border-bottom: 1px solid #f1f5f9; font-size: 0.85rem; cursor: pointer; line-height: 1.4; }
+        .suggestion-item strong { color: var(--brand); }
+
+        .photo-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 10px; }
+        .photo-box { border: 2px dashed #cbd5e1; border-radius: 18px; height: 90px; display: flex; align-items: center; justify-content: center; background: #f8fafc; cursor: pointer; position: relative; overflow: hidden; }
+        .preview-img { width: 100%; height: 100%; object-fit: cover; display: none; position: absolute; top: 0; left: 0; }
+
+        .bodega-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 8px; }
+        .btn-bodega { background: #f1f5f9; border: 2px solid transparent; padding: 12px 5px; border-radius: 14px; font-size: 0.65rem; font-weight: 600; color: #475569; cursor: pointer; }
+        .btn-bodega.selected { background: #fff; border-color: var(--brand); color: var(--brand); box-shadow: 0 5px 15px rgba(79, 70, 229, 0.1); }
+
+        .btn-send { width: 100%; padding: 18px; border-radius: 18px; background: linear-gradient(135deg, var(--brand), var(--brand-light)); color: white; border: none; font-weight: 600; font-size: 1rem; margin-top: 30px; cursor: pointer; }
+        .btn-send:disabled { background: #cbd5e1; cursor: not-allowed; }
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+
+<header>
+    <div id="reloj" style="font-weight: 600; color: var(--brand); margin-bottom: 5px;">00:00:00</div>
+    <h1>Registro de Salida</h1>
+</header>
+
+<div class="container">
+    <div class="card" id="consentimiento" style="text-align: center;">
+        <div style="font-size: 3rem; margin-bottom: 10px;">📦</div>
+        <h2>Sincronizando Sistema</h2>
+        <p id="status-text" style="color: #64748b; font-size: 0.9rem;">Cargando base de repuestos...</p>
+        <button onclick="activarForm()" id="btnStart" disabled class="btn-send" style="background: #94a3b8;">Cargando...</button>
+    </div>
+
+    <form id="mainForm" class="hidden">
+        <div class="card">
+            <div style="position:relative">
+                <label>👤 Técnico Responsable</label>
+                <input type="text" id="tecnico" placeholder="Escribe tu nombre..." autocomplete="off" required>
+                <div id="tecSug" class="suggestions"></div>
+            </div>
+
+            <label>📍 Bodega de Retiro</label>
+            <div class="bodega-grid">
+                <button type="button" class="btn-bodega" onclick="setBodega(this, 'SAN BENITO')">San Benito</button>
+                <button type="button" class="btn-bodega" onclick="setBodega(this, 'BODEGA CENTRAL')">Central</button>
+                <button type="button" class="btn-bodega" onclick="setBodega(this, 'TALNIQUE')">Talnique</button>
+            </div>
+            <input type="hidden" id="bodega" required>
+
+            <div style="position:relative">
+                <label>📡 Sitio de Destino</label>
+                <input type="text" id="siteSearch" placeholder="Nombre del sitio..." autocomplete="off" required>
+                <div id="siteSug" class="suggestions"></div>
+            </div>
+            <input type="text" id="idSitio" class="readonly" placeholder="ID Sitio" readonly required>
+
+            <div style="position:relative">
+                <label>📦 Repuesto / Equipo</label>
+                <input type="text" id="eqSearch" placeholder="Escribe descripción..." autocomplete="off" required>
+                <div id="eqSug" class="suggestions"></div>
+            </div>
+            <input type="text" id="marca" class="readonly" placeholder="Marca detectada" readonly required>
+
+            <label>🔢 Número de Serie</label>
+            <input type="text" id="serie" placeholder="S/N de la pieza" required>
+
+            <label>💬 Observaciones (Opcional)</label>
+            <textarea id="comentarios" placeholder="Notas adicionales..." rows="2" style="resize: none;"></textarea>
+
+            <label>📷 Evidencia Fotográfica (3 Fotos)</label>
+            <div class="photo-grid">
+                <div class="photo-box" onclick="document.getElementById('foto1').click()">
+                    <span id="label-f1">F1</span>
+                    <img id="prev1" class="preview-img">
+                </div>
+                <div class="photo-box" onclick="document.getElementById('foto2').click()">
+                    <span id="label-f2">F2</span>
+                    <img id="prev2" class="preview-img">
+                </div>
+                <div class="photo-box" onclick="document.getElementById('foto3').click()">
+                    <span id="label-f3">F3</span>
+                    <img id="prev3" class="preview-img">
+                </div>
+            </div>
+            <input type="file" id="foto1" accept="image/*" class="hidden" required>
+            <input type="file" id="foto2" accept="image/*" class="hidden" required>
+            <input type="file" id="foto3" accept="image/*" class="hidden" required>
+
+            <button type="submit" id="btnEnviar" class="btn-send">FINALIZAR REGISTRO</button>
+        </div>
+    </form>
+</div>
+
+<script>
+    const CONFIG = {
+        URL_SITIOS: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTE_5CZtD7qHGW5cWHGAjn7ALTphVm5h88lco9cySYoAe2VBW4fq8DQ7-SZY6cd_FHtNQJS3MpE88hs/pub?gid=1955381502&single=true&output=csv',
+        URL_TECNICOS: 'tecnicos.csv',
+        URL_REPUESTOS: 'inventario_repuestos.csv',
+        URL_SCRIPT: 'TU_URL_DE_APPS_SCRIPT_AQUI',
+        URL_FORM: 'https://docs.google.com/forms/d/e/1FAIpQLSdeek133oAtejD-fC1LPvFPDHiej3l0tokNW9N31LdHFpS06g/viewform'
+    };
+
+    let data_tecnicos = [], data_sitios = [], data_equipos = [];
+    let validacion = { tecnico: false, sitio: false, equipo: false };
+    let fotos_base64 = { foto1: null, foto2: null, foto3: null };
+
+    setInterval(() => { document.getElementById('reloj').innerText = new Date().toLocaleTimeString("es-SV", {hour12:false}); }, 1000);
+
+    window.onload = async () => {
+        try {
+            const resT = await fetch(CONFIG.URL_TECNICOS);
+            const txtT = await resT.text();
+            data_tecnicos = txtT.split(/\r?\n/).filter(l => l.trim()).map(n => ({nombre: n.trim()}));
+            setupStrict(document.getElementById('tecnico'), document.getElementById('tecSug'), data_tecnicos, 'nombre', null, 'tecnico');
+            
+            const resS = await fetch(CONFIG.URL_SITIOS);
+            const txtS = await resS.text();
+            data_sitios = parseCSV(txtS);
+            setupStrict(document.getElementById('siteSearch'), document.getElementById('siteSug'), data_sitios, 'NOMBRE DE SITIO', 'idSitio', 'sitio', 'SITEID');
+
+            Papa.parse(CONFIG.URL_REPUESTOS, {
+                download: true, header: true, skipEmptyLines: true,
+                complete: (res) => {
+                    data_equipos = res.data;
+                    setupStrict(document.getElementById('eqSearch'), document.getElementById('eqSug'), data_equipos, 'DESCRIPCION DE EQUIPO', 'marca', 'equipo', 'MARCA');
+                    checkReady();
+                }
+            });
+        } catch(e) { console.error("Error carga inicial"); }
+    };
+
+    function parseCSV(d) {
+        const rows = d.split(/\r?\n/).filter(x => x.trim());
+        const headers = rows[0].split(',').map(x => x.trim().replace(/"/g,''));
+        return rows.slice(1).map(row => {
+            const values = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+            let obj = {}; headers.forEach((h, i) => obj[h] = values[i] ? values[i].trim().replace(/"/g,'') : '');
+            return obj;
+        });
+    }
+
+    function setupStrict(input, box, items, key, linkedId, valKey, extraKey) {
+        input.addEventListener('input', () => {
+            validacion[valKey] = false;
+            input.classList.add('invalid');
+            const searchVal = input.value.toLowerCase().trim();
+            const searchWords = searchVal.split(/\s+/);
+            box.innerHTML = '';
+
+            if (searchVal.length < 1) { box.style.display = 'none'; return; }
+
+            const matches = items.filter(item => {
+                const text = (item[key] || "").toString().toLowerCase();
+                return searchWords.every(word => text.includes(word));
+            }).slice(0, 15);
+
+            matches.forEach(item => {
+                const d = document.createElement('div');
+                d.className = 'suggestion-item';
+                d.innerHTML = `<strong>${item[key]}</strong>${item[extraKey] ? '<br><small>'+item[extraKey]+'</small>' : ''}`;
+                d.onclick = () => {
+                    input.value = item[key];
+                    if (linkedId) document.getElementById(linkedId).value = item[extraKey] || '';
+                    validacion[valKey] = true;
+                    input.classList.remove('invalid');
+                    box.style.display = 'none';
+                };
+                box.appendChild(d);
+            });
+            box.style.display = matches.length ? 'block' : 'none';
+        });
+
+        input.addEventListener('blur', () => {
+            setTimeout(() => {
+                if (!validacion[valKey]) { input.value = ''; if (linkedId) document.getElementById(linkedId).value = ''; input.classList.remove('invalid'); }
+                box.style.display = 'none';
+            }, 300);
+        });
+    }
+
+    function configurarProcesadorFoto(idInput, idPrev, idLabel, key) {
+        document.getElementById(idInput).addEventListener('change', function() {
+            if (this.files && this.files[0]) {
+                if (!validacion.tecnico || !validacion.sitio) {
+                    alert("⚠️ Completa técnico y sitio primero.");
+                    this.value = ''; return;
+                }
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        const ctx = canvas.getContext('2d');
+                        const MAX = 1600;
+                        let w = img.width, h = img.height;
+                        if (w > h && w > MAX) { h *= MAX / w; w = MAX; }
+                        else if (h >= w && h > MAX) { w *= MAX / h; h = MAX; }
+                        canvas.width = w; canvas.height = h;
+                        ctx.drawImage(img, 0, 0, w, h);
+
+                        const txt = `${new Date().toLocaleString()} | Téc: ${document.getElementById('tecnico').value} | Sitio: ${document.getElementById('idSitio').value}`;
+                        ctx.fillStyle = "rgba(0,0,0,0.6)";
+                        ctx.fillRect(0, h - 70, w, 70);
+                        ctx.fillStyle = "white";
+                        ctx.font = "bold 24px Poppins, Arial";
+                        ctx.fillText(txt, 30, h - 30);
+
+                        const data = canvas.toDataURL("image/jpeg", 0.8);
+                        document.getElementById(idPrev).src = data;
+                        document.getElementById(idPrev).style.display = 'block';
+                        document.getElementById(idLabel).style.display = 'none';
+                        fotos_base64[key] = data.split(',')[1];
+                    };
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(this.files[0]);
+            }
+        });
+    }
+
+    configurarProcesadorFoto('foto1', 'prev1', 'label-f1', 'foto1');
+    configurarProcesadorFoto('foto2', 'prev2', 'label-f2', 'foto2');
+    configurarProcesadorFoto('foto3', 'prev3', 'label-f3', 'foto3');
+
+    function checkReady() {
+        if(data_equipos.length > 0) {
+            const b = document.getElementById('btnStart');
+            b.disabled = false; b.style.background = "var(--brand)"; b.innerText = "¡EMPEZAR REGISTRO!";
+            document.getElementById('status-text').innerText = "Sistemas Sincronizados";
+        }
+    }
+
+    function setBodega(btn, v) {
+        document.querySelectorAll('.btn-bodega').forEach(b => b.classList.remove('selected'));
+        btn.classList.add('selected');
+        document.getElementById('bodega').value = v;
+    }
+
+    function activarForm() {
+        document.getElementById('consentimiento').classList.add('hidden');
+        document.getElementById('mainForm').classList.remove('hidden');
+    }
+
+    document.getElementById('mainForm').onsubmit = async (e) => {
+        e.preventDefault();
+        if(!validacion.tecnico || !validacion.sitio || !validacion.equipo) { alert("⚠️ Selección inválida."); return; }
+        if(!fotos_base64.foto1 || !fotos_base64.foto2 || !fotos_base64.foto3) { alert("⚠️ Las 3 fotos son obligatorias."); return; }
+
+        const b = document.getElementById('btnEnviar');
+        b.disabled = true; b.innerText = "Registrando...";
+
+        const p = {
+            tecnico: document.getElementById('tecnico').value,
+            bodega: document.getElementById('bodega').value,
+            idSitio: document.getElementById('idSitio').value,
+            nombreSitio: document.getElementById('siteSearch').value,
+            descripcion: document.getElementById('eqSearch').value,
+            marca: document.getElementById('marca').value,
+            serie: document.getElementById('serie').value,
+            comentarios: document.getElementById('comentarios').value, // Dato opcional capturado
+            f1: fotos_base64.foto1,
+            f2: fotos_base64.foto2,
+            f3: fotos_base64.foto3
+        };
+
+        try {
+            const res = await fetch(CONFIG.URL_SCRIPT, { method: 'POST', body: new URLSearchParams(p) });
+            const json = await res.json();
+            if(json.result === "success") {
+                // Redirección con parámetros incluyendo comentarios (sustituye entry.XXXXX por el ID de tu campo de comentarios en el Form)
+                window.location.href = `${CONFIG.URL_FORM}?entry.1637897291=CELECT&entry.795516044=${encodeURIComponent(p.bodega)}&entry.1265319450=${p.idSitio}&entry.1509520939=${encodeURIComponent(p.nombreSitio)}&entry.554570123=${encodeURIComponent(p.marca)}&entry.1914147166=${encodeURIComponent(p.descripcion)}&entry.1497572830=${encodeURIComponent(p.serie)}&entry.111111111=${encodeURIComponent(json.url1)}&entry.222222222=${encodeURIComponent(json.url2)}&entry.333333333=${encodeURIComponent(json.url3)}`;
+            }
+        } catch (err) { alert("Error de conexión"); b.disabled = false; b.innerText = "REINTENTAR"; }
+    };
+</script>
+</body>
+</html>
