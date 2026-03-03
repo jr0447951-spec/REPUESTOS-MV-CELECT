@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Repuestos Go! - Network Ops 2026</title>
+    <title>Repuestos Go! - 2026</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
     <style>
@@ -14,25 +14,21 @@
         .container { width: 90%; max-width: 450px; margin: 20px auto; }
         .card { background: var(--card-bg); border-radius: 24px; padding: 25px; box-shadow: 0 10px 25px rgba(0,0,0,0.03); border: 1px solid rgba(255,255,255,0.8); margin-bottom: 20px; }
         label { display: block; margin-top: 15px; font-size: 0.75rem; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; }
-        
-        input { width: 100%; padding: 14px; margin-top: 6px; border-radius: 16px; border: 1.5px solid #e2e8f0; background: #f8fafc; font-size: 1rem; outline: none; box-sizing: border-box; transition: 0.3s; }
-        input:focus { border-color: var(--brand-light); background: #fff; }
+        input, textarea { width: 100%; padding: 14px; margin-top: 6px; border-radius: 16px; border: 1.5px solid #e2e8f0; background: #f8fafc; font-size: 1rem; outline: none; box-sizing: border-box; transition: 0.3s; font-family: 'Poppins', sans-serif; }
+        input:focus, textarea:focus { border-color: var(--brand-light); background: #fff; }
         input.invalid { border-color: var(--error); background: #fff1f2; }
         .readonly { background: #f1f5f9; color: #94a3b8; border-style: none; cursor: not-allowed; }
-        
-        .suggestions { position: absolute; width: 100%; background: #fff; border-radius: 16px; box-shadow: 0 15px 35px rgba(0,0,0,0.1); z-index: 100; display: none; margin-top: 5px; border: 1px solid #e2e8f0; max-height: 180px; overflow-y: auto; }
+        .suggestions { position: absolute; width: 100%; background: #fff; border-radius: 16px; box-shadow: 0 15px 35px rgba(0,0,0,0.1); z-index: 100; display: none; margin-top: 5px; border: 1px solid #e2e8f0; max-height: 250px; overflow-y: auto; }
         .suggestion-item { padding: 15px; border-bottom: 1px solid #f1f5f9; font-size: 0.85rem; cursor: pointer; line-height: 1.4; }
         .suggestion-item strong { color: var(--brand); }
-
-        .photo-box { border: 2px dashed #cbd5e1; border-radius: 18px; padding: 25px; text-align: center; background: #f8fafc; cursor: pointer; margin-top: 10px; }
-        #previewFoto { width: 100%; border-radius: 14px; display: none; margin-top: 10px; border: 1px solid #e2e8f0; }
-        
+        .photo-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 10px; }
+        .photo-box { border: 2px dashed #cbd5e1; border-radius: 18px; height: 90px; display: flex; align-items: center; justify-content: center; background: #f8fafc; cursor: pointer; position: relative; overflow: hidden; }
+        .photo-box.required { border-color: var(--brand-light); }
+        .preview-img { width: 100%; height: 100%; object-fit: cover; display: none; position: absolute; top: 0; left: 0; }
         .bodega-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 8px; }
         .btn-bodega { background: #f1f5f9; border: 2px solid transparent; padding: 12px 5px; border-radius: 14px; font-size: 0.65rem; font-weight: 600; color: #475569; cursor: pointer; }
         .btn-bodega.selected { background: #fff; border-color: var(--brand); color: var(--brand); box-shadow: 0 5px 15px rgba(79, 70, 229, 0.1); }
-
         .btn-send { width: 100%; padding: 18px; border-radius: 18px; background: linear-gradient(135deg, var(--brand), var(--brand-light)); color: white; border: none; font-weight: 600; font-size: 1rem; margin-top: 30px; cursor: pointer; }
-        .btn-send:disabled { background: #cbd5e1; cursor: not-allowed; }
         .hidden { display: none; }
     </style>
 </head>
@@ -47,14 +43,14 @@
     <div class="card" id="consentimiento" style="text-align: center;">
         <div style="font-size: 3rem; margin-bottom: 10px;">📦</div>
         <h2>Sincronizando Sistema</h2>
-        <p id="status-text" style="color: #64748b; font-size: 0.9rem;">Cargando base de repuestos...</p>
+        <p id="status-text" style="color: #64748b; font-size: 0.9rem;">Cargando base de datos...</p>
         <button onclick="activarForm()" id="btnStart" disabled class="btn-send" style="background: #94a3b8;">Cargando...</button>
     </div>
 
     <form id="mainForm" class="hidden">
         <div class="card">
+            <label>👤 Técnico Responsable</label>
             <div style="position:relative">
-                <label>👤 Técnico Responsable</label>
                 <input type="text" id="tecnico" placeholder="Escribe tu nombre..." autocomplete="off" required>
                 <div id="tecSug" class="suggestions"></div>
             </div>
@@ -67,15 +63,15 @@
             </div>
             <input type="hidden" id="bodega" required>
 
+            <label>📡 Sitio de Destino</label>
             <div style="position:relative">
-                <label>📡 Sitio de Destino</label>
                 <input type="text" id="siteSearch" placeholder="Nombre del sitio..." autocomplete="off" required>
                 <div id="siteSug" class="suggestions"></div>
             </div>
             <input type="text" id="idSitio" class="readonly" placeholder="ID Sitio" readonly required>
 
+            <label>📦 Repuesto / Equipo</label>
             <div style="position:relative">
-                <label>📦 Repuesto / Equipo</label>
                 <input type="text" id="eqSearch" placeholder="Escribe descripción..." autocomplete="off" required>
                 <div id="eqSug" class="suggestions"></div>
             </div>
@@ -84,16 +80,27 @@
             <label>🔢 Número de Serie</label>
             <input type="text" id="serie" placeholder="S/N de la pieza" required>
 
-            <label>📷 Evidencia Fotográfica</label>
-            <div class="photo-box" onclick="document.getElementById('foto').click()">
-                <div id="instrucciones-foto">
-                    <div style="font-size: 2rem;">📷</div>
-                    <p style="font-size: 0.8rem; color: #64748b; margin-top: 5px;">Toca para adjuntar</p>
-                    <small style="color: #94a3b8;">(Se aplicará marca de agua)</small>
+            <label>💬 Observaciones (Opcional)</label>
+            <textarea id="comentarios" placeholder="Notas adicionales..." rows="2" style="resize:none;"></textarea>
+
+            <label>📷 Evidencia (F1 Obligatoria)</label>
+            <div class="photo-grid">
+                <div class="photo-box required" onclick="document.getElementById('foto1').click()">
+                    <span id="label-f1">F1 *</span>
+                    <img id="prev1" class="preview-img">
                 </div>
-                <img id="previewFoto">
+                <div class="photo-box" onclick="document.getElementById('foto2').click()">
+                    <span id="label-f2">F2</span>
+                    <img id="prev2" class="preview-img">
+                </div>
+                <div class="photo-box" onclick="document.getElementById('foto3').click()">
+                    <span id="label-f3">F3</span>
+                    <img id="prev3" class="preview-img">
+                </div>
             </div>
-            <input type="file" id="foto" accept="image/*" class="hidden" required>
+            <input type="file" id="foto1" accept="image/*" class="hidden" required>
+            <input type="file" id="foto2" accept="image/*" class="hidden">
+            <input type="file" id="foto3" accept="image/*" class="hidden">
 
             <button type="submit" id="btnEnviar" class="btn-send">FINALIZAR REGISTRO</button>
         </div>
@@ -105,56 +112,35 @@
         URL_SITIOS: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTE_5CZtD7qHGW5cWHGAjn7ALTphVm5h88lco9cySYoAe2VBW4fq8DQ7-SZY6cd_FHtNQJS3MpE88hs/pub?gid=1955381502&single=true&output=csv',
         URL_TECNICOS: 'tecnicos.csv',
         URL_REPUESTOS: 'inventario_repuestos.csv',
-        URL_SCRIPT: 'https://script.google.com/macros/s/AKfycbz_Wv6DikTWQuqnAd9gMrjfEoFOFa9E9YdUuY5cSkr4ICqBKOo5WPvmJrhYF5_dv5fa/exec',
+        URL_SCRIPT: 'https://script.google.com/macros/s/AKfycbwGo9DDROjDezssVtiZyOM3ADMfTHIUHn9lfvYuYLfNVqM4hGW2fPsxnjHawl0AQyxX/exec',
         URL_FORM: 'https://docs.google.com/forms/d/e/1FAIpQLSdeek133oAtejD-fC1LPvFPDHiej3l0tokNW9N31LdHFpS06g/viewform'
     };
 
     let data_tecnicos = [], data_sitios = [], data_equipos = [];
     let validacion = { tecnico: false, sitio: false, equipo: false };
+    let fotos_base64 = { foto1: null, foto2: null, foto3: null };
 
     setInterval(() => { document.getElementById('reloj').innerText = new Date().toLocaleTimeString("es-SV", {hour12:false}); }, 1000);
 
     window.onload = async () => {
-        // 1. Cargar Técnicos
         try {
-            const resT = await fetch(CONFIG.URL_TECNICOS);
-            const txtT = await resT.text();
-            data_tecnicos = txtT.split(/\r?\n/).filter(l => l.trim()).map(n => ({nombre: n.trim()}));
+            const resT = await fetch(CONFIG.URL_TECNICOS).then(r => r.text());
+            data_tecnicos = resT.split(/\r?\n/).filter(l => l.trim()).map(n => ({nombre: n.trim()}));
             setupStrict(document.getElementById('tecnico'), document.getElementById('tecSug'), data_tecnicos, 'nombre', null, 'tecnico');
-        } catch(e) { console.error("Error técnicos"); }
-
-        // 2. Cargar Sitios
-        try {
-            const resS = await fetch(CONFIG.URL_SITIOS);
-            const txtS = await resS.text();
-            data_sitios = parseCSV(txtS);
+            
+            const resS = await fetch(CONFIG.URL_SITIOS).then(r => r.text());
+            data_sitios = parseCSV(resS);
             setupStrict(document.getElementById('siteSearch'), document.getElementById('siteSug'), data_sitios, 'NOMBRE DE SITIO', 'idSitio', 'sitio', 'SITEID');
-        } catch(e) { console.error("Error sitios"); }
 
-        // 3. Cargar Repuestos (Con detección de errores)
-        Papa.parse(CONFIG.URL_REPUESTOS, {
-            download: true,
-            header: true,
-            skipEmptyLines: true,
-            complete: (res) => {
-                data_equipos = res.data;
-                console.log("Datos equipos:", data_equipos[0]); // Debug
-                
-                // Mapeo flexible por si las columnas cambian ligeramente
-                setupStrict(
-                    document.getElementById('eqSearch'), 
-                    document.getElementById('eqSug'), 
-                    data_equipos, 
-                    'DESCRIPCION DE EQUIPO', 
-                    'marca', 
-                    'equipo', 
-                    'MARCA'
-                );
-                
-                checkReady();
-            },
-            error: () => { document.getElementById('status-text').innerText = "⚠️ Error cargando inventario_repuestos.csv"; }
-        });
+            Papa.parse(CONFIG.URL_REPUESTOS, {
+                download: true, header: true, skipEmptyLines: true,
+                complete: (res) => {
+                    data_equipos = res.data;
+                    setupStrict(document.getElementById('eqSearch'), document.getElementById('eqSug'), data_equipos, 'DESCRIPCION DE EQUIPO', 'marca', 'equipo', 'MARCA');
+                    checkReady();
+                }
+            });
+        } catch(e) { console.error("Error inicial"); }
     };
 
     function parseCSV(d) {
@@ -171,16 +157,14 @@
         input.addEventListener('input', () => {
             validacion[valKey] = false;
             input.classList.add('invalid');
-            const v = input.value.toLowerCase().trim();
+            const searchVal = input.value.toLowerCase().trim();
+            const searchWords = searchVal.split(/\s+/);
             box.innerHTML = '';
-            
-            if (v.length < 1) { box.style.display = 'none'; return; }
-
-            const matches = items.filter(i => {
-                const text = (i[key] || "").toString().toLowerCase();
-                return text.includes(v);
-            }).slice(0, 8);
-
+            if (searchVal.length < 1) { box.style.display = 'none'; return; }
+            const matches = items.filter(item => {
+                const text = (item[key] || "").toString().toLowerCase();
+                return searchWords.every(word => text.includes(word));
+            }).slice(0, 15);
             matches.forEach(item => {
                 const d = document.createElement('div');
                 d.className = 'suggestion-item';
@@ -196,27 +180,55 @@
             });
             box.style.display = matches.length ? 'block' : 'none';
         });
-
         input.addEventListener('blur', () => {
             setTimeout(() => {
-                if (!validacion[valKey]) {
-                    input.value = '';
-                    if (linkedId) document.getElementById(linkedId).value = '';
-                    input.classList.remove('invalid');
-                }
+                if (!validacion[valKey]) { input.value = ''; if (linkedId) document.getElementById(linkedId).value = ''; }
                 box.style.display = 'none';
             }, 300);
         });
     }
 
+    function configurarProcesadorFoto(idInput, idPrev, idLabel, key) {
+        document.getElementById(idInput).addEventListener('change', function() {
+            if (this.files && this.files[0]) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        const ctx = canvas.getContext('2d');
+                        const MAX = 1200;
+                        let w = img.width, h = img.height;
+                        if (w > h && w > MAX) { h *= MAX / w; w = MAX; }
+                        else if (h >= w && h > MAX) { w *= MAX / h; h = MAX; }
+                        canvas.width = w; canvas.height = h;
+                        ctx.drawImage(img, 0, 0, w, h);
+                        ctx.fillStyle = "rgba(0,0,0,0.6)";
+                        ctx.fillRect(0, h - 50, w, 50);
+                        ctx.fillStyle = "white";
+                        ctx.font = "bold 18px Arial";
+                        ctx.fillText(`${new Date().toLocaleString()} | ${document.getElementById('idSitio').value}`, 20, h - 20);
+                        const data = canvas.toDataURL("image/jpeg", 0.7);
+                        document.getElementById(idPrev).src = data;
+                        document.getElementById(idPrev).style.display = 'block';
+                        document.getElementById(idLabel).style.display = 'none';
+                        fotos_base64[key] = data.split(',')[1];
+                    };
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(this.files[0]);
+            }
+        });
+    }
+
+    configurarProcesadorFoto('foto1', 'prev1', 'label-f1', 'foto1');
+    configurarProcesadorFoto('foto2', 'prev2', 'label-f2', 'foto2');
+    configurarProcesadorFoto('foto3', 'prev3', 'label-f3', 'foto3');
+
     function checkReady() {
-        if(data_equipos.length > 0) {
-            const b = document.getElementById('btnStart');
-            b.disabled = false;
-            b.style.background = "var(--brand)";
-            b.innerText = "¡EMPEZAR REGISTRO!";
-            document.getElementById('status-text').innerText = "Sistemas Sincronizados";
-        }
+        const b = document.getElementById('btnStart');
+        b.disabled = false; b.style.background = "var(--brand)"; b.innerText = "¡EMPEZAR REGISTRO!";
+        document.getElementById('status-text').innerText = "Sistemas Sincronizados";
     }
 
     function setBodega(btn, v) {
@@ -230,61 +242,14 @@
         document.getElementById('mainForm').classList.remove('hidden');
     }
 
-    // --- PROCESAMIENTO HD + MARCA DE AGUA ---
-    const fotoIn = document.getElementById('foto');
-    fotoIn.addEventListener('change', function() {
-        if (this.files && this.files[0]) {
-            if (!validacion.tecnico || !validacion.sitio) {
-                alert("⚠️ Selecciona Técnico y Sitio antes de la foto.");
-                this.value = ''; return;
-            }
-            
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                const img = new Image();
-                img.onload = () => {
-                    const canvas = document.createElement('canvas');
-                    const ctx = canvas.getContext('2d');
-                    
-                    // Configuración HD Recomendada (1600px)
-                    const MAX = 1600;
-                    let w = img.width, h = img.height;
-                    if (w > h && w > MAX) { h *= MAX / w; w = MAX; }
-                    else if (h >= w && h > MAX) { w *= MAX / h; h = MAX; }
-                    
-                    canvas.width = w; canvas.height = h;
-                    ctx.imageSmoothingEnabled = true;
-                    ctx.imageSmoothingQuality = 'high';
-                    ctx.drawImage(img, 0, 0, w, h);
-
-                    // Marca de Agua Profesional
-                    const txt = `${new Date().toLocaleString()} | Téc: ${document.getElementById('tecnico').value} | Sitio: ${document.getElementById('idSitio').value}`;
-                    ctx.fillStyle = "rgba(0,0,0,0.6)";
-                    ctx.fillRect(0, h - 70, w, 70);
-                    ctx.fillStyle = "white";
-                    ctx.font = "bold 24px Poppins, Arial";
-                    ctx.fillText(txt, 30, h - 30);
-
-                    // Compresión Calidad 0.8
-                    const data = canvas.toDataURL("image/jpeg", 0.8);
-                    document.getElementById('previewFoto').src = data;
-                    document.getElementById('previewFoto').style.display = 'block';
-                    document.getElementById('instrucciones-foto').style.display = 'none';
-                    fotoIn.dataset.blob = data.split(',')[1];
-                };
-                img.src = e.target.result;
-            };
-            reader.readAsDataURL(this.files[0]);
-        }
-    });
-
     document.getElementById('mainForm').onsubmit = async (e) => {
         e.preventDefault();
-        if(!validacion.tecnico || !validacion.sitio || !validacion.equipo) {
-            alert("⚠️ Por favor selecciona elementos válidos de las listas."); return;
-        }
+        if(!validacion.tecnico || !validacion.sitio || !validacion.equipo) { alert("⚠️ Selección inválida."); return; }
+        if(!fotos_base64.foto1) { alert("⚠️ La Foto 1 es obligatoria."); return; }
 
         const b = document.getElementById('btnEnviar');
+        b.disabled = true; b.innerText = "Registrando...";
+
         const p = {
             tecnico: document.getElementById('tecnico').value,
             bodega: document.getElementById('bodega').value,
@@ -293,21 +258,35 @@
             descripcion: document.getElementById('eqSearch').value,
             marca: document.getElementById('marca').value,
             serie: document.getElementById('serie').value,
-            fileData: fotoIn.dataset.blob,
-            fileName: `REP_${document.getElementById('idSitio').value}_${Date.now()}.jpg`,
-            mimeType: "image/jpeg"
+            comentarios: document.getElementById('comentarios').value,
+            f1: fotos_base64.foto1,
+            f2: fotos_base64.foto2 || "",
+            f3: fotos_base64.foto3 || ""
         };
-
-        if(!p.bodega || !p.fileData) { alert("⚠️ Falta bodega o fotografía."); return; }
-        b.disabled = true; b.innerText = "Registrando...";
 
         try {
             const res = await fetch(CONFIG.URL_SCRIPT, { method: 'POST', body: new URLSearchParams(p) });
             const json = await res.json();
+            
             if(json.result === "success") {
-                window.location.href = `${CONFIG.URL_FORM}?entry.1637897291=CELECT&entry.795516044=${encodeURIComponent(p.bodega)}&entry.1265319450=${p.idSitio}&entry.1509520939=${encodeURIComponent(p.nombreSitio)}&entry.554570123=${encodeURIComponent(p.marca)}&entry.1914147166=${encodeURIComponent(p.descripcion)}&entry.1497572830=${encodeURIComponent(p.serie)}&entry.733439703=${encodeURIComponent(json.fileUrl)}`;
+                // REDIRECCIÓN CON ENTRIES ORIGINALES
+                const urlFinal = `${CONFIG.URL_FORM}?` + 
+                    `entry.1637897291=CELECT` + 
+                    `&entry.795516044=${encodeURIComponent(p.bodega)}` + 
+                    `&entry.1265319450=${encodeURIComponent(p.idSitio)}` + 
+                    `&entry.1509520939=${encodeURIComponent(p.nombreSitio)}` + 
+                    `&entry.554570123=${encodeURIComponent(p.marca)}` + 
+                    `&entry.1914147166=${encodeURIComponent(p.descripcion)}` + 
+                    `&entry.1497572830=${encodeURIComponent(p.serie)}` +
+                    `&entry.122146950=${encodeURIComponent(p.comentarios)}`; // Entry de comentarios
+
+                window.location.href = urlFinal;
             }
-        } catch (err) { alert("Error de conexión"); b.disabled = false; b.innerText = "REINTENTAR"; }
+        } catch (err) { 
+            alert("Error de conexión"); 
+            b.disabled = false; 
+            b.innerText = "REINTENTAR"; 
+        }
     };
 </script>
 </body>
