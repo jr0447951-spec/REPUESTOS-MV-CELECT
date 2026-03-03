@@ -56,7 +56,7 @@
         <div class="card">
             <div style="position:relative">
                 <label>👤 Técnico Responsable</label>
-                <input type="text" id="tecnico" placeholder="Escribe tu nombre..." autocomplete="off" required>
+                < type="text" id="tecnico" placeholder="Escribe tu nombre..." autocomplete="off" required>
                 <div id="tecSug" class="suggestions"></div>
             </div>
 
@@ -66,11 +66,11 @@
                 <button type="button" class="btn-bodega" onclick="setBodega(this, 'BODEGA CENTRAL')">Central</button>
                 <button type="button" class="btn-bodega" onclick="setBodega(this, 'TALNIQUE')">Talnique</button>
             </div>
-            <input type="hidden" id="bodega" required>
+            < type="hidden" id="bodega" required>
 
             <div style="position:relative">
                 <label>📡 Sitio de Destino</label>
-                <input type="text" id="siteSearch" placeholder="Nombre del sitio..." autocomplete="off" required>
+                < type="text" id="siteSearch" placeholder="Nombre del sitio..." autocomplete="off" required>
                 <div id="siteSug" class="suggestions"></div>
             </div>
             <input type="text" id="idSitio" class="readonly" placeholder="ID Sitio" readonly required>
@@ -104,8 +104,8 @@
                 </div>
             </div>
             <input type="file" id="foto1" accept="image/*" class="hidden" required>
-            <input type="file" id="foto2" accept="image/*" class="hidden" required>
-            <input type="file" id="foto3" accept="image/*" class="hidden" required>
+            <input type="file" id="foto2" accept="image/*" class="hidden">
+            <input type="file" id="foto3" accept="image/*" class="hidden">
 
             <button type="submit" id="btnEnviar" class="btn-send">FINALIZAR REGISTRO</button>
         </div>
