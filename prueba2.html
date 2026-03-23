@@ -30,8 +30,8 @@
         .tab-btn { padding: 10px 20px; border: none; border-radius: 10px; cursor: pointer; background: transparent; font-weight: 600; color: #64748b; }
         .tab-btn.active { background: white; color: var(--brand); box-shadow: 0 4px 10px rgba(0,0,0,0.08); }
 
-        /* Sub-Tabs para Status Bodega */
-        .sub-tab-container { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; }
+        /* Sub-Tabs */
+        .sub-tab-container { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; flex-wrap: wrap; }
         .sub-tab { padding: 8px 16px; border-radius: 8px; font-size: 0.85rem; }
         .sub-tab.active { background: var(--brand); color: white; }
 
@@ -100,14 +100,14 @@
         <table id="tablaPendientes">
             <thead>
                <tr>
-    <th>Antigüedad</th>
-    <th>Fecha Salida</th>
-    <th>ID Sitio</th>
-    <th>Nombre Sitio</th>
-    <th>Equipo</th>
-    <th>Serie</th>
-    <th>Técnico</th>
-</tr>
+                    <th>Antigüedad</th>
+                    <th>Fecha Salida</th>
+                    <th>ID Sitio</th>
+                    <th>Nombre Sitio</th>
+                    <th>Equipo</th>
+                    <th>Serie</th>
+                    <th>Técnico</th>
+                </tr>
             </thead>
             <tbody></tbody>
         </table>
@@ -144,11 +144,11 @@
 <div id="tab-bodega" class="tab-content" style="display:none;">
     <div class="filter-row" style="background:white; padding:20px; border-radius:20px; margin-bottom:20px; box-shadow: 0 4px 10px rgba(0,0,0,0.05)">
         <label>Semana:</label>
-        <input type="number" id="fSemanaBodega" placeholder="Ej: 12" style="width: 70px;" onchange="renderBodega()">
+        <input type="number" id="fSemanaBodega" placeholder="Todas" style="width: 70px;" oninput="renderBodega()">
         <label style="margin-left: 10px;">Año:</label>
-        <input type="number" id="fAnoBodega" placeholder="2026" style="width: 80px;" onchange="renderBodega()">
+        <input type="number" id="fAnoBodega" placeholder="Todos" style="width: 80px;" oninput="renderBodega()">
         
-        <div style="margin-left:auto; display:flex; gap:10px">
+        <div style="margin-left:auto; display:flex; gap:10px; flex-wrap: wrap;">
             <div class="badge-count" style="background: #64748b; padding: 6px 12px;">Bodega (A la espera): <span id="kpi-bodega-sol">0</span></div>
             <div class="badge-count" style="background: var(--warning); padding: 6px 12px;">Retirados (Pendientes): <span id="kpi-bodega-pen">0</span></div>
             <div class="badge-count" style="background: var(--success); padding: 6px 12px;">Entregados: <span id="kpi-bodega-ent">0</span></div>
@@ -192,15 +192,15 @@
         <table id="tablaHistorial">
             <thead>
                 <tr>
-    <th>Fecha</th>
-    <th>ID Sitio</th>
-    <th>Nombre Sitio</th>
-    <th>Equipo</th>
-    <th>Serie</th>
-    <th>Técnico</th>
-    <th>Estado</th>
-    <th>Comentario</th>
-</tr>
+                    <th>Fecha</th>
+                    <th>ID Sitio</th>
+                    <th>Nombre Sitio</th>
+                    <th>Equipo</th>
+                    <th>Serie</th>
+                    <th>Técnico</th>
+                    <th>Estado</th>
+                    <th>Comentario</th>
+                </tr>
             </thead>
             <tbody></tbody>
         </table>
@@ -210,55 +210,52 @@
 <footer><strong>NETWORK OPERATIONS</strong> | 2026</footer>
 
 <script>
-// TUS URLS ORIGINALES INTACTAS
 const URL_S = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQBNrpLKc_GPFT6Ik9Yr4s1qo8zaOOqrDgTc_9DGeMd20rNTsEtLktTCoeDcRrts6kvgne86KZDfKQS/pub?gid=0&single=true&output=csv';
 const URL_E = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQBNrpLKc_GPFT6Ik9Yr4s1qo8zaOOqrDgTc_9DGeMd20rNTsEtLktTCoeDcRrts6kvgne86KZDfKQS/pub?gid=887165919&single=true&output=csv';
 
-// ¡NUEVO! TU URL DEL HISTORIAL RECIÉN AUTOMATIZADO
-const URL_NUEVO_HISTORIAL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQa4hodHj5bdOFphK4LKC4r3R4Vu0eXocLdSvCz8TRavXyryvBRgc05P8VDwzb0V9afMJx15_RMAmBq/pub?gid=184673354&single=true&output=csv';
+// TU URL BLINDADA (Con un parámetro de tiempo al final para obligar a descargar lo más nuevo)
+const URL_NUEVO_HISTORIAL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQa4hodHj5bdOFphK4LKC4r3R4Vu0eXocLdSvCz8TRavXyryvBRgc05P8VDwzb0V9afMJx15_RMAmBq/pub?gid=184673354&single=true&output=csv&t=' + new Date().getTime();
 
 let rawData = { pendientes: [], entregas: [], historial: [], entregasFull: [], nuevoHistorial: [] };
-
-// Variable para controlar qué sub-pestaña vemos
 let currentBodegaTab = 'solicitados'; 
 
 async function init() {
-    // Agregamos el fetch del nuevo historial a la promesa original
-    const [resS, resE, resH] = await Promise.all([
-        fetch(URL_S), 
-        fetch(URL_E),
-        fetch(URL_NUEVO_HISTORIAL).catch(() => null) // .catch previene error si aún no pones el link
-    ]);
-    
-    const sTxt = await resS.text();
-    const eTxt = await resE.text();
-    let hTxt = "";
-    if (resH) hTxt = await resH.text();
-    
-    Papa.parse(sTxt, { complete: (r) => {
-        rawData.historial = r.data;
-        rawData.pendientes = r.data.filter(f => f[9] === 'PENDIENTE');
-        document.getElementById('filterMes').value = new Date().toISOString().substring(0, 7);
-        renderPendientes();
-    }});
-    
-    Papa.parse(eTxt, { complete: (r) => {
-        rawData.entregasFull = r.data;
-        setSemanaActual();
-        renderEntregas();
-        actualizarKpis();
-    }});
+    try {
+        const [resS, resE, resH] = await Promise.all([
+            fetch(URL_S), 
+            fetch(URL_E),
+            fetch(URL_NUEVO_HISTORIAL)
+        ]);
+        
+        const sTxt = await resS.text();
+        const eTxt = await resE.text();
+        const hTxt = await resH.text();
+        
+        Papa.parse(sTxt, { complete: (r) => {
+            rawData.historial = r.data;
+            rawData.pendientes = r.data.filter(f => f[9] === 'PENDIENTE');
+            document.getElementById('filterMes').value = new Date().toISOString().substring(0, 7);
+            renderPendientes();
+        }});
+        
+        Papa.parse(eTxt, { complete: (r) => {
+            rawData.entregasFull = r.data;
+            setSemanaActual();
+            renderEntregas();
+            actualizarKpis();
+        }});
 
-    // Parseamos la data de nuestra automatización
-    if (hTxt) {
         Papa.parse(hTxt, { complete: (r) => {
             rawData.nuevoHistorial = r.data;
-            setSemanaBodegaActual(); // Autocompleta los inputs de semana/año
+            setSemanaBodegaActual(); 
             renderBodega();
         }});
-    }
 
-    document.getElementById('lastUpdate').innerText = "Sincronizado: " + new Date().toLocaleTimeString();
+        document.getElementById('lastUpdate').innerText = "Sincronizado: " + new Date().toLocaleTimeString();
+    } catch (e) {
+        console.error("Error al cargar los datos:", e);
+        document.getElementById('lastUpdate').innerText = "Error de conexión. Reintenta.";
+    }
 }
 
 function parseFecha(s) { 
@@ -278,7 +275,6 @@ function setSemanaActual() {
     document.getElementById('filterSemanaE').value = `${ano}-W${String(weekNo).padStart(2, '0')}`;
 }
 
-// ¡NUEVO! Autocompletar los campos de la nueva pestaña
 function setSemanaBodegaActual() {
     const hoy = new Date();
     const ano = hoy.getFullYear();
@@ -347,9 +343,7 @@ function renderEntregas() {
     tbody.innerHTML = filt.map(f => `<tr><td>${f[0]}</td><td><strong>${f[3]}</strong></td><td>${f[2]}</td><td>${f[6]}</td><td><code>${f[9]}</code></td><td>${f[8]}</td><td>${f[1]}</td></tr>`).join('');
 }
 
-// ==========================================================
-// ¡NUEVO! LÓGICA PARA RENDERIZAR LA PESTAÑA STATUS BODEGA
-// ==========================================================
+// LOGICA BODEGA BLINDADA
 function switchBodegaTab(tabName) {
     currentBodegaTab = tabName;
     document.querySelectorAll('.sub-tab').forEach(b => b.classList.remove('active'));
@@ -364,19 +358,29 @@ function renderBodega() {
 
     if (!rawData.nuevoHistorial || rawData.nuevoHistorial.length === 0) return;
 
-    // 1. Filtramos primero por Semana y Año (Columnas Q=16 y R=17 en tu Excel)
+    // Filtro global (robusto contra espacios y letras)
     let filtGlobal = rawData.nuevoHistorial.filter((f, index) => {
-        if (index === 0) return false; // Saltamos encabezados
-        if (sem && String(f[16]).trim() !== String(sem).trim()) return false;
-        if (ano && String(f[17]).trim() !== String(ano).trim()) return false;
+        if (index === 0) return false; 
+        if (!f || f.length < 18) return false; // Salta filas dañadas o vacías
+
+        // Extraemos solo los números para comparar
+        if (sem) {
+            let valSem = String(f[16] || "").replace(/\D/g, '');
+            let inputSem = String(sem).replace(/\D/g, '');
+            if (valSem !== inputSem) return false;
+        }
+        if (ano) {
+            let valAno = String(f[17] || "").replace(/\D/g, '');
+            let inputAno = String(ano).replace(/\D/g, '');
+            if (valAno !== inputAno) return false;
+        }
         return true;
     });
 
-    // 2. Calculamos los KPIs para esa semana
     let cSol = 0, cPen = 0, cEnt = 0;
     filtGlobal.forEach(f => {
         let estS = String(f[18] || "").toUpperCase().trim();
-        let estT = String(f[19] || "").toUpperCase().trim();
+        let estT = f.length > 19 ? String(f[19] || "").toUpperCase().trim() : "";
 
         if (estT === "ENTREGADO") cEnt++;
         else if (estT === "PENDIENTE") cPen++;
@@ -387,33 +391,35 @@ function renderBodega() {
     document.getElementById('kpi-bodega-pen').innerText = cPen;
     document.getElementById('kpi-bodega-ent').innerText = cEnt;
 
-    // 3. Filtramos según la Sub-Pestaña seleccionada (Solicitado / Pendiente / Entregado)
     let filtTabla = filtGlobal.filter(f => {
         let estS = String(f[18] || "").toUpperCase().trim();
-        let estT = String(f[19] || "").toUpperCase().trim();
+        let estT = f.length > 19 ? String(f[19] || "").toUpperCase().trim() : "";
 
         if (currentBodegaTab === 'entregados') return estT === 'ENTREGADO';
         if (currentBodegaTab === 'pendientes') return estT === 'PENDIENTE';
         
-        // Si estamos en la pestaña Solicitados a Bodega (Que aún NO han salido)
         if (currentBodegaTab === 'solicitados') {
             return estS.includes('SOLICITADO') && estT !== 'PENDIENTE' && estT !== 'ENTREGADO';
         }
         return false;
     });
 
-    // 4. Dibujamos la tabla
     tbody.innerHTML = filtTabla.map(f => {
-        let spanSalida = f[19] ? `<span class="badge-count" style="background:${f[19]=='ENTREGADO'?'var(--success)':'var(--warning)'}">${f[19]}</span>` : '-';
-        let claseS = f[18].includes('OMISIÓN') ? 'color: var(--danger); font-weight: bold;' : 'color: var(--brand); font-weight: bold;';
+        let valT = f.length > 19 ? f[19] : "";
+        let spanSalida = valT ? `<span class="badge-count" style="background:${valT=='ENTREGADO'?'var(--success)':'var(--warning)'}">${valT}</span>` : '-';
+        let claseS = (f[18]||"").includes('OMISIÓN') ? 'color: var(--danger); font-weight: bold;' : 'color: var(--brand); font-weight: bold;';
 
         return `<tr>
-            <td>${f[0]}</td>
-            <td><strong>${f[6]}</strong></td> <td>${f[7]}</td> <td>${f[2]}</td> <td style="${claseS}">${f[18]}</td> <td>${spanSalida}</td> <td>W${f[16]}</td>
+            <td>${f[0] || ""}</td>
+            <td><strong>${f[6] || ""}</strong></td>
+            <td>${f[7] || ""}</td>
+            <td>${f[2] || ""}</td>
+            <td style="${claseS}">${f[18] || ""}</td>
+            <td>${spanSalida}</td>
+            <td>W${f[16] || ""}</td>
         </tr>`;
     }).join('');
 }
-// ==========================================================
 
 function openTab(name) {
     document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
