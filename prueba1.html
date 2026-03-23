@@ -87,7 +87,6 @@
         }
         .suggestion-item { padding: 15px; border-bottom: 1px solid #f1f5f9; font-size: 0.85rem; cursor: pointer; }
 
-        /* Estilo para el área de Foto */
         .photo-box {
             border: 2px dashed #cbd5e1; border-radius: 18px; padding: 25px;
             text-align: center; background: #f8fafc; cursor: pointer; margin-top: 10px;
@@ -187,15 +186,16 @@
 </div>
 
 <script>
-    const CONFIG = {
-    URL_SITIOS: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTE_5CZtD7qHGW5cWHGAjn7ALTphVm5h88lco9cySYoAe2VBW4fq8DQ7-SZY6cd_FHtNQJS3MpE88hs/pub?gid=1955381502&single=true&output=csv&cache=' + Date.now(),
+    // Parche anti-caché: Agregamos un timestamp a las URLs de Google para forzar datos frescos
+    const timestamp = new Date().getTime();
     
-    // Agregamos esto al final de la URL de pendientes:
-    URL_PENDIENTES: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQBNrpLKc_GPFT6Ik9Yr4s1qo8zaOOqrDgTc_9DGeMd20rNTsEtLktTCoeDcRrts6kvgne86KZDfKQS/pub?output=csv&t=' + new Date().getTime(),
-    URL_TECNICOS: 'tecnicos.csv',
-    URL_REPUESTOS: 'inventario_repuestos.csv',
-    URL_APPS_SCRIPT: 'https://script.google.com/macros/s/AKfycbxJyDENWy4Zmwye7tcREXVGdAur50ggJ-QQTeexEeEoWN2VseEp3EeMUQRaRTMQzJik/exec'
-};
+    const CONFIG = {
+        URL_SITIOS: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTE_5CZtD7qHGW5cWHGAjn7ALTphVm5h88lco9cySYoAe2VBW4fq8DQ7-SZY6cd_FHtNQJS3MpE88hs/pub?gid=1955381502&single=true&output=csv&t=' + timestamp,
+        URL_PENDIENTES: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQBNrpLKc_GPFT6Ik9Yr4s1qo8zaOOqrDgTc_9DGeMd20rNTsEtLktTCoeDcRrts6kvgne86KZDfKQS/pub?output=csv&t=' + timestamp,
+        URL_TECNICOS: 'tecnicos.csv',
+        URL_REPUESTOS: 'inventario_repuestos.csv',
+        URL_APPS_SCRIPT: 'https://script.google.com/macros/s/AKfycbxJyDENWy4Zmwye7tcREXVGdAur50ggJ-QQTeexEeEoWN2VseEp3EeMUQRaRTMQzJik/exec'
+    };
 
     let data = { sites: [], pendientes: [], equipos: [], tecnicos: [] };
     let validacion = { tecnico: false, sitio: false, equipo: false };
@@ -206,12 +206,16 @@
 
     window.onload = async () => {
         try {
-            // Carga de bases de datos
             const [rS, rP, rT] = await Promise.all([
                 fetch(CONFIG.URL_SITIOS), fetch(CONFIG.URL_PENDIENTES), fetch(CONFIG.URL_TECNICOS)
             ]);
+            
             data.sites = parseCSV(await rS.text());
-            data.pendientes = (await rP.text()).split("\n").map(l => l.split(",").map(c => c.replace(/"/g,"").trim()));
+            
+            // Usamos PapaParse para pendientes para manejar correctamente links con comas
+            const textoP = await rP.text();
+            data.pendientes = Papa.parse(textoP, { skipEmptyLines: true }).data;
+
             data.tecnicos = (await rT.text()).split(/\r?\n/).filter(l => l.trim()).map(n => ({nombre: n.trim()}));
 
             Papa.parse(CONFIG.URL_REPUESTOS, {
@@ -291,11 +295,22 @@
     }
 
     function cargarPendientes() {
-        const id = document.getElementById('sitio_id').value;
+        const idCapturado = document.getElementById('sitio_id').value.toString().trim();
         const sel = document.getElementById('ref_salida_desc');
-        if(!id) return;
-        const lista = data.pendientes.filter(f => f[3] === id && f[9] === 'PENDIENTE');
-        sel.innerHTML = lista.length > 0 ? '<option value="">Seleccione equipo de salida...</option>' : '<option value="">No hay salidas pendientes</option>';
+        if(!idCapturado) return;
+
+        // Filtro reforzado para ID 390316 y otros: limpia espacios y formatos
+        const lista = data.pendientes.filter(f => {
+            if (!f[3] || !f[9]) return false;
+            const idExcel = f[3].toString().trim();
+            const estadoExcel = f[9].toString().trim().toUpperCase();
+            return idExcel === idCapturado && estadoExcel === 'PENDIENTE';
+        });
+
+        sel.innerHTML = lista.length > 0 
+            ? '<option value="">Seleccione equipo de salida...</option>' 
+            : '<option value="">No hay salidas pendientes para este sitio</option>';
+        
         lista.forEach(f => {
             let o = document.createElement('option');
             o.value = f[5]; o.innerText = f[5]; sel.appendChild(o);
@@ -304,7 +319,13 @@
 
     function llenarDesdeSalida() {
         const ref = document.getElementById('ref_salida_desc').value;
-        const f = data.pendientes.find(l => l[5]===ref && l[9]==='PENDIENTE');
+        const idCapturado = document.getElementById('sitio_id').value;
+        // Buscamos el registro que coincide con el ID y la descripción seleccionada
+        const f = data.pendientes.find(l => 
+            l[3].toString().trim() === idCapturado && 
+            l[5] === ref && 
+            l[9].toString().trim().toUpperCase() === 'PENDIENTE'
+        );
         if(f) { 
             document.getElementById('eqSearch').value = f[5]; 
             document.getElementById('marca').value = f[6];
