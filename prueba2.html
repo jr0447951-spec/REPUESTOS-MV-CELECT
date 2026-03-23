@@ -149,7 +149,8 @@
         <input type="number" id="fAnoBodega" placeholder="Todos" style="width: 80px;" oninput="renderBodega()">
         
         <div style="margin-left:auto; display:flex; gap:10px; flex-wrap: wrap;">
-            <div class="badge-count" style="background: #64748b; padding: 6px 12px;">Bodega (A la espera): <span id="kpi-bodega-sol">0</span></div>
+            <div class="badge-count" style="background: #94a3b8; padding: 6px 12px;">No Solicitado EEBB: <span id="kpi-bodega-nosol">0</span></div>
+            <div class="badge-count" style="background: #64748b; padding: 6px 12px;">Solicitados a Bodega: <span id="kpi-bodega-sol">0</span></div>
             <div class="badge-count" style="background: var(--warning); padding: 6px 12px;">Retirados (Pendientes): <span id="kpi-bodega-pen">0</span></div>
             <div class="badge-count" style="background: var(--success); padding: 6px 12px;">Entregados: <span id="kpi-bodega-ent">0</span></div>
         </div>
@@ -158,6 +159,7 @@
     <div class="table-container">
         <div class="sub-tab-container">
             <button class="tab-btn sub-tab active" onclick="switchBodegaTab('solicitados')">📦 Solicitados a Bodega</button>
+            <button class="tab-btn sub-tab" onclick="switchBodegaTab('no_solicitado')">⏳ No solicitado por EEBB</button>
             <button class="tab-btn sub-tab" onclick="switchBodegaTab('pendientes')">🛠️ Retirados (Pendientes)</button>
             <button class="tab-btn sub-tab" onclick="switchBodegaTab('entregados')">✅ Entregados</button>
         </div>
@@ -212,8 +214,6 @@
 <script>
 const URL_S = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQBNrpLKc_GPFT6Ik9Yr4s1qo8zaOOqrDgTc_9DGeMd20rNTsEtLktTCoeDcRrts6kvgne86KZDfKQS/pub?gid=0&single=true&output=csv';
 const URL_E = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQBNrpLKc_GPFT6Ik9Yr4s1qo8zaOOqrDgTc_9DGeMd20rNTsEtLktTCoeDcRrts6kvgne86KZDfKQS/pub?gid=887165919&single=true&output=csv';
-
-// URL BLINDADA 
 const URL_NUEVO_HISTORIAL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQa4hodHj5bdOFphK4LKC4r3R4Vu0eXocLdSvCz8TRavXyryvBRgc05P8VDwzb0V9afMJx15_RMAmBq/pub?gid=184673354&single=true&output=csv&t=' + new Date().getTime();
 
 let rawData = { pendientes: [], entregas: [], historial: [], entregasFull: [], nuevoHistorial: [] };
@@ -261,17 +261,14 @@ async function init() {
 function parseFecha(s) { 
     if(!s) return null; 
     const p = s.split(/[/ :]/); 
-    // Si la fecha no tiene formato esperado, regresamos null
     if(p.length < 3) return null;
     return new Date(p[2], p[1]-1, p[0]); 
 }
 
-// ¡LA MAGIA MATEMÁTICA! Esta función calcula Semana y Año a partir de una fecha exacta.
 function getWeekAndYear(dateStr) {
     let d = parseFecha(dateStr);
     if (!d || isNaN(d)) return { w: "", y: "" };
     
-    // Convertimos a UTC para no tener problemas de zonas horarias
     let tempDate = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
     let dayNum = tempDate.getUTCDay() || 7;
     tempDate.setUTCDate(tempDate.getUTCDate() + 4 - dayNum);
@@ -356,7 +353,7 @@ function renderEntregas() {
     tbody.innerHTML = filt.map(f => `<tr><td>${f[0]}</td><td><strong>${f[3]}</strong></td><td>${f[2]}</td><td>${f[6]}</td><td><code>${f[9]}</code></td><td>${f[8]}</td><td>${f[1]}</td></tr>`).join('');
 }
 
-// LOGICA BODEGA 100% BLINDADA AL TIEMPO REAL
+// LOGICA BODEGA CON 4 PESTAÑAS
 function switchBodegaTab(tabName) {
     currentBodegaTab = tabName;
     document.querySelectorAll('.sub-tab').forEach(b => b.classList.remove('active'));
@@ -371,12 +368,11 @@ function renderBodega() {
 
     if (!rawData.nuevoHistorial || rawData.nuevoHistorial.length === 0) return;
 
-    // Filtro global basado en el cálculo de fecha en vivo, NO en las columnas Q y R de Excel
+    // Filtro global 
     let filtGlobal = rawData.nuevoHistorial.filter((f, index) => {
         if (index === 0) return false; 
         if (!f || f.length < 18) return false; 
 
-        // Calculamos la semana y el año usando la Marca Temporal (Columna A)
         let infoFecha = getWeekAndYear(f[0]);
 
         if (sem) {
@@ -390,20 +386,25 @@ function renderBodega() {
         return true;
     });
 
-    let cSol = 0, cPen = 0, cEnt = 0;
+    // Calcular KPIs para los 4 estados
+    let cSol = 0, cPen = 0, cEnt = 0, cNoSol = 0;
     filtGlobal.forEach(f => {
         let estS = String(f[18] || "").toUpperCase().trim();
         let estT = f.length > 19 ? String(f[19] || "").toUpperCase().trim() : "";
 
         if (estT === "ENTREGADO") cEnt++;
         else if (estT === "PENDIENTE") cPen++;
+        else if (estS === "PENDIENTE DE SOLICITUD") cNoSol++;
         else if (estS.includes("SOLICITADO")) cSol++;
     });
     
+    // Actualizar las 4 tarjetitas
+    document.getElementById('kpi-bodega-nosol').innerText = cNoSol;
     document.getElementById('kpi-bodega-sol').innerText = cSol;
     document.getElementById('kpi-bodega-pen').innerText = cPen;
     document.getElementById('kpi-bodega-ent').innerText = cEnt;
 
+    // Filtro para saber qué dibujar en la tabla según la pestaña
     let filtTabla = filtGlobal.filter(f => {
         let estS = String(f[18] || "").toUpperCase().trim();
         let estT = f.length > 19 ? String(f[19] || "").toUpperCase().trim() : "";
@@ -412,17 +413,25 @@ function renderBodega() {
         if (currentBodegaTab === 'pendientes') return estT === 'PENDIENTE';
         
         if (currentBodegaTab === 'solicitados') {
-            return estS.includes('SOLICITADO') && estT !== 'PENDIENTE' && estT !== 'ENTREGADO';
+            return estS.includes('SOLICITADO') && estS !== 'PENDIENTE DE SOLICITUD' && estT !== 'PENDIENTE' && estT !== 'ENTREGADO';
         }
+        
+        if (currentBodegaTab === 'no_solicitado') {
+            return estS === 'PENDIENTE DE SOLICITUD' && estT !== 'PENDIENTE' && estT !== 'ENTREGADO';
+        }
+        
         return false;
     });
 
     tbody.innerHTML = filtTabla.map(f => {
         let valT = f.length > 19 ? f[19] : "";
         let spanSalida = valT ? `<span class="badge-count" style="background:${valT=='ENTREGADO'?'var(--success)':'var(--warning)'}">${valT}</span>` : '-';
-        let claseS = (f[18]||"").includes('OMISIÓN') ? 'color: var(--danger); font-weight: bold;' : 'color: var(--brand); font-weight: bold;';
+        
+        // Estilos de color para la columna S
+        let colorS = "color: var(--brand); font-weight: bold;";
+        if (f[18] === "PENDIENTE DE SOLICITUD") colorS = "color: #64748b; font-weight: bold;";
+        if ((f[18]||"").includes('OMISIÓN')) colorS = "color: var(--danger); font-weight: bold;";
 
-        // Volvemos a calcular para mostrar el valor correcto en la última columna
         let infoFecha = getWeekAndYear(f[0]);
 
         return `<tr>
@@ -430,7 +439,7 @@ function renderBodega() {
             <td><strong>${f[6] || ""}</strong></td>
             <td>${f[7] || ""}</td>
             <td>${f[2] || ""}</td>
-            <td style="${claseS}">${f[18] || ""}</td>
+            <td style="${colorS}">${f[18] || ""}</td>
             <td>${spanSalida}</td>
             <td>W${infoFecha.w || "?"}</td>
         </tr>`;
