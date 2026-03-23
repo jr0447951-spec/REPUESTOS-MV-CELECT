@@ -151,7 +151,7 @@
         <div style="margin-left:auto; display:flex; gap:10px; flex-wrap: wrap;">
             <div class="badge-count" style="background: #94a3b8; padding: 6px 12px;">No Solicitado EEBB: <span id="kpi-bodega-nosol">0</span></div>
             <div class="badge-count" style="background: #64748b; padding: 6px 12px;">Solicitados a Bodega: <span id="kpi-bodega-sol">0</span></div>
-            <div class="badge-count" style="background: var(--warning); padding: 6px 12px;">Retirados (Pendientes): <span id="kpi-bodega-pen">0</span></div>
+            <div class="badge-count" style="background: var(--warning); padding: 6px 12px;">Retirados: <span id="kpi-bodega-pen">0</span></div>
             <div class="badge-count" style="background: var(--success); padding: 6px 12px;">Entregados: <span id="kpi-bodega-ent">0</span></div>
         </div>
     </div>
@@ -160,7 +160,7 @@
         <div class="sub-tab-container">
             <button class="tab-btn sub-tab active" onclick="switchBodegaTab('solicitados')">📦 Solicitados a Bodega</button>
             <button class="tab-btn sub-tab" onclick="switchBodegaTab('no_solicitado')">⏳ No solicitado por EEBB</button>
-            <button class="tab-btn sub-tab" onclick="switchBodegaTab('pendientes')">🛠️ Retirados (Pendientes)</button>
+            <button class="tab-btn sub-tab" onclick="switchBodegaTab('pendientes')">🛠️ Retirados</button>
             <button class="tab-btn sub-tab" onclick="switchBodegaTab('entregados')">✅ Entregados</button>
         </div>
 
@@ -214,6 +214,8 @@
 <script>
 const URL_S = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQBNrpLKc_GPFT6Ik9Yr4s1qo8zaOOqrDgTc_9DGeMd20rNTsEtLktTCoeDcRrts6kvgne86KZDfKQS/pub?gid=0&single=true&output=csv';
 const URL_E = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQBNrpLKc_GPFT6Ik9Yr4s1qo8zaOOqrDgTc_9DGeMd20rNTsEtLktTCoeDcRrts6kvgne86KZDfKQS/pub?gid=887165919&single=true&output=csv';
+
+// URL BLINDADA 
 const URL_NUEVO_HISTORIAL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQa4hodHj5bdOFphK4LKC4r3R4Vu0eXocLdSvCz8TRavXyryvBRgc05P8VDwzb0V9afMJx15_RMAmBq/pub?gid=184673354&single=true&output=csv&t=' + new Date().getTime();
 
 let rawData = { pendientes: [], entregas: [], historial: [], entregasFull: [], nuevoHistorial: [] };
@@ -265,10 +267,12 @@ function parseFecha(s) {
     return new Date(p[2], p[1]-1, p[0]); 
 }
 
+// ¡LA MAGIA MATEMÁTICA! Esta función calcula Semana y Año a partir de una fecha exacta.
 function getWeekAndYear(dateStr) {
     let d = parseFecha(dateStr);
     if (!d || isNaN(d)) return { w: "", y: "" };
     
+    // Convertimos a UTC para no tener problemas de zonas horarias
     let tempDate = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
     let dayNum = tempDate.getUTCDay() || 7;
     tempDate.setUTCDate(tempDate.getUTCDate() + 4 - dayNum);
@@ -353,7 +357,7 @@ function renderEntregas() {
     tbody.innerHTML = filt.map(f => `<tr><td>${f[0]}</td><td><strong>${f[3]}</strong></td><td>${f[2]}</td><td>${f[6]}</td><td><code>${f[9]}</code></td><td>${f[8]}</td><td>${f[1]}</td></tr>`).join('');
 }
 
-// LOGICA BODEGA CON 4 PESTAÑAS
+// LOGICA BODEGA 100% BLINDADA AL TIEMPO REAL
 function switchBodegaTab(tabName) {
     currentBodegaTab = tabName;
     document.querySelectorAll('.sub-tab').forEach(b => b.classList.remove('active'));
@@ -368,11 +372,12 @@ function renderBodega() {
 
     if (!rawData.nuevoHistorial || rawData.nuevoHistorial.length === 0) return;
 
-    // Filtro global 
+    // Filtro global basado en el cálculo de fecha en vivo
     let filtGlobal = rawData.nuevoHistorial.filter((f, index) => {
         if (index === 0) return false; 
         if (!f || f.length < 18) return false; 
 
+        // Calculamos la semana y el año usando la Marca Temporal (Columna A)
         let infoFecha = getWeekAndYear(f[0]);
 
         if (sem) {
@@ -424,8 +429,14 @@ function renderBodega() {
     });
 
     tbody.innerHTML = filtTabla.map(f => {
-        let valT = f.length > 19 ? f[19] : "";
-        let spanSalida = valT ? `<span class="badge-count" style="background:${valT=='ENTREGADO'?'var(--success)':'var(--warning)'}">${valT}</span>` : '-';
+        let estT = f.length > 19 ? String(f[19] || "").toUpperCase().trim() : ""; // Usamos estT para lógica interna
+        
+        // --- TRADUCCIÓN VISUAL: Mostramos RETIRADO en lugar de PENDIENTE en la etiqueta ---
+        let textToShow = estT === 'PENDIENTE' ? 'RETIRADO' : estT;
+        
+        let valT_for_style = f.length > 19 ? f[19] : ""; // Mantenemos valor crudo para lógica de estilo
+        
+        let spanSalida = valT_for_style ? `<span class="badge-count" style="background:${valT_for_style=='ENTREGADO'?'var(--success)':'var(--warning)'}">${textToShow}</span>` : '-';
         
         // Estilos de color para la columna S
         let colorS = "color: var(--brand); font-weight: bold;";
