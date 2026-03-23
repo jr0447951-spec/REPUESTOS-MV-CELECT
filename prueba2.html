@@ -213,7 +213,7 @@
 const URL_S = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQBNrpLKc_GPFT6Ik9Yr4s1qo8zaOOqrDgTc_9DGeMd20rNTsEtLktTCoeDcRrts6kvgne86KZDfKQS/pub?gid=0&single=true&output=csv';
 const URL_E = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQBNrpLKc_GPFT6Ik9Yr4s1qo8zaOOqrDgTc_9DGeMd20rNTsEtLktTCoeDcRrts6kvgne86KZDfKQS/pub?gid=887165919&single=true&output=csv';
 
-// TU URL BLINDADA (Con un parámetro de tiempo al final para obligar a descargar lo más nuevo)
+// URL BLINDADA 
 const URL_NUEVO_HISTORIAL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQa4hodHj5bdOFphK4LKC4r3R4Vu0eXocLdSvCz8TRavXyryvBRgc05P8VDwzb0V9afMJx15_RMAmBq/pub?gid=184673354&single=true&output=csv&t=' + new Date().getTime();
 
 let rawData = { pendientes: [], entregas: [], historial: [], entregasFull: [], nuevoHistorial: [] };
@@ -261,7 +261,25 @@ async function init() {
 function parseFecha(s) { 
     if(!s) return null; 
     const p = s.split(/[/ :]/); 
+    // Si la fecha no tiene formato esperado, regresamos null
+    if(p.length < 3) return null;
     return new Date(p[2], p[1]-1, p[0]); 
+}
+
+// ¡LA MAGIA MATEMÁTICA! Esta función calcula Semana y Año a partir de una fecha exacta.
+function getWeekAndYear(dateStr) {
+    let d = parseFecha(dateStr);
+    if (!d || isNaN(d)) return { w: "", y: "" };
+    
+    // Convertimos a UTC para no tener problemas de zonas horarias
+    let tempDate = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+    let dayNum = tempDate.getUTCDay() || 7;
+    tempDate.setUTCDate(tempDate.getUTCDate() + 4 - dayNum);
+    
+    let yearStart = new Date(Date.UTC(tempDate.getUTCFullYear(), 0, 1));
+    let weekNo = Math.ceil((((tempDate - yearStart) / 86400000) + 1) / 7);
+    
+    return { w: weekNo, y: tempDate.getUTCFullYear() };
 }
 
 function setSemanaActual() {
@@ -277,15 +295,10 @@ function setSemanaActual() {
 
 function setSemanaBodegaActual() {
     const hoy = new Date();
-    const ano = hoy.getFullYear();
-    const d = new Date(Date.UTC(ano, hoy.getMonth(), hoy.getDate()));
-    const dayNum = d.getUTCDay() || 7;
-    d.setUTCDate(d.getUTCDate() + 4 - dayNum);
-    const yearStart = new Date(Date.UTC(ano,0,1));
-    const weekNo = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+    const infoActual = getWeekAndYear(`${hoy.getDate()}/${hoy.getMonth()+1}/${hoy.getFullYear()}`);
     
-    document.getElementById('fSemanaBodega').value = weekNo;
-    document.getElementById('fAnoBodega').value = ano;
+    document.getElementById('fSemanaBodega').value = infoActual.w;
+    document.getElementById('fAnoBodega').value = infoActual.y;
 }
 
 function getRangoSemana(semanaStr) {
@@ -343,7 +356,7 @@ function renderEntregas() {
     tbody.innerHTML = filt.map(f => `<tr><td>${f[0]}</td><td><strong>${f[3]}</strong></td><td>${f[2]}</td><td>${f[6]}</td><td><code>${f[9]}</code></td><td>${f[8]}</td><td>${f[1]}</td></tr>`).join('');
 }
 
-// LOGICA BODEGA BLINDADA
+// LOGICA BODEGA 100% BLINDADA AL TIEMPO REAL
 function switchBodegaTab(tabName) {
     currentBodegaTab = tabName;
     document.querySelectorAll('.sub-tab').forEach(b => b.classList.remove('active'));
@@ -358,21 +371,21 @@ function renderBodega() {
 
     if (!rawData.nuevoHistorial || rawData.nuevoHistorial.length === 0) return;
 
-    // Filtro global (robusto contra espacios y letras)
+    // Filtro global basado en el cálculo de fecha en vivo, NO en las columnas Q y R de Excel
     let filtGlobal = rawData.nuevoHistorial.filter((f, index) => {
         if (index === 0) return false; 
-        if (!f || f.length < 18) return false; // Salta filas dañadas o vacías
+        if (!f || f.length < 18) return false; 
 
-        // Extraemos solo los números para comparar
+        // Calculamos la semana y el año usando la Marca Temporal (Columna A)
+        let infoFecha = getWeekAndYear(f[0]);
+
         if (sem) {
-            let valSem = String(f[16] || "").replace(/\D/g, '');
             let inputSem = String(sem).replace(/\D/g, '');
-            if (valSem !== inputSem) return false;
+            if (String(infoFecha.w) !== inputSem) return false;
         }
         if (ano) {
-            let valAno = String(f[17] || "").replace(/\D/g, '');
             let inputAno = String(ano).replace(/\D/g, '');
-            if (valAno !== inputAno) return false;
+            if (String(infoFecha.y) !== inputAno) return false;
         }
         return true;
     });
@@ -409,6 +422,9 @@ function renderBodega() {
         let spanSalida = valT ? `<span class="badge-count" style="background:${valT=='ENTREGADO'?'var(--success)':'var(--warning)'}">${valT}</span>` : '-';
         let claseS = (f[18]||"").includes('OMISIÓN') ? 'color: var(--danger); font-weight: bold;' : 'color: var(--brand); font-weight: bold;';
 
+        // Volvemos a calcular para mostrar el valor correcto en la última columna
+        let infoFecha = getWeekAndYear(f[0]);
+
         return `<tr>
             <td>${f[0] || ""}</td>
             <td><strong>${f[6] || ""}</strong></td>
@@ -416,7 +432,7 @@ function renderBodega() {
             <td>${f[2] || ""}</td>
             <td style="${claseS}">${f[18] || ""}</td>
             <td>${spanSalida}</td>
-            <td>W${f[16] || ""}</td>
+            <td>W${infoFecha.w || "?"}</td>
         </tr>`;
     }).join('');
 }
