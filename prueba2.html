@@ -174,8 +174,7 @@
                     <th>Nombre Sitio</th>
                     <th>Equipo</th>
                     <th>Ingreso (Col S)</th>
-                    <th>Salida (Col T)</th>
-                    <th>Semana</th>
+                    <th>Salida</th> <th>Semana</th>
                 </tr>
             </thead>
             <tbody></tbody>
@@ -376,6 +375,11 @@ function renderBodega() {
     let filtGlobal = rawData.nuevoHistorial.filter((f, index) => {
         if (index === 0) return false; 
         if (!f || f.length < 18) return false; 
+        
+        // FILTRO MAESTRO: Ignorar "NO APLICA" tanto en la columna T (19) como en la U (20)
+        let estT_global = f.length > 19 ? String(f[19] || "").toUpperCase().trim() : "";
+        let estU_global = f.length > 20 ? String(f[20] || "").toUpperCase().trim() : "";
+        if (estT_global === "NO APLICA" || estU_global === "NO APLICA") return false;
 
         let fechaFila = parseFecha(f[0]);
         if (!fechaFila) return false;
@@ -400,15 +404,21 @@ function renderBodega() {
         }
     });
 
-    // ¡AQUÍ ESTÁ LA NUEVA REGLA! (PENDIENTE y N/A suman a Retirados)
     let cSol = 0, cPen = 0, cEnt = 0, cNoSol = 0;
     filtGlobal.forEach(f => {
         let estS = String(f[18] || "").toUpperCase().trim();
         let estT = f.length > 19 ? String(f[19] || "").toUpperCase().trim() : "";
+        let estU = f.length > 20 ? String(f[20] || "").toUpperCase().trim() : "";
+        
+        // Creamos un Estado Final evaluando primero la columna U y luego la T
+        let estFinal = estT;
+        if (estU === "N/A" || estU === "N/A RETORNO") {
+            estFinal = "N/A RETORNO";
+        }
 
-        if (estT === "ENTREGADO") {
+        if (estFinal === "ENTREGADO") {
             cEnt++;
-        } else if (estT === "PENDIENTE" || estT === "N/A") { 
+        } else if (estFinal === "PENDIENTE" || estFinal === "N/A RETORNO") { 
             cPen++;
         } else if (estS === "PENDIENTE DE SOLICITUD" || estS === "NO SOLICITADO") {
             cNoSol++;
@@ -422,13 +432,18 @@ function renderBodega() {
     document.getElementById('kpi-bodega-pen').innerText = cPen;
     document.getElementById('kpi-bodega-ent').innerText = cEnt;
 
-    // ¡AQUÍ SE CLASIFICA EL N/A EN SU PESTAÑA CORRECTA!
     let filtTabla = filtGlobal.filter(f => {
         let estS = String(f[18] || "").toUpperCase().trim();
         let estT = f.length > 19 ? String(f[19] || "").toUpperCase().trim() : "";
+        let estU = f.length > 20 ? String(f[20] || "").toUpperCase().trim() : "";
+        
+        let estFinal = estT;
+        if (estU === "N/A" || estU === "N/A RETORNO") {
+            estFinal = "N/A RETORNO";
+        }
 
-        if (estT === 'ENTREGADO') return currentBodegaTab === 'entregados';
-        if (estT === 'PENDIENTE' || estT === 'N/A') return currentBodegaTab === 'pendientes';
+        if (estFinal === 'ENTREGADO') return currentBodegaTab === 'entregados';
+        if (estFinal === 'PENDIENTE' || estFinal === 'N/A RETORNO') return currentBodegaTab === 'pendientes';
         
         if (currentBodegaTab === 'no_solicitado') {
             return estS === 'PENDIENTE DE SOLICITUD' || estS === 'NO SOLICITADO';
@@ -443,9 +458,16 @@ function renderBodega() {
 
     tbody.innerHTML = filtTabla.map(f => {
         let estT = f.length > 19 ? String(f[19] || "").toUpperCase().trim() : ""; 
-        let textToShow = estT === 'PENDIENTE' ? 'RETIRADO' : estT;
-        let valT_for_style = f.length > 19 ? f[19] : ""; 
-        let spanSalida = valT_for_style ? `<span class="badge-count" style="background:${valT_for_style=='ENTREGADO'?'var(--success)':'var(--warning)'}">${textToShow}</span>` : '-';
+        let estU = f.length > 20 ? String(f[20] || "").toUpperCase().trim() : "";
+        
+        let estFinal = estT;
+        if (estU === "N/A" || estU === "N/A RETORNO") {
+            estFinal = "N/A RETORNO";
+        }
+
+        let textToShow = estFinal === 'PENDIENTE' ? 'RETIRADO' : estFinal;
+        
+        let spanSalida = estFinal ? `<span class="badge-count" style="background:${estFinal==='ENTREGADO'?'var(--success)':'var(--warning)'}">${textToShow}</span>` : '-';
         
         let colorS = "color: var(--brand); font-weight: bold;";
         if (f[18] === "PENDIENTE DE SOLICITUD" || f[18] === "NO SOLICITADO") {
