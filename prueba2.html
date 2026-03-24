@@ -171,8 +171,8 @@
                     <th>ID Sitio</th>
                     <th>Nombre Sitio</th>
                     <th>Equipo</th>
-                    <th>Ingreso </th>
-                    <th>Salida </th>
+                    <th>Ingreso (Col S)</th>
+                    <th>Salida (Col T)</th>
                     <th>Semana</th>
                 </tr>
             </thead>
@@ -267,12 +267,10 @@ function parseFecha(s) {
     return new Date(p[2], p[1]-1, p[0]); 
 }
 
-// ¡LA MAGIA MATEMÁTICA! Esta función calcula Semana y Año a partir de una fecha exacta.
 function getWeekAndYear(dateStr) {
     let d = parseFecha(dateStr);
     if (!d || isNaN(d)) return { w: "", y: "" };
     
-    // Convertimos a UTC para no tener problemas de zonas horarias
     let tempDate = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
     let dayNum = tempDate.getUTCDay() || 7;
     tempDate.setUTCDate(tempDate.getUTCDate() + 4 - dayNum);
@@ -357,7 +355,7 @@ function renderEntregas() {
     tbody.innerHTML = filt.map(f => `<tr><td>${f[0]}</td><td><strong>${f[3]}</strong></td><td>${f[2]}</td><td>${f[6]}</td><td><code>${f[9]}</code></td><td>${f[8]}</td><td>${f[1]}</td></tr>`).join('');
 }
 
-// LOGICA BODEGA 100% BLINDADA AL TIEMPO REAL
+// LOGICA BODEGA 100% BLINDADA (JERARQUÍA ESTRICTA)
 function switchBodegaTab(tabName) {
     currentBodegaTab = tabName;
     document.querySelectorAll('.sub-tab').forEach(b => b.classList.remove('active'));
@@ -372,12 +370,11 @@ function renderBodega() {
 
     if (!rawData.nuevoHistorial || rawData.nuevoHistorial.length === 0) return;
 
-    // Filtro global basado en el cálculo de fecha en vivo
+    // Filtro de Tiempo (Semana y Año)
     let filtGlobal = rawData.nuevoHistorial.filter((f, index) => {
         if (index === 0) return false; 
         if (!f || f.length < 18) return false; 
 
-        // Calculamos la semana y el año usando la Marca Temporal (Columna A)
         let infoFecha = getWeekAndYear(f[0]);
 
         if (sem) {
@@ -391,16 +388,22 @@ function renderBodega() {
         return true;
     });
 
-    // Calcular KPIs para los 4 estados
+    // Calcular KPIs respetando la jerarquía: Entregado mata a Retirado, Retirado mata a Solicitado.
     let cSol = 0, cPen = 0, cEnt = 0, cNoSol = 0;
     filtGlobal.forEach(f => {
         let estS = String(f[18] || "").toUpperCase().trim();
         let estT = f.length > 19 ? String(f[19] || "").toUpperCase().trim() : "";
 
-        if (estT === "ENTREGADO") cEnt++;
-        else if (estT === "PENDIENTE") cPen++;
-        else if (estS === "PENDIENTE DE SOLICITUD") cNoSol++;
-        else if (estS.includes("SOLICITADO")) cSol++;
+        if (estT === "ENTREGADO") {
+            cEnt++;
+        } else if (estT === "PENDIENTE") {
+            cPen++;
+        } else if (estS === "PENDIENTE DE SOLICITUD" || estS === "NO SOLICITADO") {
+            cNoSol++;
+        } else if (estS.includes("SOLICITADO")) { 
+            // Esto atrapa "SOLICITADO A BODEGA" y "SOLICITADO (OMISIÓN CORREGIDA)"
+            cSol++;
+        }
     });
     
     // Actualizar las 4 tarjetitas
@@ -409,39 +412,49 @@ function renderBodega() {
     document.getElementById('kpi-bodega-pen').innerText = cPen;
     document.getElementById('kpi-bodega-ent').innerText = cEnt;
 
-    // Filtro para saber qué dibujar en la tabla según la pestaña
+    // Filtro para la Tabla (Exclusión Mutua)
     let filtTabla = filtGlobal.filter(f => {
         let estS = String(f[18] || "").toUpperCase().trim();
         let estT = f.length > 19 ? String(f[19] || "").toUpperCase().trim() : "";
 
-        if (currentBodegaTab === 'entregados') return estT === 'ENTREGADO';
-        if (currentBodegaTab === 'pendientes') return estT === 'PENDIENTE';
-        
-        if (currentBodegaTab === 'solicitados') {
-            return estS.includes('SOLICITADO') && estS !== 'PENDIENTE DE SOLICITUD' && estT !== 'PENDIENTE' && estT !== 'ENTREGADO';
+        // 1. Si ya se Entregó, solo sale en Entregados
+        if (estT === 'ENTREGADO') {
+            return currentBodegaTab === 'entregados';
         }
         
+        // 2. Si ya se Retiró, solo sale en Retirados
+        if (estT === 'PENDIENTE') {
+            return currentBodegaTab === 'pendientes';
+        }
+        
+        // 3. Si no ha salido de bodega, evaluamos los de entrada (Columna S)
         if (currentBodegaTab === 'no_solicitado') {
-            return estS === 'PENDIENTE DE SOLICITUD' && estT !== 'PENDIENTE' && estT !== 'ENTREGADO';
+            return estS === 'PENDIENTE DE SOLICITUD' || estS === 'NO SOLICITADO';
+        }
+        
+        if (currentBodegaTab === 'solicitados') {
+            return estS.includes('SOLICITADO') && estS !== 'NO SOLICITADO' && estS !== 'PENDIENTE DE SOLICITUD';
         }
         
         return false;
     });
 
     tbody.innerHTML = filtTabla.map(f => {
-        let estT = f.length > 19 ? String(f[19] || "").toUpperCase().trim() : ""; // Usamos estT para lógica interna
+        let estT = f.length > 19 ? String(f[19] || "").toUpperCase().trim() : ""; 
         
-        // --- TRADUCCIÓN VISUAL: Mostramos RETIRADO en lugar de PENDIENTE en la etiqueta ---
+        // Traducción visual
         let textToShow = estT === 'PENDIENTE' ? 'RETIRADO' : estT;
-        
-        let valT_for_style = f.length > 19 ? f[19] : ""; // Mantenemos valor crudo para lógica de estilo
-        
+        let valT_for_style = f.length > 19 ? f[19] : ""; 
         let spanSalida = valT_for_style ? `<span class="badge-count" style="background:${valT_for_style=='ENTREGADO'?'var(--success)':'var(--warning)'}">${textToShow}</span>` : '-';
         
         // Estilos de color para la columna S
-        let colorS = "color: var(--brand); font-weight: bold;";
-        if (f[18] === "PENDIENTE DE SOLICITUD") colorS = "color: #64748b; font-weight: bold;";
-        if ((f[18]||"").includes('OMISIÓN')) colorS = "color: var(--danger); font-weight: bold;";
+        let colorS = "color: var(--brand); font-weight: bold;"; // Azul por defecto para Solicitados
+        if (f[18] === "PENDIENTE DE SOLICITUD" || f[18] === "NO SOLICITADO") {
+            colorS = "color: #64748b; font-weight: bold;"; // Gris oscuro para los No Solicitados
+        }
+        if ((f[18]||"").includes('OMISIÓN')) {
+            colorS = "color: var(--danger); font-weight: bold;"; // Rojo para omisiones
+        }
 
         let infoFecha = getWeekAndYear(f[0]);
 
