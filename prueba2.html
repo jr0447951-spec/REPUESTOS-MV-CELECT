@@ -376,7 +376,6 @@ function renderBodega() {
         if (index === 0) return false; 
         if (!f || f.length < 18) return false; 
         
-        // FILTRO MAESTRO: Ignorar "NO APLICA" tanto en la columna T (19) como en la U (20)
         let estT_global = f.length > 19 ? String(f[19] || "").toUpperCase().trim() : "";
         let estU_global = f.length > 20 ? String(f[20] || "").toUpperCase().trim() : "";
         if (estT_global === "NO APLICA" || estU_global === "NO APLICA") return false;
@@ -414,9 +413,9 @@ function renderBodega() {
         let estT = f.length > 19 ? String(f[19] || "").toUpperCase().trim() : "";
         let estU = f.length > 20 ? String(f[20] || "").toUpperCase().trim() : "";
         
-        // Creamos un Estado Final evaluando primero la columna U y luego la T
+        // REGLA N/A: ATRAPA N/A TANTO EN COLUMNA T COMO EN U
         let estFinal = estT;
-        if (estU === "N/A" || estU === "N/A RETORNO") {
+        if (estT === "N/A" || estU === "N/A" || estU === "N/A RETORNO") {
             estFinal = "N/A RETORNO";
         }
 
@@ -441,12 +440,14 @@ function renderBodega() {
         let estT = f.length > 19 ? String(f[19] || "").toUpperCase().trim() : "";
         let estU = f.length > 20 ? String(f[20] || "").toUpperCase().trim() : "";
         
+        // REGLA N/A: ATRAPA N/A TANTO EN COLUMNA T COMO EN U
         let estFinal = estT;
-        if (estU === "N/A" || estU === "N/A RETORNO") {
+        if (estT === "N/A" || estU === "N/A" || estU === "N/A RETORNO") {
             estFinal = "N/A RETORNO";
         }
 
         if (estFinal === 'ENTREGADO') return currentBodegaTab === 'entregados';
+        // Atrapa Pendientes y N/A RETORNO enviándolos a la pestaña "Retirados"
         if (estFinal === 'PENDIENTE' || estFinal === 'N/A RETORNO') return currentBodegaTab === 'pendientes';
         
         if (currentBodegaTab === 'no_solicitado') {
@@ -464,8 +465,9 @@ function renderBodega() {
         let estT = f.length > 19 ? String(f[19] || "").toUpperCase().trim() : ""; 
         let estU = f.length > 20 ? String(f[20] || "").toUpperCase().trim() : "";
         
+        // REGLA N/A: ETIQUETA FINAL
         let estFinal = estT;
-        if (estU === "N/A" || estU === "N/A RETORNO") {
+        if (estT === "N/A" || estU === "N/A" || estU === "N/A RETORNO") {
             estFinal = "N/A RETORNO";
         }
 
