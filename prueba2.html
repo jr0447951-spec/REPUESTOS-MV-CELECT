@@ -385,8 +385,10 @@ function renderBodega() {
         if (!fechaFila) return false;
 
         if (sem || ano) {
-            labelFiltro.innerText = "👀 Mostrando: Filtro Semanal";
-            labelFiltro.style.color = "#64748b";
+            if(labelFiltro) {
+                labelFiltro.innerText = "👀 Mostrando: Filtro Semanal";
+                labelFiltro.style.color = "#64748b";
+            }
             let infoFecha = getWeekAndYear(f[0]);
             if (sem) {
                 let inputSem = String(sem).replace(/\D/g, '');
@@ -398,8 +400,10 @@ function renderBodega() {
             }
             return true;
         } else {
-            labelFiltro.innerText = "👀 Mostrando: Últimos 30 días";
-            labelFiltro.style.color = "var(--success)";
+            if(labelFiltro) {
+                labelFiltro.innerText = "👀 Mostrando: Últimos 30 días";
+                labelFiltro.style.color = "var(--success)";
+            }
             return fechaFila >= hace30Dias && fechaFila <= ahora;
         }
     });
