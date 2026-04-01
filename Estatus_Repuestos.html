@@ -15,7 +15,7 @@
         body { font-family: 'Poppins', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; }
 
         /* Estructura */
-        .header-dash { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; flex-wrap: wrap; gap: 20px; }
+        .header-dash { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
         .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 30px; }
         .card-stat { 
             background: white; padding: 20px; border-radius: 20px; 
@@ -54,11 +54,7 @@
         .filter-row { display:flex; gap:12px; flex-wrap:wrap; align-items: center; }
         .filter-row label { font-size: 0.7rem; font-weight: 600; color: #94a3b8; text-transform: uppercase; }
         .filter-row input { padding: 8px 12px; border-radius: 12px; border: 1.5px solid #e2e8f0; font-size: 0.85rem; outline: none; }
-        
-        /* Botones de Exportación */
-        .export-btn { padding: 8px 15px; border: none; border-radius: 12px; background: #334155; color: white; cursor: pointer; font-size: 0.8rem; font-weight: 600; transition: all 0.2s; }
-        .export-btn:hover { opacity: 0.9; transform: translateY(-1px); }
-        .btn-master { background: #1e293b; border: 1px solid #475569; padding: 10px 20px; }
+        .export-btn { padding: 8px 15px; border: none; border-radius: 12px; background: #334155; color: white; cursor: pointer; font-size: 0.8rem; font-weight: 600; }
         
         footer { text-align: center; margin-top: 40px; font-size: 0.8rem; color: #94a3b8; }
 
@@ -77,11 +73,6 @@
         <h1 style="margin:0; font-size: 1.6rem;">CONTROL <span style="color:var(--brand)">OPS 2026</span></h1>
         <div id="lastUpdate" style="font-size: 0.75rem; color: #94a3b8;">Sincronizando...</div>
     </div>
-
-    <button class="export-btn btn-master" onclick="exportarTodoElDashboard()">
-        📥 Descargar Reporte Consolidado (CSV)
-    </button>
-
     <nav class="tab-container">
         <button class="tab-btn active" onclick="openTab('dashboard')">📊 Dashboard</button>
         <button class="tab-btn" onclick="openTab('bodega')">📦 Status Bodega</button>
@@ -160,15 +151,12 @@
         <span id="label-filtro-bodega" style="margin-left:15px; font-size: 0.8rem; font-weight: 600; color: var(--success);">👀 Mostrando: Últimos 30 días</span>
         
         <div style="margin-left:auto; display:flex; gap:10px; flex-wrap: wrap;">
-            <button class="export-btn" onclick="exportCSV('tablaBodega', 'Status_Bodega_' + currentBodegaTab)" style="background:#0369a1">📊 Exportar Vista Bodega</button>
+            <div class="badge-count" style="background: #94a3b8; padding: 6px 12px;">No Solicitado EEBB: <span id="kpi-bodega-nosol">0</span></div>
+            <div class="badge-count" style="background: #64748b; padding: 6px 12px;">Solicitados a Bodega: <span id="kpi-bodega-sol">0</span></div>
+            <div class="badge-count" style="background: var(--warning); padding: 6px 12px;">Retirados: <span id="kpi-bodega-pen">0</span></div>
+            <div class="badge-count" style="background: var(--success); padding: 6px 12px;">Entregados: <span id="kpi-bodega-ent">0</span></div>
+            <button class="export-btn" onclick="exportCSV('tablaBodega', 'Status_Bodega')" style="background:#075985">📊 Exportar</button>
         </div>
-    </div>
-
-    <div class="stats-row" style="margin-bottom: 20px;">
-        <div class="badge-count" style="background: #94a3b8; padding: 10px;">No Solicitado EEBB: <span id="kpi-bodega-nosol">0</span></div>
-        <div class="badge-count" style="background: #64748b; padding: 10px;">Solicitados a Bodega: <span id="kpi-bodega-sol">0</span></div>
-        <div class="badge-count" style="background: var(--warning); padding: 10px;">Retirados: <span id="kpi-bodega-pen">0</span></div>
-        <div class="badge-count" style="background: var(--success); padding: 10px;">Entregados: <span id="kpi-bodega-ent">0</span></div>
     </div>
 
     <div class="table-container">
@@ -228,6 +216,7 @@
 <script>
 const URL_S = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQBNrpLKc_GPFT6Ik9Yr4s1qo8zaOOqrDgTc_9DGeMd20rNTsEtLktTCoeDcRrts6kvgne86KZDfKQS/pub?gid=0&single=true&output=csv';
 const URL_E = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQBNrpLKc_GPFT6Ik9Yr4s1qo8zaOOqrDgTc_9DGeMd20rNTsEtLktTCoeDcRrts6kvgne86KZDfKQS/pub?gid=887165919&single=true&output=csv';
+
 const URL_NUEVO_HISTORIAL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQa4hodHj5bdOFphK4LKC4r3R4Vu0eXocLdSvCz8TRavXyryvBRgc05P8VDwzb0V9afMJx15_RMAmBq/pub?gid=184673354&single=true&output=csv&t=' + new Date().getTime();
 
 let rawData = { pendientes: [], entregas: [], historial: [], entregasFull: [], nuevoHistorial: [] };
@@ -272,54 +261,6 @@ async function init() {
     }
 }
 
-// FUNCIONES DE EXPORTACIÓN
-function exportCSV(tableId, name) {
-    const table = document.getElementById(tableId);
-    if (!table) return;
-    const rows = Array.from(table.querySelectorAll("tr"));
-    let csv = "\uFEFF"; // Soporte tildes Excel
-    rows.forEach((row) => {
-        const cols = Array.from(row.querySelectorAll("th, td"));
-        const rowData = cols.map(cell => `"${cell.innerText.replace(/"/g, '""').trim()}"`).join(";");
-        csv += rowData + "\n";
-    });
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = `${name}_${new Date().toISOString().slice(0,10)}.csv`;
-    link.click();
-}
-
-function exportarTodoElDashboard() {
-    let csvContent = "\uFEFF";
-    const tablas = [
-        { id: 'tablaPendientes', nombre: 'GESTIÓN DE PENDIENTES' },
-        { id: 'tablaEntregados', nombre: 'ENTREGAS POR PERIODO' },
-        { id: 'tablaBodega', nombre: 'STATUS BODEGA (VISTA ACTUAL)' },
-        { id: 'tablaHistorial', nombre: 'HISTORIAL CONSULTADO' }
-    ];
-
-    tablas.forEach(tablaInfo => {
-        const table = document.getElementById(tablaInfo.id);
-        if (!table || table.offsetParent === null && tablaInfo.id !== 'tablaPendientes') return; 
-
-        csvContent += `\n"--- ${tablaInfo.nombre} ---"\n`;
-        const rows = Array.from(table.querySelectorAll("tr"));
-        rows.forEach(row => {
-            const cols = Array.from(row.querySelectorAll("th, td"));
-            csvContent += cols.map(c => `"${c.innerText.replace(/"/g, '""').trim()}"`).join(";") + "\n";
-        });
-        csvContent += "\n";
-    });
-
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = `Reporte_Consolidado_Ops_${new Date().toISOString().slice(0,10)}.csv`;
-    link.click();
-}
-
-// LÓGICA DE NEGOCIO ORIGINAL
 function parseFecha(s) { 
     if(!s) return null; 
     const p = s.split(/[/ :]/); 
@@ -330,11 +271,14 @@ function parseFecha(s) {
 function getWeekAndYear(dateStr) {
     let d = parseFecha(dateStr);
     if (!d || isNaN(d)) return { w: "", y: "" };
+    
     let tempDate = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
     let dayNum = tempDate.getUTCDay() || 7;
     tempDate.setUTCDate(tempDate.getUTCDate() + 4 - dayNum);
+    
     let yearStart = new Date(Date.UTC(tempDate.getUTCFullYear(), 0, 1));
     let weekNo = Math.ceil((((tempDate - yearStart) / 86400000) + 1) / 7);
+    
     return { w: weekNo, y: tempDate.getUTCFullYear() };
 }
 
@@ -361,6 +305,7 @@ function getRangoSemana(semanaStr) {
     const ISOweekStart = simple;
     if (dow <= 4) ISOweekStart.setDate(simple.getDate() - simple.getDay() + 1);
     else ISOweekStart.setDate(simple.getDate() + 8 - simple.getDay());
+    
     const ISOweekEnd = new Date(ISOweekStart);
     ISOweekEnd.setDate(ISOweekStart.getDate() + 6);
     return { inicio: ISOweekStart, fin: ISOweekEnd };
@@ -371,14 +316,24 @@ function renderPendientes() {
     const s = document.getElementById('fSitioP').value.toLowerCase();
     const t = document.getElementById('fTecP').value.toLowerCase();
     const ahora = new Date();
+
     let filt = rawData.pendientes.filter(f => (f[3].toLowerCase().includes(s) || (f[4] && f[4].toLowerCase().includes(s))) && f[1].toLowerCase().includes(t));
     filt.sort((a, b) => parseFecha(a[0]) - parseFecha(b[0]));
+
     document.getElementById('count-pendientes').innerText = filt.length;
     tbody.innerHTML = filt.map(f => {
         const dias = Math.floor((ahora - parseFecha(f[0])) / 86400000);
         let cls = "text-success";
         if(dias > 14) cls = "text-danger"; else if(dias > 7) cls = "text-warning";
-       return `<tr><td><span class="days-tag ${cls}">${dias} días</span></td><td>${f[0]}</td><td><strong>${f[3]}</strong></td><td>${f[4]}</td><td>${f[5]}</td><td><code>${f[7]}</code></td><td>${f[1]}</td></tr>`;
+       return `<tr>
+<td><span class="days-tag ${cls}">${dias} días</span></td>
+<td>${f[0]}</td>
+<td><strong>${f[3]}</strong></td>
+<td>${f[4]}</td>
+<td>${f[5]}</td>
+<td><code>${f[7]}</code></td>
+<td>${f[1]}</td>
+</tr>`;
     }).join('');
 }
 
@@ -386,11 +341,14 @@ function renderEntregas() {
     const tbody = document.querySelector('#tablaEntregados tbody');
     const semanaValue = document.getElementById('filterSemanaE').value;
     if(!semanaValue) return;
+
     const rango = getRangoSemana(semanaValue);
+    
     const filt = rawData.entregasFull.filter(f => {
         const fecha = parseFecha(f[0]);
         return fecha >= rango.inicio && fecha <= rango.fin;
     });
+
     document.getElementById('count-entregas').innerText = filt.length;
     tbody.innerHTML = filt.map(f => `<tr><td>${f[0]}</td><td><strong>${f[3]}</strong></td><td>${f[2]}</td><td>${f[6]}</td><td><code>${f[9]}</code></td><td>${f[8]}</td><td>${f[1]}</td></tr>`).join('');
 }
@@ -406,27 +364,47 @@ function renderBodega() {
     const tbody = document.querySelector('#tablaBodega tbody');
     const sem = document.getElementById('fSemanaBodega').value;
     const ano = document.getElementById('fAnoBodega').value;
+
     if (!rawData.nuevoHistorial || rawData.nuevoHistorial.length === 0) return;
-    const hace30Dias = new Date(); hace30Dias.setDate(new Date().getDate() - 30);
+
+    const ahora = new Date();
+    const hace30Dias = new Date();
+    hace30Dias.setDate(ahora.getDate() - 30);
+
     const labelFiltro = document.getElementById('label-filtro-bodega');
 
     let filtGlobal = rawData.nuevoHistorial.filter((f, index) => {
         if (index === 0) return false; 
         if (!f || f.length < 18) return false; 
+        
         let estT_global = f.length > 19 ? String(f[19] || "").toUpperCase().trim() : "";
         let estU_global = f.length > 20 ? String(f[20] || "").toUpperCase().trim() : "";
         if (estT_global === "NO APLICA" || estU_global === "NO APLICA") return false;
+
         let fechaFila = parseFecha(f[0]);
         if (!fechaFila) return false;
+
         if (sem || ano) {
-            if(labelFiltro) { labelFiltro.innerText = "👀 Mostrando: Filtro Semanal"; labelFiltro.style.color = "#64748b"; }
+            if(labelFiltro) {
+                labelFiltro.innerText = "👀 Mostrando: Filtro Semanal";
+                labelFiltro.style.color = "#64748b";
+            }
             let infoFecha = getWeekAndYear(f[0]);
-            if (sem && String(infoFecha.w) !== String(sem)) return false;
-            if (ano && String(infoFecha.y) !== String(ano)) return false;
+            if (sem) {
+                let inputSem = String(sem).replace(/\D/g, '');
+                if (String(infoFecha.w) !== inputSem) return false;
+            }
+            if (ano) {
+                let inputAno = String(ano).replace(/\D/g, '');
+                if (String(infoFecha.y) !== inputAno) return false;
+            }
             return true;
         } else {
-            if(labelFiltro) { labelFiltro.innerText = "👀 Mostrando: Últimos 30 días"; labelFiltro.style.color = "var(--success)"; }
-            return fechaFila >= hace30Dias;
+            if(labelFiltro) {
+                labelFiltro.innerText = "👀 Mostrando: Últimos 30 días";
+                labelFiltro.style.color = "var(--success)";
+            }
+            return fechaFila >= hace30Dias && fechaFila <= ahora;
         }
     });
 
@@ -435,11 +413,21 @@ function renderBodega() {
         let estS = String(f[18] || "").toUpperCase().trim();
         let estT = f.length > 19 ? String(f[19] || "").toUpperCase().trim() : "";
         let estU = f.length > 20 ? String(f[20] || "").toUpperCase().trim() : "";
-        let estFinal = (estT === "N/A" || estU === "N/A" || estU === "N/A RETORNO") ? "N/A RETORNO" : estT;
-        if (estFinal === "ENTREGADO") cEnt++;
-        else if (estFinal === "PENDIENTE" || estFinal === "N/A RETORNO") cPen++;
-        else if (estS === "PENDIENTE DE SOLICITUD" || estS === "NO SOLICITADO") cNoSol++;
-        else if (estS.includes("SOLICITADO")) cSol++;
+        
+        let estFinal = estT;
+        if (estT === "N/A" || estU === "N/A" || estU === "N/A RETORNO") {
+            estFinal = "N/A RETORNO";
+        }
+
+        if (estFinal === "ENTREGADO") {
+            cEnt++;
+        } else if (estFinal === "PENDIENTE" || estFinal === "N/A RETORNO") { 
+            cPen++;
+        } else if (estS === "PENDIENTE DE SOLICITUD" || estS === "NO SOLICITADO") {
+            cNoSol++;
+        } else if (estS.includes("SOLICITADO")) { 
+            cSol++;
+        }
     });
     
     document.getElementById('kpi-bodega-nosol').innerText = cNoSol;
@@ -451,22 +439,57 @@ function renderBodega() {
         let estS = String(f[18] || "").toUpperCase().trim();
         let estT = f.length > 19 ? String(f[19] || "").toUpperCase().trim() : "";
         let estU = f.length > 20 ? String(f[20] || "").toUpperCase().trim() : "";
-        let estFinal = (estT === "N/A" || estU === "N/A" || estU === "N/A RETORNO") ? "N/A RETORNO" : estT;
+        
+        let estFinal = estT;
+        if (estT === "N/A" || estU === "N/A" || estU === "N/A RETORNO") {
+            estFinal = "N/A RETORNO";
+        }
+
         if (estFinal === 'ENTREGADO') return currentBodegaTab === 'entregados';
         if (estFinal === 'PENDIENTE' || estFinal === 'N/A RETORNO') return currentBodegaTab === 'pendientes';
-        if (currentBodegaTab === 'no_solicitado') return estS === 'PENDIENTE DE SOLICITUD' || estS === 'NO SOLICITADO';
-        if (currentBodegaTab === 'solicitados') return estS.includes('SOLICITADO') && estS !== 'NO SOLICITADO';
+        
+        if (currentBodegaTab === 'no_solicitado') {
+            return estS === 'PENDIENTE DE SOLICITUD' || estS === 'NO SOLICITADO';
+        }
+        
+        if (currentBodegaTab === 'solicitados') {
+            return estS.includes('SOLICITADO') && estS !== 'NO SOLICITADO' && estS !== 'PENDIENTE DE SOLICITUD';
+        }
+        
         return false;
     });
 
     tbody.innerHTML = filtTabla.map(f => {
         let estT = f.length > 19 ? String(f[19] || "").toUpperCase().trim() : ""; 
         let estU = f.length > 20 ? String(f[20] || "").toUpperCase().trim() : "";
-        let estFinal = (estT === "N/A" || estU === "N/A" || estU === "N/A RETORNO") ? "N/A RETORNO" : estT;
+        
+        let estFinal = estT;
+        if (estT === "N/A" || estU === "N/A" || estU === "N/A RETORNO") {
+            estFinal = "N/A RETORNO";
+        }
+
         let textToShow = estFinal === 'PENDIENTE' ? 'RETIRADO' : estFinal;
         let spanSalida = estFinal ? `<span class="badge-count" style="background:${estFinal==='ENTREGADO'?'var(--success)':'var(--warning)'}">${textToShow}</span>` : '-';
+        
+        let colorS = "color: var(--brand); font-weight: bold;";
+        if (f[18] === "PENDIENTE DE SOLICITUD" || f[18] === "NO SOLICITADO") {
+            colorS = "color: #64748b; font-weight: bold;";
+        }
+        if ((f[18]||"").includes('OMISIÓN')) {
+            colorS = "color: var(--danger); font-weight: bold;";
+        }
+
         let infoFecha = getWeekAndYear(f[0]);
-        return `<tr><td>${f[0]||""}</td><td><strong>${f[6]||""}</strong></td><td>${f[7]||""}</td><td>${f[2]||""}</td><td style="font-weight:bold; color:var(--brand)">${f[18]||""}</td><td>${spanSalida}</td><td>W${infoFecha.w}</td></tr>`;
+
+        return `<tr>
+            <td>${f[0] || ""}</td>
+            <td><strong>${f[6] || ""}</strong></td>
+            <td>${f[7] || ""}</td>
+            <td>${f[2] || ""}</td>
+            <td style="${colorS}">${f[18] || ""}</td>
+            <td>${spanSalida}</td>
+            <td>W${infoFecha.w || "?"}</td>
+        </tr>`;
     }).join('');
 }
 
@@ -475,6 +498,7 @@ function openTab(name) {
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
     document.getElementById('tab-' + name).style.display = 'block';
     event.currentTarget.classList.add('active');
+    
     if(name === 'historial') renderHistorial();
     if(name === 'bodega') renderBodega();
 }
@@ -486,7 +510,18 @@ function renderHistorial() {
         const d = parseFecha(f[0]);
         return d && (d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, '0')) === mes;
     });
-    tbody.innerHTML = filt.map(f => `<tr><td>${f[0]}</td><td>${f[3]}</td><td>${f[4]}</td><td>${f[5]}</td><td>${f[7]}</td><td>${f[1]}</td><td>${f[9]}</td><td>${f[10]||""}</td></tr>`).join('');
+   tbody.innerHTML = filt.map(f => `
+<tr>
+<td>${f[0]}</td>
+<td>${f[3]}</td>
+<td>${f[4]}</td>
+<td>${f[5]}</td>
+<td>${f[7]}</td>
+<td>${f[1]}</td>
+<td>${f[9]}</td>
+<td>${f[10]||""}</td>
+</tr>
+`).join('');
 }
 
 function actualizarKpis() {
@@ -500,6 +535,35 @@ function actualizarKpis() {
     document.getElementById('stat-alerta').innerText = a;
     document.getElementById('stat-critico').innerText = c;
     document.getElementById('stat-entregas-kpi').innerText = document.getElementById('count-entregas').innerText;
+}
+
+// FUNCIÓN DE EXPORTACIÓN CSV
+function exportCSV(tableId, name) {
+    const table = document.getElementById(tableId);
+    if (!table) return;
+
+    const rows = Array.from(table.querySelectorAll("tr"));
+    let csv = "\uFEFF"; // Para acentos en Excel
+    
+    rows.forEach((row, i) => {
+        let cols = Array.from(row.querySelectorAll("th, td")).map(c => `"${c.innerText.trim().replace(/"/g, '""')}"`);
+        
+        // Lógica especial para exportar comentarios en tablaPendientes si existen
+        if(tableId === 'tablaPendientes' && i > 0) {
+            const serie = row.querySelectorAll("td")[5].innerText;
+            const reg = rawData.pendientes.find(r => r[7] === serie);
+            if(reg && reg[10]) {
+               cols.push(`"${reg[10].replace(/"/g, '""')}"`);
+            }
+        }
+        csv += cols.join(";") + "\n";
+    });
+
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = `${name}_${new Date().toISOString().slice(0,10)}.csv`;
+    link.click();
 }
 
 document.getElementById('fSitioP').oninput = renderPendientes;
