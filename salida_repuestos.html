@@ -25,7 +25,9 @@
         .photo-box { border: 2px dashed #cbd5e1; border-radius: 18px; height: 90px; display: flex; align-items: center; justify-content: center; background: #f8fafc; cursor: pointer; position: relative; overflow: hidden; }
         .photo-box.required { border-color: var(--brand-light); }
         .preview-img { width: 100%; height: 100%; object-fit: cover; display: none; position: absolute; top: 0; left: 0; }
-        .bodega-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 8px; }
+        
+        /* Ajuste de cuadrícula a 2 columnas para las 4 opciones */
+        .bodega-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 8px; }
         .btn-bodega { background: #f1f5f9; border: 2px solid transparent; padding: 12px 5px; border-radius: 14px; font-size: 0.65rem; font-weight: 600; color: #475569; cursor: pointer; }
         .btn-bodega.selected { background: #fff; border-color: var(--brand); color: var(--brand); box-shadow: 0 5px 15px rgba(79, 70, 229, 0.1); }
         .btn-send { width: 100%; padding: 18px; border-radius: 18px; background: linear-gradient(135deg, var(--brand), var(--brand-light)); color: white; border: none; font-weight: 600; font-size: 1rem; margin-top: 30px; cursor: pointer; }
@@ -57,9 +59,10 @@
 
             <label>📍 Bodega de Retiro</label>
             <div class="bodega-grid">
-                <button type="button" class="btn-bodega" onclick="setBodega(this, 'SAN BENITO')">San Benito</button>
+                <button type="button" class="btn-bodega" onclick="setBodega(this, 'IBW CV1')">IBW CV1</button>
                 <button type="button" class="btn-bodega" onclick="setBodega(this, 'BODEGA CENTRAL')">Central</button>
                 <button type="button" class="btn-bodega" onclick="setBodega(this, 'TALNIQUE')">Talnique</button>
+                <button type="button" class="btn-bodega" onclick="setBodega(this, 'OTRO')">Otro</button>
             </div>
             <input type="hidden" id="bodega" required>
 
@@ -269,7 +272,6 @@
             const json = await res.json();
             
             if(json.result === "success") {
-                // REDIRECCIÓN CON ENTRIES ORIGINALES
                 const urlFinal = `${CONFIG.URL_FORM}?` + 
                     `entry.1637897291=CELECT` + 
                     `&entry.795516044=${encodeURIComponent(p.bodega)}` + 
@@ -278,7 +280,7 @@
                     `&entry.554570123=${encodeURIComponent(p.marca)}` + 
                     `&entry.1914147166=${encodeURIComponent(p.descripcion)}` + 
                     `&entry.1497572830=${encodeURIComponent(p.serie)}` +
-                    `&entry.122146950=${encodeURIComponent(p.comentarios)}`; // Entry de comentarios
+                    `&entry.122146950=${encodeURIComponent(p.comentarios)}`;
 
                 window.location.href = urlFinal;
             }
