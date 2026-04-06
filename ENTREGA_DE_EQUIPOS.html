@@ -352,50 +352,65 @@
     });
 
     document.getElementById('entregaForm').onsubmit = async (e) => {
-        e.preventDefault();
-        if(!validacion.tecnico || !validacion.sitio || !validacion.equipo) { alert("⚠️ Selecciona valores válidos."); return; }
-        if(!document.getElementById('bodega').value || !document.getElementById('equipo_estado').value || !fotoIn.dataset.blob) { alert("⚠️ Falta estado, bodega o foto."); return; }
+    e.preventDefault();
+    if(!validacion.tecnico || !validacion.sitio || !validacion.equipo) { alert("⚠️ Selecciona valores válidos."); return; }
+    if(!document.getElementById('bodega').value || !document.getElementById('equipo_estado').value || !fotoIn.dataset.blob) { alert("⚠️ Falta estado, bodega o foto."); return; }
 
-        const b = document.getElementById('btnEnviar');
-        b.disabled = true; b.innerText = "REGISTRANDO...";
+    const b = document.getElementById('btnEnviar');
+    b.disabled = true; b.innerText = "REGISTRANDO...";
 
-        const formData = {
-            action: "entregar",
-            tecnico_nombre: document.getElementById('tecnico_nombre').value,
-            nombreSitio: document.getElementById('siteSearch').value,
-            sitio_id: document.getElementById('sitio_id').value,
-            equipo_estado: document.getElementById('equipo_estado').value,
-            equipo_desc: document.getElementById('eqSearch').value,
-            equipo_marca: document.getElementById('marca').value,
-            bodega_destino: document.getElementById('bodega').value,
-            equipo_serie: document.getElementById('serie').value,
-            comentarios: document.getElementById('comentarios').value,
-            fileData: fotoIn.dataset.blob,
-            fileName: `ENT_${document.getElementById('sitio_id').value}_${Date.now()}.jpg`,
-            mimeType: "image/jpeg"
-        };
-
-        try {
-            await fetch(CONFIG.URL_APPS_SCRIPT, { method: 'POST', body: new URLSearchParams(formData), mode: 'no-cors' });
-            
-            const params = new URLSearchParams({
-                'entry.1265319450': formData.sitio_id,
-                'entry.1509520939': formData.nombreSitio,
-                'entry.554570123': formData.equipo_marca,
-                'entry.1914147166': formData.equipo_desc,
-                'entry.1497572830': formData.equipo_serie,
-                'entry.885555342': formData.equipo_estado,
-                'entry.795516044': formData.bodega_destino,
-                'entry.1637897291': 'CELECT'
-            });
-
-            alert("✅ Registro exitoso.");
-            window.location.href = `${CONFIG.URL_FORMS}?${params.toString()}`;
-        } catch(err) {
-            alert("Error de conexión");
-            b.disabled = false; b.innerText = "REINTENTAR";
-        }
+    // 1. Preparamos los datos para TU base de datos (Apps Script)
+    const formData = {
+        action: "entregar",
+        tecnico_nombre: document.getElementById('tecnico_nombre').value,
+        nombreSitio: document.getElementById('siteSearch').value,
+        sitio_id: document.getElementById('sitio_id').value,
+        equipo_estado: document.getElementById('equipo_estado').value,
+        
+        // ESTA LÍNEA ES LA QUE ENVÍA LA REFERENCIA A TU SHEETS:
+        ref_salida_desc: document.getElementById('ref_salida_desc').value, 
+        
+        equipo_desc: document.getElementById('eqSearch').value,
+        equipo_marca: document.getElementById('marca').value,
+        bodega_destino: document.getElementById('bodega').value,
+        equipo_serie: document.getElementById('serie').value,
+        comentarios: document.getElementById('comentarios').value,
+        fileData: fotoIn.dataset.blob,
+        fileName: `ENT_${document.getElementById('sitio_id').value}_${Date.now()}.jpg`,
+        mimeType: "image/jpeg"
     };
+
+    try {
+        // ENVIAR A TU SISTEMA (Apps Script)
+        await fetch(CONFIG.URL_APPS_SCRIPT, { 
+            method: 'POST', 
+            body: new URLSearchParams(formData), 
+            mode: 'no-cors' 
+        });
+        
+        // 2. Preparamos los parámetros para el FORMULARIO AJENO (Google Forms)
+        const params = new URLSearchParams({
+            'entry.1265319450': formData.sitio_id,
+            'entry.1509520939': formData.nombreSitio,
+            'entry.554570123': formData.equipo_marca,
+            'entry.1914147166': formData.equipo_desc,
+            'entry.1497572830': formData.equipo_serie,
+            'entry.885555342': formData.equipo_estado,
+            'entry.795516044': formData.bodega_destino,
+            'entry.1637897291': 'CELECT'
+            // Si el formulario ajeno tuviera un campo para la referencia, 
+            // habría que agregarlo aquí también con su propio entry.XXXX
+        });
+
+        alert("✅ Registro exitoso.");
+        // REDIRIGIR AL SISTEMA EXTERNO
+        window.location.href = `${CONFIG.URL_FORMS}?${params.toString()}`;
+
+    } catch(err) {
+        alert("Error de conexión");
+        b.disabled = false; b.innerText = "REINTENTAR";
+    }
+};
 </script>
 </body>
 </html>
