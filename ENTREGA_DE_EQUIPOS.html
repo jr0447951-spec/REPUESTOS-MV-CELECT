@@ -68,7 +68,6 @@
         .readonly { background: #f1f5f9; color: #94a3b8; border-style: none; }
 
         .opt-grid, .bodega-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 8px; }
-        .bodega-grid { grid-template-columns: repeat(3, 1fr); }
 
         .btn-opt {
             background: #f1f5f9; border: 2px solid transparent;
@@ -171,9 +170,10 @@
         <div class="card">
             <label>🏢 ¿A qué bodega ingresa?</label>
             <div class="bodega-grid">
-                <button type="button" class="btn-opt" onclick="selectOpt(this, 'SAN BENITO', 'bodega')">San Benito</button>
-                <button type="button" class="btn-opt" onclick="selectOpt(this, 'CENTRAL', 'bodega')">Central</button>
+                <button type="button" class="btn-opt" onclick="selectOpt(this, 'IBW CV1', 'bodega')">IBW CV1</button>
+                <button type="button" class="btn-opt" onclick="selectOpt(this, 'BODEGA CENTRAL', 'bodega')">Central</button>
                 <button type="button" class="btn-opt" onclick="selectOpt(this, 'TALNIQUE', 'bodega')">Talnique</button>
+                <button type="button" class="btn-opt" onclick="selectOpt(this, 'OTRO', 'bodega')">Otro</button>
             </div>
             <input type="hidden" id="bodega" required>
 
@@ -186,7 +186,6 @@
 </div>
 
 <script>
-    // Parche anti-caché: Agregamos un timestamp a las URLs de Google para forzar datos frescos
     const timestamp = new Date().getTime();
     
     const CONFIG = {
@@ -194,7 +193,8 @@
         URL_PENDIENTES: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQBNrpLKc_GPFT6Ik9Yr4s1qo8zaOOqrDgTc_9DGeMd20rNTsEtLktTCoeDcRrts6kvgne86KZDfKQS/pub?output=csv&t=' + timestamp,
         URL_TECNICOS: 'tecnicos.csv',
         URL_REPUESTOS: 'inventario_repuestos.csv',
-        URL_APPS_SCRIPT: 'https://script.google.com/macros/s/AKfycbxJyDENWy4Zmwye7tcREXVGdAur50ggJ-QQTeexEeEoWN2VseEp3EeMUQRaRTMQzJik/exec'
+        URL_APPS_SCRIPT: 'https://script.google.com/macros/s/AKfycbxJyDENWy4Zmwye7tcREXVGdAur50ggJ-QQTeexEeEoWN2VseEp3EeMUQRaRTMQzJik/exec',
+        URL_FORMS: 'https://docs.google.com/forms/d/e/1FAIpQLSf77ucRahgZVntJ1mvPWdCUakcLIpd7xKPw72diIkjBYD36OQ/viewform'
     };
 
     let data = { sites: [], pendientes: [], equipos: [], tecnicos: [] };
@@ -211,11 +211,8 @@
             ]);
             
             data.sites = parseCSV(await rS.text());
-            
-            // Usamos PapaParse para pendientes para manejar correctamente links con comas
             const textoP = await rP.text();
             data.pendientes = Papa.parse(textoP, { skipEmptyLines: true }).data;
-
             data.tecnicos = (await rT.text()).split(/\r?\n/).filter(l => l.trim()).map(n => ({nombre: n.trim()}));
 
             Papa.parse(CONFIG.URL_REPUESTOS, {
@@ -251,9 +248,7 @@
             const v = input.value.toLowerCase().trim();
             box.innerHTML = '';
             if (v.length < 1) { box.style.display = 'none'; return; }
-
             const matches = items.filter(i => (i[key] || "").toString().toLowerCase().includes(v) || (extraKey && (i[extraKey] || "").toString().toLowerCase().includes(v))).slice(0, 6);
-
             matches.forEach(item => {
                 const d = document.createElement('div');
                 d.className = 'suggestion-item';
@@ -283,7 +278,6 @@
         const parent = btn.parentElement;
         parent.querySelectorAll('.btn-opt').forEach(x => x.classList.remove('selected'));
         btn.classList.add('selected');
-
         if(grupo === 'estado') {
             document.getElementById('equipo_estado').value = val;
             const boxRef = document.getElementById('box_ref');
@@ -298,19 +292,13 @@
         const idCapturado = document.getElementById('sitio_id').value.toString().trim();
         const sel = document.getElementById('ref_salida_desc');
         if(!idCapturado) return;
-
-        // Filtro reforzado para ID 390316 y otros: limpia espacios y formatos
         const lista = data.pendientes.filter(f => {
             if (!f[3] || !f[9]) return false;
             const idExcel = f[3].toString().trim();
             const estadoExcel = f[9].toString().trim().toUpperCase();
             return idExcel === idCapturado && estadoExcel === 'PENDIENTE';
         });
-
-        sel.innerHTML = lista.length > 0 
-            ? '<option value="">Seleccione equipo de salida...</option>' 
-            : '<option value="">No hay salidas pendientes para este sitio</option>';
-        
+        sel.innerHTML = lista.length > 0 ? '<option value="">Seleccione equipo de salida...</option>' : '<option value="">No hay salidas pendientes para este sitio</option>';
         lista.forEach(f => {
             let o = document.createElement('option');
             o.value = f[5]; o.innerText = f[5]; sel.appendChild(o);
@@ -320,12 +308,7 @@
     function llenarDesdeSalida() {
         const ref = document.getElementById('ref_salida_desc').value;
         const idCapturado = document.getElementById('sitio_id').value;
-        // Buscamos el registro que coincide con el ID y la descripción seleccionada
-        const f = data.pendientes.find(l => 
-            l[3].toString().trim() === idCapturado && 
-            l[5] === ref && 
-            l[9].toString().trim().toUpperCase() === 'PENDIENTE'
-        );
+        const f = data.pendientes.find(l => l[3].toString().trim() === idCapturado && l[5] === ref && l[9].toString().trim().toUpperCase() === 'PENDIENTE');
         if(f) { 
             document.getElementById('eqSearch').value = f[5]; 
             document.getElementById('marca').value = f[6];
@@ -334,7 +317,6 @@
         }
     }
 
-    // --- PROCESAMIENTO HD + MARCA DE AGUA ---
     const fotoIn = document.getElementById('foto');
     fotoIn.addEventListener('change', function() {
         if (this.files && this.files[0]) {
@@ -348,18 +330,15 @@
                     let w = img.width, h = img.height;
                     if (w > h && w > MAX) { h *= MAX / w; w = MAX; }
                     else if (h >= w && h > MAX) { w *= MAX / h; h = MAX; }
-                    
                     canvas.width = w; canvas.height = h;
                     ctx.imageSmoothingQuality = 'high';
                     ctx.drawImage(img, 0, 0, w, h);
-
                     const txt = `${new Date().toLocaleString()} | Téc: ${document.getElementById('tecnico_nombre').value} | Sitio: ${document.getElementById('sitio_id').value}`;
                     ctx.fillStyle = "rgba(0,0,0,0.6)";
                     ctx.fillRect(0, h - 60, w, 60);
                     ctx.fillStyle = "white";
                     ctx.font = "bold 22px Poppins, Arial";
                     ctx.fillText(txt, 25, h - 25);
-
                     const finalData = canvas.toDataURL("image/jpeg", 0.8);
                     document.getElementById('previewFoto').src = finalData;
                     document.getElementById('previewFoto').style.display = 'block';
@@ -374,12 +353,8 @@
 
     document.getElementById('entregaForm').onsubmit = async (e) => {
         e.preventDefault();
-        if(!validacion.tecnico || !validacion.sitio || !validacion.equipo) {
-            alert("⚠️ Selecciona valores válidos de las listas."); return;
-        }
-        if(!document.getElementById('bodega').value || !document.getElementById('equipo_estado').value || !fotoIn.dataset.blob) {
-            alert("⚠️ Falta estado, bodega o foto."); return;
-        }
+        if(!validacion.tecnico || !validacion.sitio || !validacion.equipo) { alert("⚠️ Selecciona valores válidos."); return; }
+        if(!document.getElementById('bodega').value || !document.getElementById('equipo_estado').value || !fotoIn.dataset.blob) { alert("⚠️ Falta estado, bodega o foto."); return; }
 
         const b = document.getElementById('btnEnviar');
         b.disabled = true; b.innerText = "REGISTRANDO...";
@@ -390,7 +365,6 @@
             nombreSitio: document.getElementById('siteSearch').value,
             sitio_id: document.getElementById('sitio_id').value,
             equipo_estado: document.getElementById('equipo_estado').value,
-            ref_salida_desc: document.getElementById('ref_salida_desc').value,
             equipo_desc: document.getElementById('eqSearch').value,
             equipo_marca: document.getElementById('marca').value,
             bodega_destino: document.getElementById('bodega').value,
@@ -404,20 +378,19 @@
         try {
             await fetch(CONFIG.URL_APPS_SCRIPT, { method: 'POST', body: new URLSearchParams(formData), mode: 'no-cors' });
             
-            const fechaHoy = new Date().toISOString().split('T')[0];
-            const urlGoogleForm = `https://docs.google.com/forms/d/e/1FAIpQLSfz-IGCT2vdfUplh2MipdjgBLcspDE_TWChhrWn1wBaVMnWOQ/viewform?` +
-                `entry.997804380=${fechaHoy}` + 
-                `&entry.821288735=${encodeURIComponent(formData.sitio_id)}` +
-                `&entry.1024047478=${encodeURIComponent(formData.nombreSitio)}` +
-                `&entry.808319871=${encodeURIComponent(formData.equipo_marca)}` +
-                `&entry.735015225=${encodeURIComponent(formData.equipo_desc)}` +
-                `&entry.1183702054=${encodeURIComponent(formData.equipo_serie)}` +
-                `&entry.1370238515=${encodeURIComponent(formData.equipo_estado)}` +
-                `&entry.1372699954=${encodeURIComponent(formData.bodega_destino)}` +
-                `&entry.908256573=CELECT`;
+            const params = new URLSearchParams({
+                'entry.1265319450': formData.sitio_id,
+                'entry.1509520939': formData.nombreSitio,
+                'entry.554570123': formData.equipo_marca,
+                'entry.1914147166': formData.equipo_desc,
+                'entry.1497572830': formData.equipo_serie,
+                'entry.885555342': formData.equipo_estado,
+                'entry.795516044': formData.bodega_destino,
+                'entry.1637897291': 'CELECT'
+            });
 
             alert("✅ Registro exitoso.");
-            window.location.href = urlGoogleForm;
+            window.location.href = `${CONFIG.URL_FORMS}?${params.toString()}`;
         } catch(err) {
             alert("Error de conexión");
             b.disabled = false; b.innerText = "REINTENTAR";
