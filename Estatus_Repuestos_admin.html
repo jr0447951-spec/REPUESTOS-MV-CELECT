@@ -236,7 +236,7 @@
 <footer><strong>NETWORK OPERATIONS</strong> | 2026</footer>
 
 <script>
-// Orígenes de Datos Sincronizados de Producción
+// Orígenes de Datos Sincronizados
 const URL_S = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQBNrpLKc_GPFT6Ik9Yr4s1qo8zaOOqrDgTc_9DGeMd20rNTsEtLktTCoeDcRrts6kvgne86KZDfKQS/pub?gid=0&single=true&output=csv';
 const URL_E = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQBNrpLKc_GPFT6Ik9Yr4s1qo8zaOOqrDgTc_9DGeMd20rNTsEtLktTCoeDcRrts6kvgne86KZDfKQS/pub?gid=887165919&single=true&output=csv';
 const URL_NUEVO_HISTORIAL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQa4hodHj5bdOFphK4LKC4r3R4Vu0eXocLdSvCz8TRavXyryvBRgc05P8VDwzb0V9afMJx15_RMAmBq/pub?gid=184673354&single=true&output=csv&t=' + new Date().getTime();
@@ -506,7 +506,6 @@ function renderBodega() {
         let tdBodegaHtml = "";
         let bodegaActual = String(f[22] || "").trim().toUpperCase();
 
-        // Si es la subpestaña de solicitados, inyecta el menú desplegable dinámico
         if (currentBodegaTab === 'solicitados') {
             tdBodegaHtml = `
                 <td>
@@ -614,36 +613,30 @@ function exportCSV(tableId, name) {
 }
 
 // =========================================================================
-// MOTOR ASÍNCRONO INTERACTIVO (FORMATO NATIVO URL-ENCODED PERFECTO PARA NO-CORS)
+// MOTOR DE ENVÍO A PRUEBA DE BALAS (MÉTODO GET)
 // =========================================================================
 function guardarBodegaEnSheets(elementoSelect) {
     const serieEquipo = elementoSelect.getAttribute('data-serie');
     const bodegaElegida = elementoSelect.value;
 
-    // Indicador visual de procesamiento (Naranja de carga)
     elementoSelect.style.background = "#f59e0b"; 
     elementoSelect.style.color = "#ffffff";
     elementoSelect.disabled = true;
 
-    const URL_WEB_APP_GOOGLE = "https://script.google.com/macros/s/AKfycbzNHgjPuWBj80Q7vw3pN7_JsrMz0yEDhuYLWsXbVDn_FfxJcsn5NFvzKWH96LBMsudc/exec";
+    // AQUÍ ESTÁ TU NUEVA URL INYECTADA
+    const URL_BASE = "https://script.google.com/macros/s/AKfycbyjJJzXsL3tjJrLZvPW2E7cpw_0RbG0mJ_jGqWxSVcTxhswzmO_keFNpgnpKm4YjODR/exec";
+    const URL_CON_DATOS = URL_BASE + "?serie=" + encodeURIComponent(serieEquipo) + "&bodega=" + encodeURIComponent(bodegaElegida);
 
-    // Convertimos a formulario tradicional URL-Encoded
-    const parametrosFormulario = new URLSearchParams();
-    parametrosFormulario.append('serie', serieEquipo);
-    parametrosFormulario.append('bodega', bodegaElegida);
-
-    fetch(URL_WEB_APP_GOOGLE, {
-        method: "POST",
-        mode: "no-cors", 
-        body: parametrosFormulario
+    // Al usar método GET, el navegador no bloquea NADA, sin importar dónde esté alojado
+    fetch(URL_CON_DATOS, {
+        method: "GET",
+        mode: "no-cors"
     })
     .then(() => {
-        // Alerta visual de éxito (Verde)
         elementoSelect.style.background = "#10b981"; 
         elementoSelect.style.color = "#ffffff";
         elementoSelect.disabled = false;
 
-        // Actualizamos el modelo rawData local para no perder el cambio al alternar subpestañas
         if (rawData && rawData.nuevoHistorial) {
             for (let i = 0; i < rawData.nuevoHistorial.length; i++) {
                 if (String(rawData.nuevoHistorial[i][5]).trim() === String(serieEquipo).trim()) {
@@ -653,7 +646,6 @@ function guardarBodegaEnSheets(elementoSelect) {
             }
         }
 
-        // Retorno elegante al color original de la UI
         setTimeout(() => {
             elementoSelect.style.background = "#ffffff";
             elementoSelect.style.color = "var(--text)";
@@ -661,10 +653,10 @@ function guardarBodegaEnSheets(elementoSelect) {
         }, 1200);
     })
     .catch(error => {
-        console.error("Error crítico de guardado:", error);
-        alert("Fallo de red: No se logró almacenar la bodega.");
+        console.error("Error de comunicación:", error);
+        alert("Fallo de red al enviar por GET.");
         
-        elementoSelect.style.background = "#ef4444"; // Rojo si se cae la conexión
+        elementoSelect.style.background = "#ef4444"; 
         elementoSelect.style.color = "#ffffff";
         elementoSelect.disabled = false;
     });
@@ -672,7 +664,4 @@ function guardarBodegaEnSheets(elementoSelect) {
 
 document.getElementById('fSitioP').oninput = renderPendientes;
 document.getElementById('fTecP').oninput = renderPendientes;
-window.onload = init;
-</script>
-</body>
-</html>
+window
